@@ -16,18 +16,22 @@ const netIncomeEl = $('net-income');
 const saveNetBtn = $('save-net');
 const netYearlyEl = $('net-yearly');
 
-// Bill inputs (including Phone)
+// Bill inputs (including the new ones)
 const billEls = {
   rent: $('bill-rent'),
+  hoa: $('bill-hoa'),
   electric: $('bill-electric'),
   internet: $('bill-internet'),
   gas: $('bill-gas'),
   water: $('bill-water'),
   groceries: $('bill-groceries'),
   phone: $('bill-phone'),
+  security: $('bill-security'),
+  transportation: $('bill-transportation'),
+  health: $('bill-health'),
 };
 
-// Metrics block (added in index.html)
+// Metrics block (from index.html)
 const nnTotalEl = $('nn-total');
 const playLeftEl = $('play-left');
 
@@ -58,7 +62,17 @@ const KEY_TX = 'budget:tx';
 
 let netIncome = load(KEY_NET, 0);
 let bills = load(KEY_BILLS, {
-  rent: '', electric: '', internet: '', gas: '', water: '', groceries: '', phone: ''
+  rent: '',
+  hoa: '',
+  electric: '',
+  internet: '',
+  gas: '',
+  water: '',
+  groceries: '',
+  phone: '',
+  security: '',
+  transportation: '',
+  health: '',
 });
 let items = load(KEY_TX, []);
 
@@ -132,12 +146,16 @@ function updateYearly() {
 function totalNonNegotiables() {
   return (
     num(billEls.rent?.value) +
+    num(billEls.hoa?.value) +
     num(billEls.electric?.value) +
     num(billEls.internet?.value) +
     num(billEls.gas?.value) +
     num(billEls.water?.value) +
     num(billEls.groceries?.value) +
-    num(billEls.phone?.value)
+    num(billEls.phone?.value) +
+    num(billEls.security?.value) +
+    num(billEls.transportation?.value) +
+    num(billEls.health?.value)
   );
 }
 
