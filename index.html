@@ -7,47 +7,65 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0ea5e9" />
-  <title>Budget (Minimal)</title>
+  <title>Budget</title>
+  <!-- Lucide (cached by our SW; see sw.js) -->
+  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
     html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:#0b1220;color:#e5e7eb}
     .wrap{max-width:860px;margin:0 auto;padding:16px}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-    h1{font-size:20px;margin:0}
+    h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
     .card{background:#0f172a;border:1px solid #1f2937;border-radius:12px;padding:12px;margin-bottom:12px}
-    input,button{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
-    input:focus,button:focus{outline:2px solid #0ea5e9}
-    button{cursor:pointer}
+    input,select,button{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
+    input:focus,select:focus,button:focus{outline:2px solid #0ea5e9}
+    button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
     .row{display:flex;gap:8px;flex-wrap:wrap}
     .row>*{flex:1 1 160px}
     ul{list-style:none;padding:0;margin:0}
-    li{padding:10px;border-bottom:1px solid #1f2937}
+    li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid #1f2937}
     .muted{color:#9ca3af;font-size:12px}
+    .pill{display:inline-flex;align-items:center;gap:6px;background:#081127;border:1px solid #1f2937;border-radius:999px;padding:6px 10px;font-size:12px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>💸 Budget (Minimal)</h1>
-      <button id="install-help">Install</button>
+      <h1>
+        <i data-lucide="piggy-bank"></i>
+        Budget
+      </h1>
+      <button id="install-help" title="Install"><i data-lucide="download"></i>Install</button>
     </header>
 
     <section class="card">
-      <p class="muted">This is a minimal PWA shell. We’ll add real storage together later. For now, it installs and works offline.</p>
       <div class="row">
-        <input id="desc" placeholder="Description (placeholder)" />
-        <input id="amount" type="number" step="0.01" placeholder="Amount (placeholder)" />
-        <button id="add">Add (noop)</button>
+        <input id="desc" placeholder="Description" />
+        <input id="amount" type="number" step="0.01" placeholder="Amount" />
+        <select id="type" aria-label="Type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+        <button id="add"><i data-lucide="plus"></i>Add</button>
+      </div>
+      <p class="muted">Ultra-minimal: enter a description + amount, pick expense/income, hit Add. Data is saved locally (offline).</p>
+    </section>
+
+    <section class="card">
+      <div class="row" style="align-items:center">
+        <span class="pill"><i data-lucide="wallet"></i> Balance: <strong id="bal">$0.00</strong></span>
+        <span class="pill"><i data-lucide="trending-up"></i> Income: <strong id="inc">$0.00</strong></span>
+        <span class="pill"><i data-lucide="trending-down"></i> Expenses: <strong id="exp">$0.00</strong></span>
       </div>
     </section>
 
     <section class="card">
-      <h2 class="muted" style="margin:0 0 8px 0;">Preview List (static)</h2>
-      <ul id="list">
-        <li>Example: Coffee — $3.50</li>
-      </ul>
+      <div class="row">
+        <input id="search" placeholder="Search description" />
+        <button id="clear"><i data-lucide="eraser"></i>Clear All</button>
+      </div>
+      <ul id="list"></ul>
+      <p class="muted">Tip: Long-press the app icon → “Remove App” only removes the shortcut; your data lives in-browser. Use “Clear All” above to wipe entries.</p>
     </section>
-
-    <p class="muted">Install on iPhone/iPad: open in Safari → Share → <strong>Add to Home Screen</strong>.</p>
   </div>
 
   <script type="module" src="app.js"></script>
