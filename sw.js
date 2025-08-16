@@ -1,7 +1,6 @@
-// Cache name bump = easy refresh after you edit files
-const CACHE = 'budget-minimal-v4';
+const CACHE = 'budget-tabs-v1';
 
-// Precache app shell + the Lucide UMD so icons also work offline
+// Precache our shell + Lucide
 const ASSETS = [
   'index.html',
   'app.js',
@@ -25,14 +24,14 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
 
-  // For navigations, fall back to cached index.html if offline
+  // Navigations: network first, fallback to cached index
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).catch(() => caches.match('index.html')));
     return;
   }
 
-  // Cache-first for same-origin assets
   const url = new URL(req.url);
+  // Same-origin: cache-first
   if (url.origin === location.origin) {
     e.respondWith(
       caches.match(req).then(cached => cached || fetch(req).then(resp => {
@@ -44,7 +43,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Network-first for the Lucide CDN, fallback to cache if offline
+  // Lucide CDN: network first, fallback to cache
   if (req.url.includes('unpkg.com/lucide')) {
     e.respondWith(
       fetch(req).then(resp => {
