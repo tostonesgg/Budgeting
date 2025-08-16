@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 const toCurrency = (n) =>
   (Number.isFinite(n) ? n : 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 
-// Robust number parser: handles $, commas, spaces, etc.
+// Parse $, commas, spaces, etc.
 function num(v) {
   const s = String(v ?? '').replace(/[^0-9.\-]/g, '');
   const n = parseFloat(s);
@@ -29,7 +29,7 @@ const saveNetBtn = $('save-net');
 const netYearlyNote = $('net-yearly-note');
 const playAmountEl = $('play-amount');
 
-// Top-level category totals (monthly ballparks)
+// Category monthly ballparks (DOM inputs)
 const totalsInputs = {
   'Non-Negotiables': $('total-nonneg'),
   'Streaming': $('total-streaming'),
@@ -42,7 +42,7 @@ const totalsInputs = {
   'Fun': $('total-fun'),
 };
 
-// Detail lists
+// Detail lists (for NN/Streaming/Big)
 const nnList = $('nn-list');
 const nnAdd = $('nn-add');
 const streamList = $('stream-list');
@@ -76,7 +76,6 @@ const KEY_NET   = 'budget:minimal:net';
 const KEY_SETUP = 'budget:minimal:setup';
 const KEY_CATS  = 'budget:minimal:categories';
 
-// Canonical categories (global, used everywhere)
 const CATEGORIES = [
   'Non-Negotiables',
   'Streaming',
@@ -129,7 +128,7 @@ let setup = loadJSON(KEY_SETUP, {
 });
 
 let items = loadJSON(KEY_TX, []);
-saveJSON(KEY_CATS, CATEGORIES); // keep categories centralized
+saveJSON(KEY_CATS, CATEGORIES); // single source of truth for categories
 
 // =========================
 /* Init */
@@ -140,7 +139,6 @@ populateCategorySelect();
 renderAll();
 if (window.lucide?.createIcons) window.lucide.createIcons();
 
-// SW
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
@@ -164,34 +162,37 @@ function initTabs(){
 /* Setup UI */
 // =========================
 function initSetupUI(){
-  // Net income
+  // Net income: show saved value (if any)
   if (setup.net) netIncomeEl.value = setup.net;
   updateNetYearly();
-  updatePlayAmount();
+  updatePlayAmount(); // compute from current inputs
 
-  // Live recompute as user types
+  // LIVE: every keystroke both saves & recomputes (no Save needed to see updates)
   netIncomeEl.addEventListener('input', () => {
-    updateNetYearly();
-    updatePlayAmount();
-  });
-
-  saveNetBtn.addEventListener('click', () => {
-    const val = num(netIncomeEl.value);
-    if (val <= 0) return alert('Enter a valid monthly net income.');
-    setup.net = val;
-    saveJSON(KEY_NET, val);
+    setup.net = num(netIncomeEl.value);          // persist live
+    saveJSON(KEY_NET, setup.net);
     saveJSON(KEY_SETUP, setup);
     updateNetYearly();
     updatePlayAmount();
   });
 
-  // Top-level totals inputs (ballparks)
+  // "Save" button optional (kept for UX reassurance)
+  saveNetBtn.addEventListener('click', () => {
+    setup.net = num(netIncomeEl.value);
+    if (setup.net <= 0) return alert('Enter a valid monthly net income.');
+    saveJSON(KEY_NET, setup.net);
+    saveJSON(KEY_SETUP, setup);
+    updateNetYearly();
+    updatePlayAmount();
+  });
+
+  // Top-level monthly ballparks (all categories)
   for (const cat of CATEGORIES) {
     const input = totalsInputs[cat];
     if (!input) continue;
     input.value = setup.totals[cat] ?? '';
     input.addEventListener('input', () => {
-      setup.totals[cat] = input.value; // persist; compute from DOM live
+      setup.totals[cat] = input.value; // persist AND recompute from DOM value
       saveJSON(KEY_SETUP, setup);
       updatePlayAmount();
     });
@@ -224,9 +225,11 @@ function initSetupUI(){
 }
 
 function updateNetYearly(){
-  const m = num(netIncomeEl.value);
-  const y = m > 0 ? m * 12 : 0;
-  netYearlyNote.textContent = `Yearly: ${y ? toCurrency(y) : '—'}`;
+  const m = num(netIncomeEl.value);        // live input
+  const fallback = num(setup.net);         // saved
+  const monthly = m > 0 ? m : fallback;    // prefer live if > 0
+  const yearly = monthly > 0 ? monthly * 12 : 0;
+  netYearlyNote.textContent = `Yearly: ${yearly ? toCurrency(yearly) : '—'}`;
 }
 
 function renderSetupList(root, arr, key){
@@ -263,7 +266,7 @@ function renderSetupList(root, arr, key){
   if (window.lucide?.createIcons) window.lucide.createIcons();
 }
 
-// Convert detail-row amount to monthly using frequency
+// Convert a detail row to a monthly equivalent
 function toMonthly(amount, freq){
   const a = num(amount);
   switch (freq) {
@@ -276,45 +279,33 @@ function toMonthly(amount, freq){
   }
 }
 
-// Category monthly: prefer live DOM total; else saved total; else sum details (for supported cats)
+// Category monthly: prefer live DOM top total; else saved total; else sum details
 function categoryMonthly(cat){
-  // 1) Live DOM input (most up-to-date)
   const domInput = totalsInputs[cat];
   const domVal = domInput ? num(domInput.value) : 0;
   if (domVal > 0) return domVal;
 
-  // 2) Saved top-level total
   const savedTop = num(setup.totals[cat]);
   if (savedTop > 0) return savedTop;
 
-  // 3) Sum detail rows (supported categories)
-  if (cat === 'Non-Negotiables') {
-    return setup.nonNegotiables.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
-  }
-  if (cat === 'Streaming') {
-    return setup.streaming.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
-  }
-  if (cat === 'Big Experiences') {
-    return setup.big.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
-  }
-  return 0; // other categories rely on top total only
+  if (cat === 'Non-Negotiables') return setup.nonNegotiables.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
+  if (cat === 'Streaming')       return setup.streaming.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
+  if (cat === 'Big Experiences') return setup.big.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
+  return 0;
 }
 
-// NEW: Non-Negotiables monthly helper
-function nonnegMonthly(){
-  return categoryMonthly('Non-Negotiables');
-}
+// Non-Negotiables monthly (helper)
+function nonnegMonthly(){ return categoryMonthly('Non-Negotiables'); }
 
-// Compute & show “play money” (net minus Non-Negotiables only)
+// Compute & show “play money” = NET − Non-Negotiables
 function updatePlayAmount(){
-  // Prefer live net-income input; fallback to saved
-  const liveNet = num(netIncomeEl.value);
-  const net = liveNet > 0 ? liveNet : num(setup.net);
+  const liveNet = num(netIncomeEl.value);      // prefer what the user is typing
+  const storedNet = num(setup.net);            // fallback
+  const net = liveNet > 0 ? liveNet : storedNet;
 
-  // Only subtract Non-Negotiables; if empty, it's 0
-  const nn = nonnegMonthly();
-
+  const nn = nonnegMonthly();                  // from top-level dom/saved, else details
   const play = Math.max(0, net - nn);
+
   playAmountEl.textContent = `${toCurrency(play)}/mo`;
 }
 
@@ -392,7 +383,7 @@ function renderTransactions(){
 }
 
 function renderCategoryTotals(){
-  // Sum EXPENSES by category (zeros for all categories)
+  // Expense totals by category
   const byCat = Object.fromEntries(CATEGORIES.map(c => [c, 0]));
   for (const it of items) {
     if (it.type !== 'expense') continue;
