@@ -243,7 +243,7 @@ function renderTransactions() {
   if (window.lucide?.createIcons) window.lucide.createIcons();
 }
 
-// ========= Income Split: 4-slice category pie + pills + remainder =========
+// ========= Income Split: 4-slice category pie + on-canvas legend + pills + remainder =========
 function updateIncomeSplit() {
   const income = num(netIncomeEl.value) || num(netIncome);
 
@@ -252,29 +252,32 @@ function updateIncomeSplit() {
   const date = totalDateNights();     // pink
   const inv  = totalInvestments();    // orange
 
-  const allocated = nn + subs + date + inv;
-  const remainder = income - allocated;
-
-  drawCategoryPie([
+  const slices = [
     { label:'Non-Negotiables', value: nn,   color:'#ef4444' }, // red-500
     { label:'Subscriptions',   value: subs, color:'#3b82f6' }, // blue-500
     { label:'Date Nights',     value: date, color:'#ec4899' }, // pink-500
     { label:'Investments',     value: inv,  color:'#f59e0b' }, // orange-500
-  ]);
+  ];
 
+  const allocated = nn + subs + date + inv;
+  const remainder = income - allocated;
+
+  drawCategoryPie(slices);
+  drawCanvasLegend(slices); // NEW: totals right on the chart
+
+  // Pills + remainder + message underneath
   const pillsHTML = `
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
-      ${[
-        {label:'Non-Negotiables', val:nn, color:'#ef4444', fg:'#fff'},
-        {label:'Subscriptions',   val:subs, color:'#3b82f6', fg:'#0b1220'},
-        {label:'Date Nights',     val:date, color:'#ec4899', fg:'#0b1220'},
-        {label:'Investments',     val:inv, color:'#f59e0b', fg:'#0b1220'},
-      ].map(({label,val,color,fg})=>`
-        <span style="display:inline-flex;align-items:center;gap:8px;background:${color};color:${fg};padding:6px 10px;border-radius:999px;font-weight:700">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${fg}"></span>
-          ${label}: ${money(val)}
-        </span>
-      `).join('')}
+      ${slices.map(({label,value,color})=>{
+        const fg = color === '#ef4444' ? '#fff' : '#0b1220';
+        const dot = fg === '#fff' ? '#fff' : '#0b1220';
+        return `
+          <span style="display:inline-flex;align-items:center;gap:8px;background:${color};color:${fg};padding:6px 10px;border-radius:999px;font-weight:700">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dot}"></span>
+            ${label}: ${money(value)}
+          </span>
+        `;
+      }).join('')}
     </div>
     <div style="margin-top:12px;font-size:16px;font-weight:800">
       Remainder: ${money(remainder)}
@@ -310,14 +313,39 @@ function drawCategoryPie(slices) {
     const fraction = Math.max(0, value) / total;
     const angle = fraction * Math.PI * 2;
     const end = start + angle;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, start, end);
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
+    if (angle > 0) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, start, end);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
     start = end;
   }
+}
+
+// NEW: draw small legend with totals directly on the canvas (top-left)
+function drawCanvasLegend(slices) {
+  const pad = 10;
+  let x = pad, y = pad;
+  const lineH = 18;
+
+  // Background panel for readability
+  const widest = Math.max(...slices.map(s => (s.label + money(s.value)).length)) * 6 + 60;
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)'; // semi-dark
+  ctx.fillRect(6, 6, Math.min(pieCanvas.width-12, widest), slices.length * lineH + 12);
+
+  slices.forEach(({label,value,color}, i) => {
+    // color box
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y + i*lineH + 4, 10, 10);
+
+    // text
+    ctx.fillStyle = '#e5e7eb';
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillText(`${label}: ${money(value)}`, x + 16, y + i*lineH + 14);
+  });
 }
 
 // Responsive
