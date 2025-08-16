@@ -8,65 +8,103 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0ea5e9" />
   <title>Budget</title>
-  <!-- Lucide (cached by our SW; see sw.js) -->
+  <!-- Lucide icons -->
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
-    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:#0b1220;color:#e5e7eb}
-    .wrap{max-width:860px;margin:0 auto;padding:16px}
+    :root { --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; }
+    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:#e5e7eb}
+    .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom,0))}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
-    .card{background:#0f172a;border:1px solid #1f2937;border-radius:12px;padding:12px;margin-bottom:12px}
-    input,select,button{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
-    input:focus,select:focus,button:focus{outline:2px solid #0ea5e9}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+    input,select,button{background:var(--field);color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
+    input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
     button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
     .row{display:flex;gap:8px;flex-wrap:wrap}
     .row>*{flex:1 1 160px}
+    .muted{color:var(--muted);font-size:12px}
     ul{list-style:none;padding:0;margin:0}
-    li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid #1f2937}
-    .muted{color:#9ca3af;font-size:12px}
-    .pill{display:inline-flex;align-items:center;gap:6px;background:#081127;border:1px solid #1f2937;border-radius:999px;padding:6px 10px;font-size:12px}
+    li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--line)}
+    .pill{display:inline-flex;align-items:center;gap:6px;background:#081127;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
+    .bar{height:8px;background:#111827;border:1px solid #374151;border-radius:999px;overflow:hidden}
+    .bar>i{display:block;height:100%;background:#0ea5e9;width:0%}
+
+    /* Bottom Tabs */
+    .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
+    .tabs .inner{max-width:860px;margin:0 auto;display:flex;gap:12px;justify-content:space-between}
+    .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:#e5e7eb}
+    .tab-btn.active{background:#111827;border-color:#374151}
+    .tab-btn span{font-size:11px;color:var(--muted)}
+    main section{display:none}
+    main section.active{display:block}
+    canvas{max-width:100%;height:auto}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>
-        <i data-lucide="piggy-bank"></i>
-        Budget
-      </h1>
+      <h1><i data-lucide="piggy-bank"></i> Budget</h1>
       <button id="install-help" title="Install"><i data-lucide="download"></i>Install</button>
     </header>
 
-    <section class="card">
-      <div class="row">
-        <input id="desc" placeholder="Description" />
-        <input id="amount" type="number" step="0.01" placeholder="Amount" />
-        <select id="type" aria-label="Type">
-          <option value="expense">Expense</option>
-          <option value="income">Income</option>
-        </select>
-        <button id="add"><i data-lucide="plus"></i>Add</button>
-      </div>
-      <p class="muted">Ultra-minimal: enter a description + amount, pick expense/income, hit Add. Data is saved locally (offline).</p>
-    </section>
+    <main>
+      <!-- Analyze (Category totals) -->
+      <section id="view-analyze" class="active">
+        <div class="card">
+          <div class="row" style="align-items:center">
+            <span class="pill"><i data-lucide="chart-bar-stacked"></i> Category Totals (Expenses)</span>
+          </div>
+          <div id="cat-totals"></div>
+          <p class="muted" style="margin-top:8px">Shows **expense** totals per category. Starter categories are preloaded.</p>
+        </div>
+      </section>
 
-    <section class="card">
-      <div class="row" style="align-items:center">
-        <span class="pill"><i data-lucide="wallet"></i> Balance: <strong id="bal">$0.00</strong></span>
-        <span class="pill"><i data-lucide="trending-up"></i> Income: <strong id="inc">$0.00</strong></span>
-        <span class="pill"><i data-lucide="trending-down"></i> Expenses: <strong id="exp">$0.00</strong></span>
-      </div>
-    </section>
+      <!-- Transactions -->
+      <section id="view-transactions">
+        <div class="card">
+          <div class="row">
+            <input id="desc" placeholder="Description" />
+            <input id="amount" type="number" step="0.01" placeholder="Amount" />
+            <select id="type" aria-label="Type">
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+            <select id="category" aria-label="Category"></select>
+            <button id="add"><i data-lucide="receipt-text"></i>Add</button>
+          </div>
+          <p class="muted">Pick a type + category, then Add. Everything stays on-device (offline).</p>
+        </div>
 
-    <section class="card">
-      <div class="row">
-        <input id="search" placeholder="Search description" />
-        <button id="clear"><i data-lucide="eraser"></i>Clear All</button>
-      </div>
-      <ul id="list"></ul>
-      <p class="muted">Tip: Long-press the app icon → “Remove App” only removes the shortcut; your data lives in-browser. Use “Clear All” above to wipe entries.</p>
-    </section>
+        <div class="card">
+          <div class="row">
+            <input id="search" placeholder="Search description" />
+            <button id="clear"><i data-lucide="eraser"></i>Clear All</button>
+          </div>
+          <ul id="list"></ul>
+        </div>
+      </section>
+
+      <!-- Income Split (Pie) -->
+      <section id="view-pie">
+        <div class="card">
+          <div class="row" style="align-items:center">
+            <span class="pill"><i data-lucide="chart-pie"></i> Income by Category</span>
+          </div>
+          <canvas id="pie" width="400" height="400"></canvas>
+          <div id="pie-legend" class="muted" style="margin-top:8px"></div>
+        </div>
+      </section>
+    </main>
   </div>
+
+  <!-- Bottom Tab Bar -->
+  <nav class="tabs" role="navigation" aria-label="Tabs">
+    <div class="inner">
+      <button class="tab-btn active" data-tab="analyze"><i data-lucide="chart-bar-stacked"></i><span>Analyze</span></button>
+      <button class="tab-btn" data-tab="transactions"><i data-lucide="receipt-text"></i><span>Transactions</span></button>
+      <button class="tab-btn" data-tab="pie"><i data-lucide="chart-pie"></i><span>Income Split</span></button>
+    </div>
+  </nav>
 
   <script type="module" src="app.js"></script>
 </body>
