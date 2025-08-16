@@ -1,9 +1,12 @@
-// Keep paths RELATIVE so it works under https://username.github.io/repo-name/
-const CACHE = 'budget-minimal-v2';
+// Cache name bump = easy refresh after you edit files
+const CACHE = 'budget-minimal-v4';
+
+// Precache app shell + the Lucide UMD so icons also work offline
 const ASSETS = [
   'index.html',
   'app.js',
-  'manifest.webmanifest'
+  'manifest.webmanifest',
+  'https://unpkg.com/lucide@latest/dist/umd/lucide.js'
 ];
 
 self.addEventListener('install', (e) => {
@@ -22,11 +25,9 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
 
-  // For navigations, fall back to cached index.html
+  // For navigations, fall back to cached index.html if offline
   if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req).catch(() => caches.match('index.html'))
-    );
+    e.respondWith(fetch(req).catch(() => caches.match('index.html')));
     return;
   }
 
@@ -34,14 +35,23 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin === location.origin) {
     e.respondWith(
-      caches.match(req).then(cached => {
-        if (cached) return cached;
-        return fetch(req).then(resp => {
-          const copy = resp.clone();
-          caches.open(CACHE).then(c => c.put(req, copy));
-          return resp;
-        });
-      })
+      caches.match(req).then(cached => cached || fetch(req).then(resp => {
+        const copy = resp.clone();
+        caches.open(CACHE).then(c => c.put(req, copy));
+        return resp;
+      }))
+    );
+    return;
+  }
+
+  // Network-first for the Lucide CDN, fallback to cache if offline
+  if (req.url.includes('unpkg.com/lucide')) {
+    e.respondWith(
+      fetch(req).then(resp => {
+        const copy = resp.clone();
+        caches.open(CACHE).then(c => c.put(req, copy));
+        return resp;
+      }).catch(() => caches.match(req))
     );
   }
 });
