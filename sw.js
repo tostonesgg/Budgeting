@@ -1,6 +1,4 @@
-const CACHE = 'budget-tabs-v1';
-
-// Precache our shell + Lucide
+const CACHE = 'budget-onboarding-v1';
 const ASSETS = [
   'index.html',
   'app.js',
@@ -12,26 +10,22 @@ self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
   self.skipWaiting();
 });
-
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
   );
   self.clients.claim();
 });
-
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
 
-  // Navigations: network first, fallback to cached index
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).catch(() => caches.match('index.html')));
     return;
   }
 
   const url = new URL(req.url);
-  // Same-origin: cache-first
   if (url.origin === location.origin) {
     e.respondWith(
       caches.match(req).then(cached => cached || fetch(req).then(resp => {
@@ -43,7 +37,6 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Lucide CDN: network first, fallback to cache
   if (req.url.includes('unpkg.com/lucide')) {
     e.respondWith(
       fetch(req).then(resp => {
