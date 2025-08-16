@@ -1,200 +1,340 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+// ========= Helpers =========
+const $ = (id) => document.getElementById(id);
+const money = (v) =>
+  (Number.isFinite(v) ? v : 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+const num = (v) => {
+  const s = String(v ?? '').replace(/[^0-9.\-]/g, '');
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : 0;
+};
 
-  <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0ea5e9" />
+// ========= Elements =========
+const sections = { setup: $('view-setup'), transactions: $('view-transactions'), pie: $('view-pie') };
+const tabButtons = [...document.querySelectorAll('.tab-btn')];
 
-  <title>Budget</title>
+const netIncomeEl = $('net-income');
+const saveNetBtn = $('save-net');
+const netYearlyEl = $('net-yearly');
 
-  <!-- Lucide icons (vanilla UMD) -->
-  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+// Non-Negotiables + new categories
+const billEls = {
+  // Non-Negotiables
+  rent: $('bill-rent'),
+  hoa: $('bill-hoa'),
+  electric: $('bill-electric'),
+  internet: $('bill-internet'),
+  gas: $('bill-gas'),
+  water: $('bill-water'),
+  groceries: $('bill-groceries'),
+  phone: $('bill-phone'),
+  security: $('bill-security'),
+  transportation: $('bill-transportation'),
+  health: $('bill-health'),
 
-  <!-- Dark, minimal styling (restored) -->
-  <style>
-    :root { --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; }
-    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:#e5e7eb}
-    .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0))}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-    h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-    input,select,button{background:var(--field);color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
-    input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
-    button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    .row>*{flex:1 1 180px}
-    .muted{color:var(--muted);font-size:12px}
-    .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
-    .subbig{font-size:18px;font-weight:700;margin:6px 0}
-    .bill-row{display:flex;gap:10px;align-items:center;margin:8px 0}
-    .bill-row label{min-width:190px;display:flex;align-items:center;gap:8px}
-    .bill-row input{flex:1}
-    canvas{max-width:100%;height:auto}
+  // Subscriptions
+  amazon: $('bill-amazon'),
+  netflix: $('bill-netflix'),
+  disney: $('bill-disney'),
+  crunchy: $('bill-crunchy'),
 
-    /* Tabs */
-    .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
-    .tabs .inner{max-width:860px;margin:0 auto;display:flex;gap:12px;justify-content:space-between}
-    .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:#e5e7eb}
-    .tab-btn.active{background:#111827;border-color:#374151}
-    .tab-btn span{font-size:11px;color:var(--muted)}
-    main section{display:none}
-    main section.active{display:block}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <header>
-      <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
-      <button id="install-help" title="Install"><i data-lucide="download"></i>Install</button>
-    </header>
+  // Date Nights
+  lunches: $('bill-lunches'),
+  disneyland: $('bill-disneyland'),
+  knotts: $('bill-knotts'),
+  universal: $('bill-universal'),
+  parking: $('bill-parking'),
+  shopping: $('bill-shopping'),
 
-    <main>
-      <!-- SETUP -->
-      <section id="view-setup" class="active">
-        <div class="card">
-          <h2 class="big">What is your monthly net income?</h2>
-          <div class="row">
-            <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home (post-tax)" />
-            <button id="save-net"><i data-lucide="save"></i>Save</button>
-          </div>
-          <p class="muted" id="net-yearly">Yearly: —</p>
-        </div>
+  // Investments
+  stocks: $('bill-stocks'),
+  crypto: $('bill-crypto'),
+  collectibles: $('bill-collectibles'),
+  savings: $('bill-savings'),
+  emergency: $('bill-emergency'),
+};
 
-        <div class="card">
-          <h2 class="subbig">Non-Negotiable Bills</h2>
-          <p class="muted">These are your necessities—if you lost your job today, you would stop putting money into every other category except this one.</p>
+// Metrics block (Setup tab)
+const nnTotalEl = $('nn-total');
+const playLeftEl = $('play-left');
 
-          <div class="bill-row">
-            <label for="bill-rent"><i data-lucide="house"></i> Rent/Mortgage</label>
-            <input id="bill-rent" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
+// Transactions
+const descEl = $('desc');
+const amountEl = $('amount');
+const typeEl = $('type');
+const categoryEl = $('category');
+const addBtn = $('add');
+const listEl = $('list');
+const searchEl = $('search');
+const clearBtn = $('clear');
 
-          <!-- NEW: HOA under Rent/Mortgage -->
-          <div class="bill-row">
-            <label for="bill-hoa"><i data-lucide="house"></i> HOA</label>
-            <input id="bill-hoa" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
+// Income Split (Pie tab)
+const pieCanvas = $('pie');
+const pieLegend = $('pie-legend');
+const ctx = pieCanvas.getContext('2d');
 
-          <div class="bill-row">
-            <label for="bill-electric"><i data-lucide="zap"></i> Electricity</label>
-            <input id="bill-electric" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
-          <div class="bill-row">
-            <label for="bill-internet"><i data-lucide="wifi"></i> Internet</label>
-            <input id="bill-internet" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
-          <div class="bill-row">
-            <label for="bill-gas"><i data-lucide="cooking-pot"></i> Gas</label>
-            <input id="bill-gas" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
-          <div class="bill-row">
-            <label for="bill-water"><i data-lucide="droplet"></i> Water</label>
-            <input id="bill-water" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
-          <div class="bill-row">
-            <label for="bill-groceries"><i data-lucide="carrot"></i> Groceries</label>
-            <input id="bill-groceries" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
-          <div class="bill-row">
-            <label for="bill-phone"><i data-lucide="phone"></i> Phone</label>
-            <input id="bill-phone" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
+// Install hint
+$('install-help')?.addEventListener('click', () =>
+  alert('Open in Safari → Share → Add to Home Screen to install.')
+);
 
-          <!-- NEW: Security, Transportation, Health Insurance -->
-          <div class="bill-row">
-            <label for="bill-security"><i data-lucide="cctv"></i> Security</label>
-            <input id="bill-security" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
-          <div class="bill-row">
-            <label for="bill-transportation"><i data-lucide="fuel"></i> Transportation</label>
-            <input id="bill-transportation" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
-          <div class="bill-row">
-            <label for="bill-health"><i data-lucide="stethoscope"></i> Health Insurance</label>
-            <input id="bill-health" type="number" step="0.01" placeholder="Amount / month" />
-          </div>
-        </div>
+// ========= Storage =========
+const KEY_NET = 'budget:net';
+const KEY_BILLS = 'budget:bills';
+const KEY_TX = 'budget:tx';
 
-        <!-- Dynamic metrics (used by app.js) -->
-        <div class="card" id="metrics-card">
-          <div class="row" style="align-items:center;gap:12px">
-            <div style="flex:1">
-              <strong>Non-Negotiables total:</strong> <span id="nn-total">—</span>
-            </div>
-            <div id="play-left" style="flex:1;padding:10px;border-radius:8px;text-align:center;font-weight:700">
-              You’ve got —/mo to play with
-            </div>
-          </div>
-        </div>
-      </section>
+// Load state
+let netIncome = load(KEY_NET, 0);
+let bills = load(KEY_BILLS, Object.fromEntries(Object.keys(billEls).map(k => [k, ''])));
+let items = load(KEY_TX, []);
 
-      <!-- TRANSACTIONS -->
-      <section id="view-transactions">
-        <div class="card">
-          <div class="row">
-            <input id="desc" placeholder="Description" />
-            <input id="amount" type="number" step="0.01" placeholder="Amount" />
-            <select id="type" aria-label="Type">
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </select>
-            <select id="category" aria-label="Category">
-              <option>Non-Negotiables</option>
-              <option>Streaming</option>
-              <option>Big Experiences</option>
-              <option>Date Nights</option>
-              <option>Pet</option>
-              <option>Investments</option>
-              <option>Savings</option>
-              <option>Work-Expenses</option>
-              <option>Fun</option>
-            </select>
-            <button id="add"><i data-lucide="receipt-text"></i>Add</button>
-          </div>
-          <p class="muted">Pick a type + category, then Add. Data stays on-device.</p>
-        </div>
+// ========= Init =========
+initTabs();
+initSetup();
+updateMetrics();      // show numbers on first load (Setup)
+renderTransactions();
+updateIncomeSplit();  // build pie + pills on first load
 
-        <div class="card">
-          <div class="row">
-            <input id="search" placeholder="Search description" />
-            <button id="clear"><i data-lucide="eraser"></i>Clear All</button>
-          </div>
-          <ul id="list"></ul>
-        </div>
-      </section>
+// Rehydrate Lucide icons
+if (window.lucide?.createIcons) window.lucide.createIcons();
 
-      <!-- INCOME SPLIT -->
-      <section id="view-pie">
-        <div class="card">
-          <div class="row" style="align-items:center">
-            <span style="display:inline-flex;align-items:center;gap:8px;font-weight:600;">
-              <i data-lucide="chart-pie"></i> Income by Category
-            </span>
-          </div>
-          <canvas id="pie" width="400" height="400"></canvas>
-          <div id="pie-legend" class="muted" style="margin-top:8px"></div>
-        </div>
-      </section>
-    </main>
-  </div>
+// Register SW
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
-  <!-- Bottom Tabs with your exact icons -->
-  <nav class="tabs" role="navigation" aria-label="Tabs">
-    <div class="inner">
-      <button class="tab-btn active" data-tab="setup"><i data-lucide="banknote"></i><span>Setup</span></button>
-      <button class="tab-btn" data-tab="transactions"><i data-lucide="receipt-text"></i><span>Transactions</span></button>
-      <button class="tab-btn" data-tab="pie"><i data-lucide="chart-pie"></i><span>Income Split</span></button>
+// ========= Tabs =========
+function initTabs() {
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      tabButtons.forEach((b) => b.classList.toggle('active', b === btn));
+      Object.entries(sections).forEach(([k, sec]) => sec.classList.toggle('active', k === tab));
+      if (window.lucide?.createIcons) window.lucide.createIcons();
+      if (tab === 'pie') updateIncomeSplit();
+    });
+  });
+}
+
+// ========= Setup =========
+function initSetup() {
+  // Net income
+  if (netIncome) netIncomeEl.value = netIncome;
+  updateYearly();
+
+  netIncomeEl.addEventListener('input', () => {
+    updateYearly();
+    netIncome = num(netIncomeEl.value);
+    save(KEY_NET, netIncome);
+    updateMetrics();
+    updateIncomeSplit();
+  });
+
+  saveNetBtn.addEventListener('click', () => {
+    netIncome = num(netIncomeEl.value);
+    if (netIncome <= 0) return alert('Please enter a valid monthly net income.');
+    save(KEY_NET, netIncome);
+    updateYearly();
+    updateMetrics();
+    updateIncomeSplit();
+  });
+
+  // Bills
+  for (const [k, el] of Object.entries(billEls)) {
+    if (!el) continue;
+    el.value = bills[k] ?? '';
+    el.addEventListener('input', () => {
+      bills[k] = el.value;
+      save(KEY_BILLS, bills);
+      updateMetrics();
+      updateIncomeSplit();
+    });
+  }
+}
+
+function updateYearly() {
+  const m = num(netIncomeEl.value) || num(netIncome);
+  const y = m > 0 ? m * 12 : 0;
+  netYearlyEl.textContent = `Yearly: ${y ? money(y) : '—'}`;
+}
+
+// Category totals
+function totalNonNegotiables() {
+  return sum('rent','hoa','electric','internet','gas','water','groceries','phone','security','transportation','health');
+}
+function totalSubscriptions() {
+  return sum('amazon','netflix','disney','crunchy');
+}
+function totalDateNights() {
+  return sum('lunches','disneyland','knotts','universal','parking','shopping');
+}
+function totalInvestments() {
+  return sum('stocks','crypto','collectibles','savings','emergency');
+}
+function sum(...keys) {
+  return keys.reduce((t,k)=> t + num(billEls[k]?.value), 0);
+}
+
+// Update Setup metrics (top)
+function updateMetrics() {
+  const net = num(netIncomeEl.value) || num(netIncome);
+  const nn = totalNonNegotiables();
+  const subs = totalSubscriptions();
+  const dates = totalDateNights();
+  const inv = totalInvestments();
+  const allocated = nn + subs + dates + inv;
+  const play = net - allocated;
+
+  if (nnTotalEl) nnTotalEl.textContent = money(nn);
+
+  if (playLeftEl) {
+    playLeftEl.textContent =
+      play >= 0
+        ? `You’ve got ${money(play)}/mo to play with`
+        : `Over by ${money(Math.abs(play))}/mo`;
+    playLeftEl.style.background = play >= 0 ? '#166534' : '#7f1d1d';
+    playLeftEl.style.color = '#fff';
+  }
+}
+
+// ========= Transactions =========
+addBtn.addEventListener('click', () => {
+  const desc = (descEl.value || '').trim();
+  const amt = num(amountEl.value);
+  const type = typeEl.value;
+  const cat = categoryEl.value;
+  if (!desc || amt <= 0) return alert('Enter a description and a valid amount.');
+
+  const now = new Date();
+  items.unshift({ id: Date.now(), date: now.toISOString().slice(0, 10), desc, amount: amt, type, category: cat });
+  save(KEY_TX, items);
+
+  descEl.value = ''; amountEl.value = '';
+  renderTransactions(); updateIncomeSplit();
+});
+
+clearBtn.addEventListener('click', () => {
+  if (!items.length) return;
+  if (confirm('Clear ALL entries? This cannot be undone.')) {
+    items = []; save(KEY_TX, items);
+    renderTransactions(); updateIncomeSplit();
+  }
+});
+
+function renderTransactions() {
+  const q = (searchEl.value || '').toLowerCase();
+  const filtered = items.filter((x) => !q || x.desc.toLowerCase().includes(q));
+  listEl.innerHTML = filtered.map((x) => `
+    <li>
+      <div>
+        <div><strong>${x.desc}</strong> <span class="muted">• ${x.category}</span></div>
+        <div class="muted">${x.date} • ${x.type}</div>
+      </div>
+      <div style="text-align:right"><strong>${money(x.amount)}</strong></div>
+      <div style="text-align:right"><button data-del="${x.id}" title="Delete"><i data-lucide="trash-2"></i></button></div>
+    </li>`).join('');
+
+  listEl.querySelectorAll('button[data-del]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-del');
+      items = items.filter((x) => String(x.id) !== String(id));
+      save(KEY_TX, items);
+      renderTransactions(); updateIncomeSplit();
+    });
+  });
+
+  if (window.lucide?.createIcons) window.lucide.createIcons();
+}
+
+// ========= Income Split: 4-slice category pie + pills + remainder =========
+function updateIncomeSplit() {
+  const income = num(netIncomeEl.value) || num(netIncome);
+
+  const nn   = totalNonNegotiables(); // red
+  const subs = totalSubscriptions();  // blue
+  const date = totalDateNights();     // pink
+  const inv  = totalInvestments();    // orange
+
+  const allocated = nn + subs + date + inv;
+  const remainder = income - allocated;
+
+  drawCategoryPie([
+    { label:'Non-Negotiables', value: nn,   color:'#ef4444' }, // red-500
+    { label:'Subscriptions',   value: subs, color:'#3b82f6' }, // blue-500
+    { label:'Date Nights',     value: date, color:'#ec4899' }, // pink-500
+    { label:'Investments',     value: inv,  color:'#f59e0b' }, // orange-500
+  ]);
+
+  const pillsHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+      ${[
+        {label:'Non-Negotiables', val:nn, color:'#ef4444', fg:'#fff'},
+        {label:'Subscriptions',   val:subs, color:'#3b82f6', fg:'#0b1220'},
+        {label:'Date Nights',     val:date, color:'#ec4899', fg:'#0b1220'},
+        {label:'Investments',     val:inv, color:'#f59e0b', fg:'#0b1220'},
+      ].map(({label,val,color,fg})=>`
+        <span style="display:inline-flex;align-items:center;gap:8px;background:${color};color:${fg};padding:6px 10px;border-radius:999px;font-weight:700">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${fg}"></span>
+          ${label}: ${money(val)}
+        </span>
+      `).join('')}
     </div>
-  </nav>
+    <div style="margin-top:12px;font-size:16px;font-weight:800">
+      Remainder: ${money(remainder)}
+    </div>
+    <div style="margin-top:6px;font-size:14px;">
+      ${
+        remainder >= 0
+          ? `<span style="color:#22c55e;font-weight:700">Congrats, you're within budget!</span>`
+          : `<span style="color:#ef4444;font-weight:700">Uh oh, looks like you need to lower your spending!</span>`
+      }
+    </div>
+  `;
+  pieLegend.innerHTML = pillsHTML;
+}
 
-  <script type="module" src="app.js"></script>
-  <script>
-    // render icons on first load
-    if (window.lucide?.createIcons) window.lucide.createIcons();
-  </script>
-</body>
-</html>
+function drawCategoryPie(slices) {
+  const total = slices.reduce((t,s)=>t + Math.max(0, s.value), 0);
+  ctx.clearRect(0, 0, pieCanvas.width, pieCanvas.height);
+
+  if (total <= 0) {
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.fillText('Add amounts to see the split.', 10, 20);
+    return;
+  }
+
+  const cx = pieCanvas.width / 2;
+  const cy = pieCanvas.height / 2;
+  const r  = Math.min(cx, cy) - 8;
+
+  let start = -Math.PI / 2;
+  for (const { value, color } of slices) {
+    const fraction = Math.max(0, value) / total;
+    const angle = fraction * Math.PI * 2;
+    const end = start + angle;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    start = end;
+  }
+}
+
+// Responsive
+window.addEventListener('resize', () => {
+  if (sections.pie.classList.contains('active')) updateIncomeSplit();
+});
+
+// ========= Storage helpers =========
+function load(k, fb) {
+  try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(fb)); }
+  catch { return fb; }
+}
+function save(k, v) {
+  localStorage.setItem(k, JSON.stringify(v));
+}
+
+// Re-run Lucide after DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.lucide?.createIcons) window.lucide.createIcons();
+});
