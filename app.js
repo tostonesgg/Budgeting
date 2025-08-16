@@ -1,461 +1,153 @@
-// =========================
-// Helpers
-// =========================
-const $ = (id) => document.getElementById(id);
-const toCurrency = (n) =>
-  (Number.isFinite(n) ? n : 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>Budget</title>
+  <!-- Lucide icons -->
+  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root { --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; }
+    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:#e5e7eb}
+    .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0))}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+    input,select,button{background:var(--field);color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
+    input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
+    button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .row>*{flex:1 1 180px}
+    .muted{color:var(--muted);font-size:12px}
+    .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
+    .subbig{font-size:18px;font-weight:700;margin:6px 0}
+    .bill-row{display:flex;gap:10px;align-items:center;margin:8px 0}
+    .bill-row label{min-width:150px;display:flex;align-items:center;gap:8px}
+    .bill-row input{flex:1}
+    /* Tabs */
+    .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
+    .tabs .inner{max-width:860px;margin:0 auto;display:flex;gap:12px;justify-content:space-between}
+    .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:#e5e7eb}
+    .tab-btn.active{background:#111827;border-color:#374151}
+    .tab-btn span{font-size:11px;color:var(--muted)}
+    main section{display:none}
+    main section.active{display:block}
+    canvas{max-width:100%;height:auto}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
+      <button id="install-help" title="Install"><i data-lucide="download"></i>Install</button>
+    </header>
 
-// Parse $, commas, spaces, etc.
-function num(v) {
-  const s = String(v ?? '').replace(/[^0-9.\-]/g, '');
-  const n = parseFloat(s);
-  return Number.isFinite(n) ? n : 0;
-}
+    <main>
+      <!-- SETUP -->
+      <section id="view-setup" class="active">
+        <div class="card">
+          <h2 class="big">What is your monthly net income?</h2>
+          <div class="row">
+            <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home (post-tax)" />
+            <button id="save-net"><i data-lucide="save"></i>Save</button>
+          </div>
+          <p class="muted" id="net-yearly">Yearly: —</p>
+        </div>
 
-// =========================
-/* Tabs & Elements */
-// =========================
-const sections = {
-  onboarding: $('view-onboarding'),
-  analyze: $('view-analyze'),
-  transactions: $('view-transactions'),
-  pie: $('view-pie'),
-};
-const tabButtons = [...document.querySelectorAll('.tab-btn')];
+        <div class="card">
+          <h2 class="subbig">Non-Negotiable Bills</h2>
+          <p class="muted">These are your necessities—if you lost your job today, you would stop putting money into every other category except this one.</p>
 
-// Setup (onboarding)
-const netIncomeEl = $('net-income');
-const saveNetBtn = $('save-net');
-const netYearlyNote = $('net-yearly-note');
-const playAmountEl = $('play-amount');
+          <div class="bill-row">
+            <label for="bill-rent"><i data-lucide="house"></i> Rent/Mortgage</label>
+            <input id="bill-rent" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+          <div class="bill-row">
+            <label for="bill-electric"><i data-lucide="zap"></i> Electricity</label>
+            <input id="bill-electric" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+          <div class="bill-row">
+            <label for="bill-internet"><i data-lucide="wifi"></i> Internet</label>
+            <input id="bill-internet" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+          <div class="bill-row">
+            <label for="bill-gas"><i data-lucide="cooking-pot"></i> Gas</label>
+            <input id="bill-gas" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+          <div class="bill-row">
+            <label for="bill-water"><i data-lucide="droplet"></i> Water</label>
+            <input id="bill-water" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+          <div class="bill-row">
+            <label for="bill-groceries"><i data-lucide="carrot"></i> Groceries</label>
+            <input id="bill-groceries" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+        </div>
+      </section>
 
-// Category monthly ballparks (DOM inputs)
-const totalsInputs = {
-  'Non-Negotiables': $('total-nonneg'),
-  'Streaming': $('total-streaming'),
-  'Big Experiences': $('total-big'),
-  'Date Nights': $('total-date-nights'),
-  'Pet': $('total-pet'),
-  'Investments': $('total-investments'),
-  'Savings': $('total-savings'),
-  'Work-Expenses': $('total-work'),
-  'Fun': $('total-fun'),
-};
+      <!-- TRANSACTIONS -->
+      <section id="view-transactions">
+        <div class="card">
+          <div class="row">
+            <input id="desc" placeholder="Description" />
+            <input id="amount" type="number" step="0.01" placeholder="Amount" />
+            <select id="type" aria-label="Type">
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+            <select id="category" aria-label="Category">
+              <option>Non-Negotiables</option>
+              <option>Streaming</option>
+              <option>Big Experiences</option>
+              <option>Date Nights</option>
+              <option>Pet</option>
+              <option>Investments</option>
+              <option>Savings</option>
+              <option>Work-Expenses</option>
+              <option>Fun</option>
+            </select>
+            <button id="add"><i data-lucide="receipt-text"></i>Add</button>
+          </div>
+          <p class="muted">Pick a type + category, then Add. Data stays on-device.</p>
+        </div>
 
-// Detail lists (for NN/Streaming/Big)
-const nnList = $('nn-list');
-const nnAdd = $('nn-add');
-const streamList = $('stream-list');
-const streamAdd = $('stream-add');
-const bigList = $('big-list');
-const bigAdd = $('big-add');
+        <div class="card">
+          <div class="row">
+            <input id="search" placeholder="Search description" />
+            <button id="clear"><i data-lucide="eraser"></i>Clear All</button>
+          </div>
+          <ul id="list"></ul>
+        </div>
+      </section>
 
-// Transactions
-const descEl = $('desc');
-const amountEl = $('amount');
-const typeEl = $('type');
-const categoryEl = $('category');
-const addBtn = $('add');
-const listEl = $('list');
-const searchEl = $('search');
-const clearBtn = $('clear');
+      <!-- INCOME SPLIT -->
+      <section id="view-pie">
+        <div class="card">
+          <div class="row" style="align-items:center">
+            <span style="display:inline-flex;align-items:center;gap:8px;font-weight:600;">
+              <i data-lucide="chart-pie"></i> Income by Category
+            </span>
+          </div>
+          <canvas id="pie" width="400" height="400"></canvas>
+          <div id="pie-legend" class="muted" style="margin-top:8px"></div>
+        </div>
+      </section>
+    </main>
+  </div>
 
-// Analyze + Pie
-const catTotalsEl = $('cat-totals');
-const pieCanvas = $('pie');
-const pieLegend = $('pie-legend');
-const ctx = pieCanvas.getContext('2d');
-
-const installHelp = $('install-help');
-
-// =========================
-/* Storage Keys & Categories */
-// =========================
-const KEY_TX    = 'budget:minimal:tx';
-const KEY_NET   = 'budget:minimal:net';
-const KEY_SETUP = 'budget:minimal:setup';
-const KEY_CATS  = 'budget:minimal:categories';
-
-const CATEGORIES = [
-  'Non-Negotiables',
-  'Streaming',
-  'Big Experiences',
-  'Date Nights',
-  'Pet',
-  'Investments',
-  'Savings',
-  'Work-Expenses',
-  'Fun'
-];
-
-// =========================
-/* Load State */
-// =========================
-let setup = loadJSON(KEY_SETUP, {
-  net: 0,
-  totals: {
-    'Non-Negotiables': '',
-    'Streaming': '',
-    'Big Experiences': '',
-    'Date Nights': '',
-    'Pet': '',
-    'Investments': '',
-    'Savings': '',
-    'Work-Expenses': '',
-    'Fun': ''
-  },
-  nonNegotiables: [
-    { name:'Mortgage', amount:'', freq:'monthly' },
-    { name:'HOA', amount:'', freq:'monthly' },
-    { name:'Gas', amount:'', freq:'monthly' },
-    { name:'Water', amount:'', freq:'monthly' },
-    { name:'Electric', amount:'', freq:'monthly' },
-    { name:'Waste', amount:'', freq:'monthly' },
-    { name:'Internet', amount:'', freq:'monthly' },
-    { name:'Fast Pass', amount:'', freq:'monthly' },
-    { name:'Health Insurance', amount:'', freq:'monthly' },
-    { name:'Phone', amount:'', freq:'monthly' },
-    { name:'Transportation', amount:'', freq:'monthly' },
-  ],
-  streaming: [
-    { name:'', amount:'', freq:'monthly' },
-    { name:'', amount:'', freq:'monthly' },
-    { name:'', amount:'', freq:'monthly' },
-  ],
-  big: [
-    { name:'', amount:'', freq:'yearly' }
-  ]
-});
-
-let items = loadJSON(KEY_TX, []);
-saveJSON(KEY_CATS, CATEGORIES); // single source of truth for categories
-
-// =========================
-/* Init */
-// =========================
-initTabs();
-initSetupUI();
-populateCategorySelect();
-renderAll();
-if (window.lucide?.createIcons) window.lucide.createIcons();
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
-
-// =========================
-/* Tabs */
-// =========================
-function initTabs(){
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      tabButtons.forEach(b => b.classList.toggle('active', b === btn));
-      Object.entries(sections).forEach(([k,sec]) => sec.classList.toggle('active', k === tab));
-      if (window.lucide?.createIcons) window.lucide.createIcons();
-      if (tab === 'pie') drawPie();
-    });
-  });
-}
-
-// =========================
-/* Setup UI */
-// =========================
-function initSetupUI(){
-  // Net income: show saved value (if any)
-  if (setup.net) netIncomeEl.value = setup.net;
-  updateNetYearly();
-  updatePlayAmount(); // compute from current inputs
-
-  // LIVE: every keystroke both saves & recomputes (no Save needed to see updates)
-  netIncomeEl.addEventListener('input', () => {
-    setup.net = num(netIncomeEl.value);          // persist live
-    saveJSON(KEY_NET, setup.net);
-    saveJSON(KEY_SETUP, setup);
-    updateNetYearly();
-    updatePlayAmount();
-  });
-
-  // "Save" button optional (kept for UX reassurance)
-  saveNetBtn.addEventListener('click', () => {
-    setup.net = num(netIncomeEl.value);
-    if (setup.net <= 0) return alert('Enter a valid monthly net income.');
-    saveJSON(KEY_NET, setup.net);
-    saveJSON(KEY_SETUP, setup);
-    updateNetYearly();
-    updatePlayAmount();
-  });
-
-  // Top-level monthly ballparks (all categories)
-  for (const cat of CATEGORIES) {
-    const input = totalsInputs[cat];
-    if (!input) continue;
-    input.value = setup.totals[cat] ?? '';
-    input.addEventListener('input', () => {
-      setup.totals[cat] = input.value; // persist AND recompute from DOM value
-      saveJSON(KEY_SETUP, setup);
-      updatePlayAmount();
-    });
-  }
-
-  // Detail lists
-  renderSetupList(nnList, setup.nonNegotiables, 'nonNegotiables');
-  nnAdd.addEventListener('click', () => {
-    setup.nonNegotiables.push({ name:'', amount:'', freq:'monthly' });
-    saveJSON(KEY_SETUP, setup);
-    renderSetupList(nnList, setup.nonNegotiables, 'nonNegotiables');
-    updatePlayAmount();
-  });
-
-  renderSetupList(streamList, setup.streaming, 'streaming');
-  streamAdd.addEventListener('click', () => {
-    setup.streaming.push({ name:'', amount:'', freq:'monthly' });
-    saveJSON(KEY_SETUP, setup);
-    renderSetupList(streamList, setup.streaming, 'streaming');
-    updatePlayAmount();
-  });
-
-  renderSetupList(bigList, setup.big, 'big');
-  bigAdd.addEventListener('click', () => {
-    setup.big.push({ name:'', amount:'', freq:'yearly' });
-    saveJSON(KEY_SETUP, setup);
-    renderSetupList(bigList, setup.big, 'big');
-    updatePlayAmount();
-  });
-}
-
-function updateNetYearly(){
-  const m = num(netIncomeEl.value);        // live input
-  const fallback = num(setup.net);         // saved
-  const monthly = m > 0 ? m : fallback;    // prefer live if > 0
-  const yearly = monthly > 0 ? monthly * 12 : 0;
-  netYearlyNote.textContent = `Yearly: ${yearly ? toCurrency(yearly) : '—'}`;
-}
-
-function renderSetupList(root, arr, key){
-  root.innerHTML = arr.map((row, i) => `
-    <div class="row" data-idx="${i}">
-      <input class="name" placeholder="Name" value="${row.name || ''}">
-      <input class="amt" type="number" step="0.01" placeholder="Amount" value="${row.amount || ''}">
-      <select class="freq">
-        ${['weekly','monthly','bi-monthly','quarterly','yearly'].map(opt => `<option value="${opt}" ${row.freq===opt?'selected':''}>${opt}</option>`).join('')}
-      </select>
-      <button class="mini-btn" data-remove title="Remove"><i data-lucide="x"></i></button>
+  <!-- Bottom Tabs -->
+  <nav class="tabs" role="navigation" aria-label="Tabs">
+    <div class="inner">
+      <button class="tab-btn active" data-tab="setup"><i data-lucide="banknote"></i><span>Setup</span></button>
+      <button class="tab-btn" data-tab="transactions"><i data-lucide="receipt-text"></i><span>Transactions</span></button>
+      <button class="tab-btn" data-tab="pie"><i data-lucide="chart-pie"></i><span>Income Split</span></button>
     </div>
-  `).join('');
+  </nav>
 
-  root.querySelectorAll('.row').forEach(div => {
-    const idx = Number(div.dataset.idx);
-    const nameEl = div.querySelector('.name');
-    const amtEl  = div.querySelector('.amt');
-    const freqEl = div.querySelector('.freq');
-    const rmBtn  = div.querySelector('[data-remove]');
-
-    nameEl.addEventListener('input', () => { arr[idx].name = nameEl.value; saveJSON(KEY_SETUP, setup); });
-    amtEl.addEventListener('input',  () => { arr[idx].amount = amtEl.value;  saveJSON(KEY_SETUP, setup); updatePlayAmount(); });
-    freqEl.addEventListener('change',() => { arr[idx].freq = freqEl.value;   saveJSON(KEY_SETUP, setup); updatePlayAmount(); });
-
-    rmBtn.addEventListener('click', () => {
-      arr.splice(idx, 1);
-      saveJSON(KEY_SETUP, setup);
-      renderSetupList(root, arr, key);
-      updatePlayAmount();
-    });
-  });
-
-  if (window.lucide?.createIcons) window.lucide.createIcons();
-}
-
-// Convert a detail row to a monthly equivalent
-function toMonthly(amount, freq){
-  const a = num(amount);
-  switch (freq) {
-    case 'weekly':      return a * (52/12);
-    case 'bi-monthly':  return a * 2;     // twice a month
-    case 'quarterly':   return a / 3;
-    case 'yearly':      return a / 12;
-    case 'monthly':
-    default:            return a;
-  }
-}
-
-// Category monthly: prefer live DOM top total; else saved total; else sum details
-function categoryMonthly(cat){
-  const domInput = totalsInputs[cat];
-  const domVal = domInput ? num(domInput.value) : 0;
-  if (domVal > 0) return domVal;
-
-  const savedTop = num(setup.totals[cat]);
-  if (savedTop > 0) return savedTop;
-
-  if (cat === 'Non-Negotiables') return setup.nonNegotiables.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
-  if (cat === 'Streaming')       return setup.streaming.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
-  if (cat === 'Big Experiences') return setup.big.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
-  return 0;
-}
-
-// Non-Negotiables monthly (helper)
-function nonnegMonthly(){ return categoryMonthly('Non-Negotiables'); }
-
-// Compute & show “play money” = NET − Non-Negotiables
-function updatePlayAmount(){
-  const liveNet = num(netIncomeEl.value);      // prefer what the user is typing
-  const storedNet = num(setup.net);            // fallback
-  const net = liveNet > 0 ? liveNet : storedNet;
-
-  const nn = nonnegMonthly();                  // from top-level dom/saved, else details
-  const play = Math.max(0, net - nn);
-
-  playAmountEl.textContent = `${toCurrency(play)}/mo`;
-}
-
-// =========================
-/* Transactions */
-// =========================
-installHelp.addEventListener('click', () => {
-  alert('Open this site in Safari → Share → Add to Home Screen to install.');
-});
-
-addBtn.addEventListener('click', () => {
-  const desc = (descEl.value || '').trim();
-  const amount = num(amountEl.value);
-  const type = typeEl.value;
-  const category = categoryEl.value;
-
-  if (!desc || amount <= 0) return alert('Enter a description and a valid amount.');
-
-  const now = new Date();
-  items.unshift({ id: Date.now(), date: now.toISOString().slice(0,10), desc, amount, type, category });
-  saveJSON(KEY_TX, items);
-
-  descEl.value = '';
-  amountEl.value = '';
-  renderAll();
-});
-
-clearBtn.addEventListener('click', () => {
-  if (!items.length) return;
-  if (confirm('Clear ALL entries? This cannot be undone.')) {
-    items = [];
-    saveJSON(KEY_TX, items);
-    renderAll();
-  }
-});
-
-function populateCategorySelect(){
-  categoryEl.innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
-}
-
-// =========================
-/* Analyze / Pie / List */
-// =========================
-function renderAll(){
-  renderTransactions();
-  renderCategoryTotals();
-  drawPie();
-  if (window.lucide?.createIcons) window.lucide.createIcons();
-}
-
-function renderTransactions(){
-  const q = (searchEl.value || '').toLowerCase();
-  const filtered = items.filter(x => !q || x.desc.toLowerCase().includes(q));
-  listEl.innerHTML = filtered.map(x => `
-    <li>
-      <div>
-        <div><strong>${x.desc}</strong> <span class="muted">• ${x.category || '—'}</span></div>
-        <div class="muted">${x.date} • ${x.type}</div>
-      </div>
-      <div style="text-align:right"><strong>${toCurrency(x.amount)}</strong></div>
-      <div style="text-align:right">
-        <button data-del="${x.id}" title="Delete"><i data-lucide="trash-2"></i></button>
-      </div>
-    </li>
-  `).join('');
-
-  listEl.querySelectorAll('button[data-del]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-del');
-      items = items.filter(x => String(x.id) !== String(id));
-      saveJSON(KEY_TX, items);
-      renderAll();
-    });
-  });
-}
-
-function renderCategoryTotals(){
-  // Expense totals by category
-  const byCat = Object.fromEntries(CATEGORIES.map(c => [c, 0]));
-  for (const it of items) {
-    if (it.type !== 'expense') continue;
-    const c = CATEGORIES.includes(it.category) ? it.category : 'Non-Negotiables';
-    byCat[c] += it.amount;
-  }
-
-  const entries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
-  const max = Math.max(1, ...entries.map(([,v])=>v));
-  catTotalsEl.innerHTML = entries.map(([cat, val]) => `
-    <div style="margin:10px 0">
-      <div class="flex-row" style="justify-content:space-between">
-        <strong>${cat}</strong>
-        <span class="muted">${toCurrency(val)}</span>
-      </div>
-      <div class="bar"><i style="width:${Math.round((val/max)*100)}%"></i></div>
-    </div>
-  `).join('');
-}
-
-function drawPie(){
-  // Income by category
-  const byCat = Object.fromEntries(CATEGORIES.map(c => [c, 0]));
-  for (const it of items) {
-    if (it.type !== 'income') continue;
-    const c = CATEGORIES.includes(it.category) ? it.category : 'Non-Negotiables';
-    byCat[c] += it.amount;
-  }
-  const labels = Object.keys(byCat);
-  const values = labels.map(k => byCat[k]);
-  const total = values.reduce((t,v)=>t+v,0);
-
-  const palette = ['#60a5fa','#34d399','#f472b6','#f59e0b','#22d3ee','#a78bfa','#fb7185','#84cc16','#f97316'];
-  const colors = labels.map((_,i)=>palette[i % palette.length]);
-
-  ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height);
-  if (!total) {
-    ctx.fillStyle = '#9ca3af';
-    ctx.font = '14px system-ui, sans-serif';
-    ctx.fillText('No income recorded yet.', 10, 20);
-    pieLegend.innerHTML = '<span class="muted">Add income transactions to see the split.</span>';
-    return;
-  }
-
-  const cx = pieCanvas.width/2, cy = pieCanvas.height/2, r = Math.min(cx, cy) - 8;
-  let start = -Math.PI/2;
-  values.forEach((val, i) => {
-    const angle = (val/total) * Math.PI * 2;
-    const end = start + angle;
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
-    ctx.fillStyle = colors[i]; ctx.fill(); start = end;
-  });
-
-  pieLegend.innerHTML = labels.map((lab, i) => {
-    const pct = total ? Math.round((values[i]/total)*100) : 0;
-    return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${colors[i]}"></span>
-      <span>${lab}</span>
-      <span style="margin-left:auto" class="muted">${pct}% • ${toCurrency(values[i])}</span>
-    </div>`;
-  }).join('');
-}
-
-window.addEventListener('resize', () => {
-  if (sections.pie.classList.contains('active')) drawPie();
-});
-
-// =========================
-/* Storage Helpers */
-// =========================
-function loadJSON(key, fallback){
-  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
-  catch { return fallback; }
-}
-function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+  <script type="module" src="app.js"></script>
+</body>
+</html>
