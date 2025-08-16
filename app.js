@@ -1,8 +1,20 @@
+// =========================
 // Helpers
+// =========================
 const $ = (id) => document.getElementById(id);
-const toCurrency = (n) => (Number.isFinite(n) ? n : 0).toLocaleString(undefined,{style:'currency',currency:'USD'});
+const toCurrency = (n) =>
+  (Number.isFinite(n) ? n : 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 
-// Tabs
+// Robust number parser: handles $, commas, spaces, etc.
+function num(v) {
+  const s = String(v ?? '').replace(/[^0-9.\-]/g, '');
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+// =========================
+/* Tabs & Elements */
+// =========================
 const sections = {
   onboarding: $('view-onboarding'),
   analyze: $('view-analyze'),
@@ -11,13 +23,13 @@ const sections = {
 };
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 
-// Elements: Setup
+// Setup (onboarding)
 const netIncomeEl = $('net-income');
 const saveNetBtn = $('save-net');
 const netYearlyNote = $('net-yearly-note');
 const playAmountEl = $('play-amount');
 
-// Totals inputs
+// Top-level category totals (monthly ballparks)
 const totalsInputs = {
   'Non-Negotiables': $('total-nonneg'),
   'Streaming': $('total-streaming'),
@@ -38,7 +50,7 @@ const streamAdd = $('stream-add');
 const bigList = $('big-list');
 const bigAdd = $('big-add');
 
-// Elements: Transactions
+// Transactions
 const descEl = $('desc');
 const amountEl = $('amount');
 const typeEl = $('type');
@@ -56,13 +68,15 @@ const ctx = pieCanvas.getContext('2d');
 
 const installHelp = $('install-help');
 
-// Storage keys
+// =========================
+/* Storage Keys & Categories */
+// =========================
 const KEY_TX    = 'budget:minimal:tx';
 const KEY_NET   = 'budget:minimal:net';
 const KEY_SETUP = 'budget:minimal:setup';
 const KEY_CATS  = 'budget:minimal:categories';
 
-// Canonical categories (global)
+// Canonical categories (global, used everywhere)
 const CATEGORIES = [
   'Non-Negotiables',
   'Streaming',
@@ -75,10 +89,12 @@ const CATEGORIES = [
   'Fun'
 ];
 
-// Setup default payload
+// =========================
+/* Load State */
+// =========================
 let setup = loadJSON(KEY_SETUP, {
   net: 0,
-  totals: { // monthly ballparks
+  totals: {
     'Non-Negotiables': '',
     'Streaming': '',
     'Big Experiences': '',
@@ -89,7 +105,6 @@ let setup = loadJSON(KEY_SETUP, {
     'Work-Expenses': '',
     'Fun': ''
   },
-  // details rows for selected categories
   nonNegotiables: [
     { name:'Mortgage', amount:'', freq:'monthly' },
     { name:'HOA', amount:'', freq:'monthly' },
@@ -113,11 +128,12 @@ let setup = loadJSON(KEY_SETUP, {
   ]
 });
 
-// Transactions + categories
 let items = loadJSON(KEY_TX, []);
-saveJSON(KEY_CATS, CATEGORIES); // keep a single source of truth
+saveJSON(KEY_CATS, CATEGORIES); // keep categories centralized
 
-// Init UI
+// =========================
+/* Init */
+// =========================
 initTabs();
 initSetupUI();
 populateCategorySelect();
@@ -129,7 +145,9 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
 
-// ---------- Tabs ----------
+// =========================
+/* Tabs */
+// =========================
 function initTabs(){
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -142,15 +160,24 @@ function initTabs(){
   });
 }
 
-// ---------- Setup UI ----------
+// =========================
+/* Setup UI */
+// =========================
 function initSetupUI(){
   // Net income
   if (setup.net) netIncomeEl.value = setup.net;
   updateNetYearly();
-  netIncomeEl.addEventListener('input', updateNetYearly);
+  updatePlayAmount();
+
+  // Live recompute as user types
+  netIncomeEl.addEventListener('input', () => {
+    updateNetYearly();
+    updatePlayAmount();
+  });
+
   saveNetBtn.addEventListener('click', () => {
-    const val = parseFloat(netIncomeEl.value);
-    if (!Number.isFinite(val) || val <= 0) return alert('Enter a valid monthly net income.');
+    const val = num(netIncomeEl.value);
+    if (val <= 0) return alert('Enter a valid monthly net income.');
     setup.net = val;
     saveJSON(KEY_NET, val);
     saveJSON(KEY_SETUP, setup);
@@ -158,7 +185,7 @@ function initSetupUI(){
     updatePlayAmount();
   });
 
-  // Top-level totals
+  // Top-level totals inputs (ballparks)
   for (const cat of CATEGORIES) {
     const input = totalsInputs[cat];
     if (!input) continue;
@@ -170,7 +197,7 @@ function initSetupUI(){
     });
   }
 
-  // Detail lists render + add handlers
+  // Detail lists
   renderSetupList(nnList, setup.nonNegotiables, 'nonNegotiables');
   nnAdd.addEventListener('click', () => {
     setup.nonNegotiables.push({ name:'', amount:'', freq:'monthly' });
@@ -194,14 +221,11 @@ function initSetupUI(){
     renderSetupList(bigList, setup.big, 'big');
     updatePlayAmount();
   });
-
-  // Initial “play” compute
-  updatePlayAmount();
 }
 
 function updateNetYearly(){
-  const m = parseFloat(netIncomeEl.value);
-  const y = Number.isFinite(m) && m > 0 ? m * 12 : 0;
+  const m = num(netIncomeEl.value);
+  const y = m > 0 ? m * 12 : 0;
   netYearlyNote.textContent = `Yearly: ${y ? toCurrency(y) : '—'}`;
 }
 
@@ -239,13 +263,12 @@ function renderSetupList(root, arr, key){
   if (window.lucide?.createIcons) window.lucide.createIcons();
 }
 
-// Convert a detail-row to its monthly equivalent based on frequency
+// Convert detail-row amount to monthly using frequency
 function toMonthly(amount, freq){
-  const a = parseFloat(amount);
-  if (!Number.isFinite(a) || a <= 0) return 0;
+  const a = num(amount);
   switch (freq) {
     case 'weekly':      return a * (52/12);
-    case 'bi-monthly':  return a * 2;      // twice a month
+    case 'bi-monthly':  return a * 2;
     case 'quarterly':   return a / 3;
     case 'yearly':      return a / 12;
     case 'monthly':
@@ -253,10 +276,10 @@ function toMonthly(amount, freq){
   }
 }
 
-// Category monthly number: prefer top-level total if present; else sum details
+// Category monthly: prefer top-level total; else sum details (for supported cats)
 function categoryMonthly(cat){
-  const top = parseFloat(setup.totals[cat]);
-  if (Number.isFinite(top) && top > 0) return top;
+  const top = num(setup.totals[cat]);
+  if (top > 0) return top;
 
   if (cat === 'Non-Negotiables') {
     return setup.nonNegotiables.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
@@ -267,30 +290,31 @@ function categoryMonthly(cat){
   if (cat === 'Big Experiences') {
     return setup.big.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
   }
-  // categories without details rely on top total only
-  return 0;
+  return 0; // other categories rely on top-level total only
 }
 
-// Compute & show “play” amount
+// Compute & show “play money”
 function updatePlayAmount(){
-  const net = parseFloat(setup.net || netIncomeEl.value);
-  const validNet = Number.isFinite(net) && net > 0 ? net : 0;
+  const net = setup.net ? setup.net : num(netIncomeEl.value);
   const totalFixed = CATEGORIES.reduce((sum, cat) => sum + categoryMonthly(cat), 0);
-  const play = Math.max(0, validNet - totalFixed);
+  const play = Math.max(0, net - totalFixed);
   playAmountEl.textContent = `${toCurrency(play)}/mo`;
 }
 
-// ---------- Transactions ----------
+// =========================
+/* Transactions */
+// =========================
 installHelp.addEventListener('click', () => {
   alert('Open this site in Safari → Share → Add to Home Screen to install.');
 });
 
 addBtn.addEventListener('click', () => {
-  const desc = descEl.value.trim();
-  const amount = parseFloat(amountEl.value);
+  const desc = (descEl.value || '').trim();
+  const amount = num(amountEl.value);
   const type = typeEl.value;
   const category = categoryEl.value;
-  if (!desc || !Number.isFinite(amount)) return alert('Enter a description and a valid amount.');
+
+  if (!desc || amount <= 0) return alert('Enter a description and a valid amount.');
 
   const now = new Date();
   items.unshift({ id: Date.now(), date: now.toISOString().slice(0,10), desc, amount, type, category });
@@ -314,7 +338,9 @@ function populateCategorySelect(){
   categoryEl.innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
-// ---------- Analyze / Pie / List ----------
+// =========================
+/* Analyze / Pie / List */
+// =========================
 function renderAll(){
   renderTransactions();
   renderCategoryTotals();
@@ -349,7 +375,7 @@ function renderTransactions(){
 }
 
 function renderCategoryTotals(){
-  // Sum EXPENSES by category, keep zeros for all categories
+  // Sum EXPENSES by category (zeros for all categories)
   const byCat = Object.fromEntries(CATEGORIES.map(c => [c, 0]));
   for (const it of items) {
     if (it.type !== 'expense') continue;
@@ -417,7 +443,9 @@ window.addEventListener('resize', () => {
   if (sections.pie.classList.contains('active')) drawPie();
 });
 
-// Storage helpers
+// =========================
+/* Storage Helpers */
+// =========================
 function loadJSON(key, fallback){
   try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
   catch { return fallback; }
