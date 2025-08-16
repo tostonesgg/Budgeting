@@ -191,7 +191,7 @@ function initSetupUI(){
     if (!input) continue;
     input.value = setup.totals[cat] ?? '';
     input.addEventListener('input', () => {
-      setup.totals[cat] = input.value; // persist, but compute from DOM live
+      setup.totals[cat] = input.value; // persist; compute from DOM live
       saveJSON(KEY_SETUP, setup);
       updatePlayAmount();
     });
@@ -290,24 +290,31 @@ function categoryMonthly(cat){
   // 3) Sum detail rows (supported categories)
   if (cat === 'Non-Negotiables') {
     return setup.nonNegotiables.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
-    }
+  }
   if (cat === 'Streaming') {
     return setup.streaming.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
   }
   if (cat === 'Big Experiences') {
     return setup.big.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
   }
-  return 0; // others rely on top total only
+  return 0; // other categories rely on top total only
 }
 
-// Compute & show “play money”
+// NEW: Non-Negotiables monthly helper
+function nonnegMonthly(){
+  return categoryMonthly('Non-Negotiables');
+}
+
+// Compute & show “play money” (net minus Non-Negotiables only)
 function updatePlayAmount(){
   // Prefer live net-income input; fallback to saved
   const liveNet = num(netIncomeEl.value);
   const net = liveNet > 0 ? liveNet : num(setup.net);
 
-  const totalFixed = CATEGORIES.reduce((sum, cat) => sum + categoryMonthly(cat), 0);
-  const play = Math.max(0, net - totalFixed);
+  // Only subtract Non-Negotiables; if empty, it's 0
+  const nn = nonnegMonthly();
+
+  const play = Math.max(0, net - nn);
   playAmountEl.textContent = `${toCurrency(play)}/mo`;
 }
 
