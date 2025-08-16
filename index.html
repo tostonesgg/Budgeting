@@ -23,20 +23,12 @@
     .row{display:flex;gap:8px;flex-wrap:wrap}
     .row>*{flex:1 1 180px}
     .muted{color:var(--muted);font-size:12px}
-    ul{list-style:none;padding:0;margin:0}
-    li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--line)}
-    .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
-    .pill.red{background:#2b0c10}
-    .pill.blue{background:#0b1830}
-    .pill.yellow{background:#2b230b}
-    .flex-row{display:flex;gap:8px;align-items:center}
-    .big{font-size:22px;font-weight:700;margin:0 0 6px 0}
-    .big-amount{font-size:22px;font-weight:800}
-    .bar{height:8px;background:#111827;border:1px solid #374151;border-radius:999px;overflow:hidden}
-    .bar>i{display:block;height:100%;background:#0ea5e9;width:0%}
-    .mini-btn{padding:6px 8px;border-radius:8px}
-
-    /* Bottom Tabs */
+    .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
+    .subbig{font-size:18px;font-weight:700;margin:6px 0}
+    .bill-row{display:flex;gap:10px;align-items:center;margin:8px 0}
+    .bill-row label{min-width:150px;display:flex;align-items:center;gap:8px}
+    .bill-row input{flex:1}
+    /* Tabs */
     .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
     .tabs .inner{max-width:860px;margin:0 auto;display:flex;gap:12px;justify-content:space-between}
     .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:#e5e7eb}
@@ -45,84 +37,55 @@
     main section{display:none}
     main section.active{display:block}
     canvas{max-width:100%;height:auto}
-    .section-title{display:flex;align-items:center;gap:8px;margin:0 0 6px 0}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1><i data-lucide="piggy-bank"></i> Budget</h1>
+      <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
       <button id="install-help" title="Install"><i data-lucide="download"></i>Install</button>
     </header>
 
     <main>
       <!-- SETUP -->
-      <section id="view-onboarding" class="active">
+      <section id="view-setup" class="active">
         <div class="card">
           <h2 class="big">What is your monthly net income?</h2>
           <div class="row">
             <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home (post-tax)" />
-            <button id="save-net" class="mini-btn"><i data-lucide="save"></i>Save</button>
+            <button id="save-net"><i data-lucide="save"></i>Save</button>
           </div>
-          <p class="muted" id="net-yearly-note">Yearly: —</p>
+          <p class="muted" id="net-yearly">Yearly: —</p>
         </div>
 
         <div class="card">
-          <h2 class="big">Fill out your mandatory expenses</h2>
-          <p class="muted" style="margin-top:-4px">You can enter a total now and break it down later.</p>
+          <h2 class="subbig">Non-Negotiable Bills</h2>
+          <p class="muted">These are your necessities—if you lost your job today, you would stop putting money into every other category except this one.</p>
 
-          <!-- Non-Negotiables total -->
-          <div class="row">
-            <input id="total-nonneg" type="number" step="0.01" placeholder="Non-Negotiables total (monthly)" />
+          <div class="bill-row">
+            <label for="bill-rent"><i data-lucide="house"></i> Rent/Mortgage</label>
+            <input id="bill-rent" type="number" step="0.01" placeholder="Amount / month" />
           </div>
-
-          <!-- Non-Negotiables details -->
-          <h3 class="section-title"><span class="pill red"><i data-lucide="shield"></i> Non-Negotiables (details)</span></h3>
-          <div id="nn-list" style="margin-top:8px"></div>
-          <div class="row"><button id="nn-add" class="mini-btn"><i data-lucide="plus"></i>Add Row</button></div>
-        </div>
-
-        <!-- The “you’ve got … to play with” line -->
-        <div class="card">
-          <h2 class="big">You’ve got <span id="play-amount" class="big-amount">$0.00/mo</span> to play with, how do you want to allocate it?</h2>
-        </div>
-
-        <!-- Other categories with top-level totals -->
-        <div class="card">
-          <h3 class="section-title"><span class="pill blue"><i data-lucide="tv"></i> Streaming</span></h3>
-          <div class="row"><input id="total-streaming" type="number" step="0.01" placeholder="Streaming total (monthly)" /></div>
-          <div id="stream-list" style="margin-top:8px"></div>
-          <div class="row"><button id="stream-add" class="mini-btn"><i data-lucide="plus"></i>Add Streaming Row</button></div>
-        </div>
-
-        <div class="card">
-          <h3 class="section-title"><span class="pill yellow"><i data-lucide="sun"></i> Big Experiences</span></h3>
-          <div class="row"><input id="total-big" type="number" step="0.01" placeholder="Big Experiences total (monthly)" /></div>
-          <div id="big-list" style="margin-top:8px"></div>
-          <div class="row"><button id="big-add" class="mini-btn"><i data-lucide="plus"></i>Add Big Row</button></div>
-        </div>
-
-        <!-- Simple totals only for the remaining categories -->
-        <div class="card">
-          <div class="row">
-            <input id="total-date-nights" type="number" step="0.01" placeholder="Date Nights total (monthly)" />
-            <input id="total-pet"          type="number" step="0.01" placeholder="Pet total (monthly)" />
-            <input id="total-investments"  type="number" step="0.01" placeholder="Investments total (monthly)" />
-            <input id="total-savings"      type="number" step="0.01" placeholder="Savings total (monthly)" />
-            <input id="total-work"         type="number" step="0.01" placeholder="Work-Expenses total (monthly)" />
-            <input id="total-fun"          type="number" step="0.01" placeholder="Fun total (monthly)" />
+          <div class="bill-row">
+            <label for="bill-electric"><i data-lucide="zap"></i> Electricity</label>
+            <input id="bill-electric" type="number" step="0.01" placeholder="Amount / month" />
           </div>
-        </div>
-      </section>
-
-      <!-- ANALYZE -->
-      <section id="view-analyze">
-        <div class="card">
-          <div class="row" style="align-items:center">
-            <span class="pill"><i data-lucide="chart-bar-stacked"></i> Category Totals (Expenses)</span>
+          <div class="bill-row">
+            <label for="bill-internet"><i data-lucide="wifi"></i> Internet</label>
+            <input id="bill-internet" type="number" step="0.01" placeholder="Amount / month" />
           </div>
-          <div id="cat-totals"></div>
-          <p class="muted" style="margin-top:8px">Shows expense totals per category.</p>
+          <div class="bill-row">
+            <label for="bill-gas"><i data-lucide="cooking-pot"></i> Gas</label>
+            <input id="bill-gas" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+          <div class="bill-row">
+            <label for="bill-water"><i data-lucide="droplet"></i> Water</label>
+            <input id="bill-water" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+          <div class="bill-row">
+            <label for="bill-groceries"><i data-lucide="carrot"></i> Groceries</label>
+            <input id="bill-groceries" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
         </div>
       </section>
 
@@ -136,7 +99,17 @@
               <option value="expense">Expense</option>
               <option value="income">Income</option>
             </select>
-            <select id="category" aria-label="Category"></select>
+            <select id="category" aria-label="Category">
+              <option>Non-Negotiables</option>
+              <option>Streaming</option>
+              <option>Big Experiences</option>
+              <option>Date Nights</option>
+              <option>Pet</option>
+              <option>Investments</option>
+              <option>Savings</option>
+              <option>Work-Expenses</option>
+              <option>Fun</option>
+            </select>
             <button id="add"><i data-lucide="receipt-text"></i>Add</button>
           </div>
           <p class="muted">Pick a type + category, then Add. Data stays on-device.</p>
@@ -155,7 +128,9 @@
       <section id="view-pie">
         <div class="card">
           <div class="row" style="align-items:center">
-            <span class="pill"><i data-lucide="chart-pie"></i> Income by Category</span>
+            <span style="display:inline-flex;align-items:center;gap:8px;font-weight:600;">
+              <i data-lucide="chart-pie"></i> Income by Category
+            </span>
           </div>
           <canvas id="pie" width="400" height="400"></canvas>
           <div id="pie-legend" class="muted" style="margin-top:8px"></div>
@@ -164,11 +139,10 @@
     </main>
   </div>
 
-  <!-- Bottom Tab Bar -->
+  <!-- Bottom Tabs -->
   <nav class="tabs" role="navigation" aria-label="Tabs">
     <div class="inner">
-      <button class="tab-btn active" data-tab="onboarding"><i data-lucide="banknote"></i><span>Setup</span></button>
-      <button class="tab-btn" data-tab="analyze"><i data-lucide="chart-bar-stacked"></i><span>Analyze</span></button>
+      <button class="tab-btn active" data-tab="setup"><i data-lucide="banknote"></i><span>Setup</span></button>
       <button class="tab-btn" data-tab="transactions"><i data-lucide="receipt-text"></i><span>Transactions</span></button>
       <button class="tab-btn" data-tab="pie"><i data-lucide="chart-pie"></i><span>Income Split</span></button>
     </div>
