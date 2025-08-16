@@ -27,6 +27,10 @@ const billEls = {
   phone: $('bill-phone'),
 };
 
+// Metrics block (added in index.html)
+const nnTotalEl = $('nn-total');
+const playLeftEl = $('play-left');
+
 // Transactions
 const descEl = $('desc');
 const amountEl = $('amount');
@@ -61,13 +65,14 @@ let items = load(KEY_TX, []);
 // ========= Init =========
 initTabs();
 initSetup();
+updateMetrics();          // show numbers on first load
 renderTransactions();
 drawPie();
 
-// hydrate Lucide icons
+// Rehydrate Lucide icons once on load
 if (window.lucide?.createIcons) window.lucide.createIcons();
 
-// Register SW (leave your sw.js as-is)
+// Register SW (keep your sw.js as-is)
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
 // ========= Tabs =========
@@ -87,20 +92,22 @@ function initTabs() {
 function initSetup() {
   // Net income
   if (netIncome) netIncomeEl.value = netIncome;
-  updateYearlyAndMetrics();
+  updateYearly();
 
+  // Live updates as you type (also persist)
   netIncomeEl.addEventListener('input', () => {
-    updateYearlyAndMetrics();
-    // persist on each keystroke so it sticks on reload
+    updateYearly();
     netIncome = num(netIncomeEl.value);
     save(KEY_NET, netIncome);
+    updateMetrics();
   });
 
   saveNetBtn.addEventListener('click', () => {
     netIncome = num(netIncomeEl.value);
     if (netIncome <= 0) return alert('Please enter a valid monthly net income.');
     save(KEY_NET, netIncome);
-    updateYearlyAndMetrics();
+    updateYearly();
+    updateMetrics();
   });
 
   // Bills: load + wire events
@@ -110,59 +117,15 @@ function initSetup() {
     el.addEventListener('input', () => {
       bills[k] = el.value;
       save(KEY_BILLS, bills);
-      updateYearlyAndMetrics();
+      updateMetrics();
     });
   }
-
-  // Ensure dynamic metrics container exists under the bills card
-  ensureMetricsBlock();
-  updateMetricsOnly();
 }
 
-function updateYearlyAndMetrics() {
+function updateYearly() {
   const m = num(netIncomeEl.value) || num(netIncome);
   const y = m > 0 ? m * 12 : 0;
   netYearlyEl.textContent = `Yearly: ${y ? money(y) : '—'}`;
-  updateMetricsOnly();
-}
-
-// Create/Update the Non-Negotiables total + Play money banners
-function ensureMetricsBlock() {
-  if ($('nn-metrics')) return;
-  // Insert right after the Non-Negotiables card (last .card in Setup)
-  const setupSection = sections.setup;
-  const cards = setupSection.querySelectorAll('.card');
-  const billsCard = cards[cards.length - 1]; // assumes bills card is last in Setup
-  const div = document.createElement('div');
-  div.id = 'nn-metrics';
-  div.className = 'card';
-  div.innerHTML = `
-    <div class="row" style="align-items:center;gap:12px">
-      <div id="nn-total-line" style="flex:1;font-weight:600">Non-Negotiables total: —</div>
-      <div id="play-banner" style="flex:1;padding:10px;border-radius:8px;text-align:center;font-weight:700">You’ve got —/mo to play with</div>
-    </div>
-  `;
-  billsCard.after(div);
-  if (window.lucide?.createIcons) window.lucide.createIcons();
-}
-
-function updateMetricsOnly() {
-  const nn = totalNonNegotiables();
-  const net = num(netIncomeEl.value) || num(netIncome);
-  const play = net - nn;
-
-  const nnLine = $('nn-total-line');
-  const playBanner = $('play-banner');
-  if (nnLine) nnLine.textContent = `Non-Negotiables total: ${money(nn)}`;
-
-  if (playBanner) {
-    playBanner.textContent =
-      play >= 0
-        ? `You’ve got ${money(play)}/mo to play with`
-        : `Over by ${money(Math.abs(play))}/mo`;
-    playBanner.style.background = play >= 0 ? '#166534' : '#7f1d1d';
-    playBanner.style.color = '#fff';
-  }
 }
 
 // Sum the non-negotiable inputs (live)
@@ -176,6 +139,24 @@ function totalNonNegotiables() {
     num(billEls.groceries?.value) +
     num(billEls.phone?.value)
   );
+}
+
+// Update the two numbers + color of the banner
+function updateMetrics() {
+  const net = num(netIncomeEl.value) || num(netIncome);
+  const nn = totalNonNegotiables();
+  const play = net - nn;
+
+  if (nnTotalEl) nnTotalEl.textContent = money(nn);
+
+  if (playLeftEl) {
+    playLeftEl.textContent =
+      play >= 0
+        ? `You’ve got ${money(play)}/mo to play with`
+        : `Over by ${money(Math.abs(play))}/mo`;
+    playLeftEl.style.background = play >= 0 ? '#166534' : '#7f1d1d'; // green / red
+    playLeftEl.style.color = '#fff';
+  }
 }
 
 // ========= Transactions =========
