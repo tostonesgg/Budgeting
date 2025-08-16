@@ -16,8 +16,9 @@ const netIncomeEl = $('net-income');
 const saveNetBtn = $('save-net');
 const netYearlyEl = $('net-yearly');
 
-// Bill inputs (including all new ones)
+// Non-Negotiables + new categories
 const billEls = {
+  // Non-Negotiables
   rent: $('bill-rent'),
   hoa: $('bill-hoa'),
   electric: $('bill-electric'),
@@ -29,6 +30,27 @@ const billEls = {
   security: $('bill-security'),
   transportation: $('bill-transportation'),
   health: $('bill-health'),
+
+  // Subscriptions
+  amazon: $('bill-amazon'),
+  netflix: $('bill-netflix'),
+  disney: $('bill-disney'),
+  crunchy: $('bill-crunchy'),
+
+  // Date Nights
+  lunches: $('bill-lunches'),
+  disneyland: $('bill-disneyland'),
+  knotts: $('bill-knotts'),
+  universal: $('bill-universal'),
+  parking: $('bill-parking'),
+  shopping: $('bill-shopping'),
+
+  // Investments
+  stocks: $('bill-stocks'),
+  crypto: $('bill-crypto'),
+  collectibles: $('bill-collectibles'),
+  savings: $('bill-savings'),
+  emergency: $('bill-emergency'),
 };
 
 // Metrics block (Setup tab)
@@ -60,21 +82,19 @@ const KEY_NET = 'budget:net';
 const KEY_BILLS = 'budget:bills';
 const KEY_TX = 'budget:tx';
 
+// Load state
 let netIncome = load(KEY_NET, 0);
-let bills = load(KEY_BILLS, {
-  rent: '', hoa: '', electric: '', internet: '', gas: '', water: '',
-  groceries: '', phone: '', security: '', transportation: '', health: ''
-});
+let bills = load(KEY_BILLS, Object.fromEntries(Object.keys(billEls).map(k => [k, ''])));
 let items = load(KEY_TX, []);
 
 // ========= Init =========
 initTabs();
 initSetup();
-updateMetrics();          // show numbers on first load (Setup)
+updateMetrics();      // show numbers on first load (Setup)
 renderTransactions();
-updateIncomeSplit();      // render initial Income Split
+updateIncomeSplit();  // build pie + pills on first load
 
-// Rehydrate Lucide icons once on load
+// Rehydrate Lucide icons
 if (window.lucide?.createIcons) window.lucide.createIcons();
 
 // Register SW
@@ -84,7 +104,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 function initTabs() {
   tabButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab; // 'setup' | 'transactions' | 'pie'
+      const tab = btn.dataset.tab;
       tabButtons.forEach((b) => b.classList.toggle('active', b === btn));
       Object.entries(sections).forEach(([k, sec]) => sec.classList.toggle('active', k === tab));
       if (window.lucide?.createIcons) window.lucide.createIcons();
@@ -99,7 +119,6 @@ function initSetup() {
   if (netIncome) netIncomeEl.value = netIncome;
   updateYearly();
 
-  // Live updates as you type (also persist)
   netIncomeEl.addEventListener('input', () => {
     updateYearly();
     netIncome = num(netIncomeEl.value);
@@ -117,7 +136,7 @@ function initSetup() {
     updateIncomeSplit();
   });
 
-  // Bills: load + wire events
+  // Bills
   for (const [k, el] of Object.entries(billEls)) {
     if (!el) continue;
     el.value = bills[k] ?? '';
@@ -136,28 +155,32 @@ function updateYearly() {
   netYearlyEl.textContent = `Yearly: ${y ? money(y) : '—'}`;
 }
 
-// Sum the non-negotiable inputs (live)
+// Category totals
 function totalNonNegotiables() {
-  return (
-    num(billEls.rent?.value) +
-    num(billEls.hoa?.value) +
-    num(billEls.electric?.value) +
-    num(billEls.internet?.value) +
-    num(billEls.gas?.value) +
-    num(billEls.water?.value) +
-    num(billEls.groceries?.value) +
-    num(billEls.phone?.value) +
-    num(billEls.security?.value) +
-    num(billEls.transportation?.value) +
-    num(billEls.health?.value)
-  );
+  return sum('rent','hoa','electric','internet','gas','water','groceries','phone','security','transportation','health');
+}
+function totalSubscriptions() {
+  return sum('amazon','netflix','disney','crunchy');
+}
+function totalDateNights() {
+  return sum('lunches','disneyland','knotts','universal','parking','shopping');
+}
+function totalInvestments() {
+  return sum('stocks','crypto','collectibles','savings','emergency');
+}
+function sum(...keys) {
+  return keys.reduce((t,k)=> t + num(billEls[k]?.value), 0);
 }
 
-// Update the two numbers + color of the banner (Setup tab)
+// Update Setup metrics (top)
 function updateMetrics() {
   const net = num(netIncomeEl.value) || num(netIncome);
   const nn = totalNonNegotiables();
-  const play = net - nn;
+  const subs = totalSubscriptions();
+  const dates = totalDateNights();
+  const inv = totalInvestments();
+  const allocated = nn + subs + dates + inv;
+  const play = net - allocated;
 
   if (nnTotalEl) nnTotalEl.textContent = money(nn);
 
@@ -166,7 +189,7 @@ function updateMetrics() {
       play >= 0
         ? `You’ve got ${money(play)}/mo to play with`
         : `Over by ${money(Math.abs(play))}/mo`;
-    playLeftEl.style.background = play >= 0 ? '#166534' : '#7f1d1d'; // green / red
+    playLeftEl.style.background = play >= 0 ? '#166534' : '#7f1d1d';
     playLeftEl.style.color = '#fff';
   }
 }
@@ -180,87 +203,78 @@ addBtn.addEventListener('click', () => {
   if (!desc || amt <= 0) return alert('Enter a description and a valid amount.');
 
   const now = new Date();
-  items.unshift({
-    id: Date.now(),
-    date: now.toISOString().slice(0, 10),
-    desc,
-    amount: amt,
-    type,
-    category: cat,
-  });
+  items.unshift({ id: Date.now(), date: now.toISOString().slice(0, 10), desc, amount: amt, type, category: cat });
   save(KEY_TX, items);
 
-  descEl.value = '';
-  amountEl.value = '';
-  renderTransactions();
-  updateIncomeSplit();
+  descEl.value = ''; amountEl.value = '';
+  renderTransactions(); updateIncomeSplit();
 });
 
 clearBtn.addEventListener('click', () => {
   if (!items.length) return;
   if (confirm('Clear ALL entries? This cannot be undone.')) {
-    items = [];
-    save(KEY_TX, items);
-    renderTransactions();
-    updateIncomeSplit();
+    items = []; save(KEY_TX, items);
+    renderTransactions(); updateIncomeSplit();
   }
 });
 
 function renderTransactions() {
   const q = (searchEl.value || '').toLowerCase();
   const filtered = items.filter((x) => !q || x.desc.toLowerCase().includes(q));
-  listEl.innerHTML = filtered
-    .map(
-      (x) => `
+  listEl.innerHTML = filtered.map((x) => `
     <li>
       <div>
         <div><strong>${x.desc}</strong> <span class="muted">• ${x.category}</span></div>
         <div class="muted">${x.date} • ${x.type}</div>
       </div>
       <div style="text-align:right"><strong>${money(x.amount)}</strong></div>
-      <div style="text-align:right">
-        <button data-del="${x.id}" title="Delete"><i data-lucide="trash-2"></i></button>
-      </div>
-    </li>`
-    )
-    .join('');
+      <div style="text-align:right"><button data-del="${x.id}" title="Delete"><i data-lucide="trash-2"></i></button></div>
+    </li>`).join('');
 
   listEl.querySelectorAll('button[data-del]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-del');
       items = items.filter((x) => String(x.id) !== String(id));
       save(KEY_TX, items);
-      renderTransactions();
-      updateIncomeSplit();
+      renderTransactions(); updateIncomeSplit();
     });
   });
 
   if (window.lucide?.createIcons) window.lucide.createIcons();
 }
 
-// ========= Income Split (NEW): Income (green) vs Non-Negotiables (red) =========
+// ========= Income Split: 4-slice category pie + pills + remainder =========
 function updateIncomeSplit() {
-  const income = num(netIncomeEl.value) || num(netIncome); // from Setup (not transactions)
-  const nn = totalNonNegotiables();
-  const remainder = income - nn;
+  const income = num(netIncomeEl.value) || num(netIncome);
 
-  // Draw two-slice pie
-  drawIncomeVsNNPie({ income, nn });
+  const nn   = totalNonNegotiables(); // red
+  const subs = totalSubscriptions();  // blue
+  const date = totalDateNights();     // pink
+  const inv  = totalInvestments();    // orange
 
-  // Build category pills + remainder + message
-  const green = '#22c55e'; // Tailwind green-500
-  const red   = '#ef4444'; // Tailwind red-500
+  const allocated = nn + subs + date + inv;
+  const remainder = income - allocated;
+
+  drawCategoryPie([
+    { label:'Non-Negotiables', value: nn,   color:'#ef4444' }, // red-500
+    { label:'Subscriptions',   value: subs, color:'#3b82f6' }, // blue-500
+    { label:'Date Nights',     value: date, color:'#ec4899' }, // pink-500
+    { label:'Investments',     value: inv,  color:'#f59e0b' }, // orange-500
+  ]);
 
   const pillsHTML = `
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
-      <span style="display:inline-flex;align-items:center;gap:8px;background:${green};color:#0b1220;padding:6px 10px;border-radius:999px;font-weight:700">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0b1220"></span>
-        Income: ${money(income)}
-      </span>
-      <span style="display:inline-flex;align-items:center;gap:8px;background:${red};color:#fff;padding:6px 10px;border-radius:999px;font-weight:700">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff"></span>
-        Non-Negotiables: ${money(nn)}
-      </span>
+      ${[
+        {label:'Non-Negotiables', val:nn, color:'#ef4444', fg:'#fff'},
+        {label:'Subscriptions',   val:subs, color:'#3b82f6', fg:'#0b1220'},
+        {label:'Date Nights',     val:date, color:'#ec4899', fg:'#0b1220'},
+        {label:'Investments',     val:inv, color:'#f59e0b', fg:'#0b1220'},
+      ].map(({label,val,color,fg})=>`
+        <span style="display:inline-flex;align-items:center;gap:8px;background:${color};color:${fg};padding:6px 10px;border-radius:999px;font-weight:700">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${fg}"></span>
+          ${label}: ${money(val)}
+        </span>
+      `).join('')}
     </div>
     <div style="margin-top:12px;font-size:16px;font-weight:800">
       Remainder: ${money(remainder)}
@@ -268,68 +282,59 @@ function updateIncomeSplit() {
     <div style="margin-top:6px;font-size:14px;">
       ${
         remainder >= 0
-          ? `<span style="color:${green};font-weight:700">Congrats, you're within budget!</span>`
-          : `<span style="color:${red};font-weight:700">Uh oh, looks like you need to lower your spending!</span>`
+          ? `<span style="color:#22c55e;font-weight:700">Congrats, you're within budget!</span>`
+          : `<span style="color:#ef4444;font-weight:700">Uh oh, looks like you need to lower your spending!</span>`
       }
     </div>
   `;
-
   pieLegend.innerHTML = pillsHTML;
 }
 
-function drawIncomeVsNNPie({ income, nn }) {
-  const total = Math.max(0, income) + Math.max(0, nn);
+function drawCategoryPie(slices) {
+  const total = slices.reduce((t,s)=>t + Math.max(0, s.value), 0);
   ctx.clearRect(0, 0, pieCanvas.width, pieCanvas.height);
 
-  // If both are zero, show hint
   if (total <= 0) {
     ctx.fillStyle = '#9ca3af';
     ctx.font = '14px system-ui, sans-serif';
-    ctx.fillText('Add income and bills to see the split.', 10, 20);
+    ctx.fillText('Add amounts to see the split.', 10, 20);
     return;
   }
-
-  const green = '#22c55e';
-  const red   = '#ef4444';
 
   const cx = pieCanvas.width / 2;
   const cy = pieCanvas.height / 2;
   const r  = Math.min(cx, cy) - 8;
 
   let start = -Math.PI / 2;
-
-  // Income slice
-  const incAngle = total ? (Math.max(0, income) / total) * Math.PI * 2 : 0;
-  let end = start + incAngle;
-  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
-  ctx.fillStyle = green; ctx.fill();
-  start = end;
-
-  // Non-Negotiables slice
-  const nnAngle = total ? (Math.max(0, nn) / total) * Math.PI * 2 : 0;
-  end = start + nnAngle;
-  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
-  ctx.fillStyle = red; ctx.fill();
+  for (const { value, color } of slices) {
+    const fraction = Math.max(0, value) / total;
+    const angle = fraction * Math.PI * 2;
+    const end = start + angle;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    start = end;
+  }
 }
 
-// Keep canvas responsive
+// Responsive
 window.addEventListener('resize', () => {
   if (sections.pie.classList.contains('active')) updateIncomeSplit();
 });
 
 // ========= Storage helpers =========
 function load(k, fb) {
-  try {
-    return JSON.parse(localStorage.getItem(k) || JSON.stringify(fb));
-  } catch {
-    return fb;
-  }
+  try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(fb)); }
+  catch { return fb; }
 }
 function save(k, v) {
   localStorage.setItem(k, JSON.stringify(v));
 }
 
-// ========= Re-run Lucide after any DOM changes just in case =========
+// Re-run Lucide after DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   if (window.lucide?.createIcons) window.lucide.createIcons();
 });
