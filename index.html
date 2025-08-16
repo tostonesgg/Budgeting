@@ -25,9 +25,15 @@
     .muted{color:var(--muted);font-size:12px}
     ul{list-style:none;padding:0;margin:0}
     li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--line)}
-    .pill{display:inline-flex;align-items:center;gap:6px;background:#081127;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
+    .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
+    .pill.red{background:#2b0c10}
+    .pill.blue{background:#0b1830}
+    .pill.yellow{background:#2b230b}
     .bar{height:8px;background:#111827;border:1px solid #374151;border-radius:999px;overflow:hidden}
     .bar>i{display:block;height:100%;background:#0ea5e9;width:0%}
+    .mini-btn{padding:6px 8px;border-radius:8px}
+    .mini-btn.warn{background:#3b0d0d;border-color:#7f1d1d}
+    .mini-btn.good{background:#06240e;border-color:#14532d}
 
     /* Bottom Tabs */
     .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
@@ -38,6 +44,7 @@
     main section{display:none}
     main section.active{display:block}
     canvas{max-width:100%;height:auto}
+    .flex-row{display:flex;gap:8px;align-items:center}
   </style>
 </head>
 <body>
@@ -48,18 +55,70 @@
     </header>
 
     <main>
-      <!-- Analyze (Category totals) -->
-      <section id="view-analyze" class="active">
+      <!-- Onboarding / Questionnaire -->
+      <section id="view-onboarding" class="active">
+        <div class="card">
+          <div class="row" style="align-items:center">
+            <span class="pill"><i data-lucide="banknote"></i> Setup</span>
+          </div>
+
+          <!-- Net monthly -->
+          <div class="row" style="margin-top:6px">
+            <input id="net-income" type="number" step="0.01" placeholder="Net monthly income (post-tax)" />
+            <button id="save-net" class="mini-btn good"><i data-lucide="save"></i>Save</button>
+          </div>
+          <p class="muted" id="net-note"></p>
+        </div>
+
+        <!-- Non-Negotiables (red) -->
+        <div class="card">
+          <div class="flex-row">
+            <span class="pill red"><i data-lucide="shield"></i> Non-Negotiables</span>
+            <span class="muted">Mortgage, utilities, insurance…</span>
+          </div>
+          <div id="nn-list" style="margin-top:8px"></div>
+          <div class="row">
+            <button id="nn-add" class="mini-btn"><i data-lucide="plus"></i>Add Row</button>
+          </div>
+        </div>
+
+        <!-- Streaming (blue) -->
+        <div class="card">
+          <div class="flex-row">
+            <span class="pill blue"><i data-lucide="tv"></i> Streaming</span>
+            <span class="muted">e.g., Netflix, Disney+, etc.</span>
+          </div>
+          <div id="stream-list" style="margin-top:8px"></div>
+          <div class="row">
+            <button id="stream-add" class="mini-btn"><i data-lucide="plus"></i>Add Row</button>
+          </div>
+        </div>
+
+        <!-- Big Experiences (yellow) -->
+        <div class="card">
+          <div class="flex-row">
+            <span class="pill yellow"><i data-lucide="sun"></i> Big Experiences</span>
+            <span class="muted">Trips, concerts, big days out.</span>
+          </div>
+          <div id="big-list" style="margin-top:8px"></div>
+          <div class="row">
+            <button id="big-add" class="mini-btn"><i data-lucide="plus"></i>Add Row</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analyze (existing) -->
+      <section id="view-analyze">
         <div class="card">
           <div class="row" style="align-items:center">
             <span class="pill"><i data-lucide="chart-bar-stacked"></i> Category Totals (Expenses)</span>
           </div>
           <div id="cat-totals"></div>
-          <p class="muted" style="margin-top:8px">Shows **expense** totals per category. Starter categories are preloaded.</p>
+          <p class="muted" style="margin-top:8px">Shows expense totals per category.</p>
         </div>
       </section>
 
-      <!-- Transactions -->
+      <!-- Transactions (existing) -->
       <section id="view-transactions">
         <div class="card">
           <div class="row">
@@ -72,7 +131,7 @@
             <select id="category" aria-label="Category"></select>
             <button id="add"><i data-lucide="receipt-text"></i>Add</button>
           </div>
-          <p class="muted">Pick a type + category, then Add. Everything stays on-device (offline).</p>
+          <p class="muted">Pick a type + category, then Add. Data stays on-device.</p>
         </div>
 
         <div class="card">
@@ -84,7 +143,7 @@
         </div>
       </section>
 
-      <!-- Income Split (Pie) -->
+      <!-- Income Split (existing) -->
       <section id="view-pie">
         <div class="card">
           <div class="row" style="align-items:center">
@@ -100,7 +159,8 @@
   <!-- Bottom Tab Bar -->
   <nav class="tabs" role="navigation" aria-label="Tabs">
     <div class="inner">
-      <button class="tab-btn active" data-tab="analyze"><i data-lucide="chart-bar-stacked"></i><span>Analyze</span></button>
+      <button class="tab-btn active" data-tab="onboarding"><i data-lucide="banknote"></i><span>Setup</span></button>
+      <button class="tab-btn" data-tab="analyze"><i data-lucide="chart-bar-stacked"></i><span>Analyze</span></button>
       <button class="tab-btn" data-tab="transactions"><i data-lucide="receipt-text"></i><span>Transactions</span></button>
       <button class="tab-btn" data-tab="pie"><i data-lucide="chart-pie"></i><span>Income Split</span></button>
     </div>
