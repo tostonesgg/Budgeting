@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,32 +7,81 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0ea5e9" />
 
   <title>Budget</title>
 
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
   <style>
-    :root { --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; }
-    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:#e5e7eb}
+    /* ---------- Theme + palette ---------- */
+    :root {
+      /* category brand colors */
+      --nn:#ef4444;          --nn-200:#fecaca;
+      --subs:#3b82f6;        --subs-200:#bfdbfe;
+      --dates:#ec4899;       --dates-200:#fbcfe8;
+      --invest:#f59e0b;      --invest-200:#fed7aa;
+      --oneoff:#38bdf8;      --oneoff-200:#bae6fd;
+
+      /* dark */
+      --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9;
+      --text:#e5e7eb;
+      /* light */
+      --bg-light:#f8fafc; --card-light:#ffffff; --muted-light:#475569; --line-light:#e2e8f0; --field-light:#ffffff; --text-dark:#111827;
+    }
+
+    /* base = dark */
+    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    [data-theme="light"] body{ background:var(--bg-light); color:var(--text-dark); }
 
     .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0));overflow-x:hidden}
-
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
 
-    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-    input,select,button{background:var(--field);color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
+    /* theme toggle */
+    #theme-toggle{background:transparent;border:1px solid var(--line);border-radius:10px;color:inherit;padding:8px 10px;display:flex;gap:6px;align-items:center}
+    [data-theme="light"] #theme-toggle{ border-color:var(--line-light); }
+    .icon-sun{display:none}
+    [data-theme="light"] .icon-moon{display:none}
+    [data-theme="light"] .icon-sun{display:inline}
+
+    .card{
+      background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px;
+    }
+    [data-theme="light"] .card{
+      background:var(--card-light); border:1px solid var(--line-light);
+    }
+
+    input,select,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
     input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
     button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
 
+    [data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] button{
+      background:var(--field-light); border-color:var(--line-light); color:var(--text-dark);
+    }
+
     .row{display:flex;gap:8px;flex-wrap:wrap}
     .row>*{flex:1 1 min(240px,100%)}
-
-    .muted{color:var(--muted);font-size:12px}
+    .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
     .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
     .subbig{font-size:18px;font-weight:700;margin:6px 0}
+
+    /* category headers with total on the right */
+    .card-head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:8px}
+    .card-title{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+    .cat-total{font-weight:800}
+
+    /* category coloring */
+    .card-nn{ border-color:var(--nn); }
+    .card-subs{ border-color:var(--subs); }
+    .card-dates{ border-color:var(--dates); }
+    .card-invest{ border-color:var(--invest); }
+    .card-oneoff{ border-color:var(--oneoff); }
+
+    [data-theme="light"] .card-nn{ background:var(--nn-200); }
+    [data-theme="light"] .card-subs{ background:var(--subs-200); }
+    [data-theme="light"] .card-dates{ background:var(--dates-200); }
+    [data-theme="light"] .card-invest{ background:var(--invest-200); }
+    [data-theme="light"] .card-oneoff{ background:var(--oneoff-200); }
 
     /* responsive bill rows (no overflow) */
     .bill-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,44%);gap:10px;align-items:center;margin:8px 0}
@@ -45,9 +94,11 @@
     /* Tabs */
     .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
     .tabs .inner{max-width:860px;margin:0 auto;display:flex;gap:12px;justify-content:space-between}
-    .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:#e5e7eb}
+    .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:inherit}
     .tab-btn.active{background:#111827;border-color:#374151}
+    [data-theme="light"] .tab-btn.active{background:#e5e7eb;border-color:var(--line-light)}
     .tab-btn span{font-size:11px;color:var(--muted)}
+    [data-theme="light"] .tab-btn span{color:var(--muted-light)}
     main section{display:none}
     main section.active{display:block}
   </style>
@@ -56,7 +107,11 @@
   <div class="wrap">
     <header>
       <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
-      <button id="install-help" title="Install"><i data-lucide="download"></i>Install</button>
+      <button id="theme-toggle" title="Toggle theme">
+        <i class="icon-moon" data-lucide="moon"></i>
+        <i class="icon-sun" data-lucide="sun"></i>
+        Theme
+      </button>
     </header>
 
     <main>
@@ -72,8 +127,11 @@
         </div>
 
         <!-- Non-Negotiables -->
-        <div class="card">
-          <h2 class="subbig">Non-Negotiable Bills</h2>
+        <div class="card card-nn">
+          <div class="card-head">
+            <span class="card-title"><i data-lucide="shield-alert"></i> Non-Negotiable Bills</span>
+            <span class="cat-total" id="ttl-nn">—</span>
+          </div>
           <p class="muted">These are your necessities—if you lost your job today, you would stop putting money into every other category except this one.</p>
 
           <div class="bill-row"><label for="bill-rent"><i data-lucide="house"></i> Rent/Mortgage</label><input id="bill-rent" type="number" step="0.01" placeholder="Amount / month" /></div>
@@ -84,42 +142,46 @@
           <div class="bill-row"><label for="bill-water"><i data-lucide="droplet"></i> Water</label><input id="bill-water" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-groceries"><i data-lucide="carrot"></i> Groceries</label><input id="bill-groceries" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-phone"><i data-lucide="phone"></i> Phone</label><input id="bill-phone" type="number" step="0.01" placeholder="Amount / month" /></div>
-
-          <!-- NEW -->
           <div class="bill-row"><label for="bill-carins"><i data-lucide="car"></i> Car Insurance</label><input id="bill-carins" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-carmaint"><i data-lucide="car"></i> Maintenance / Registration</label><input id="bill-carmaint" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-smeegs"><i data-lucide="dog"></i> Smeegs’ food / wipes / pads / vet</label><input id="bill-smeegs" type="number" step="0.01" placeholder="Amount / month" /></div>
-
           <div class="bill-row"><label for="bill-security"><i data-lucide="cctv"></i> Security</label><input id="bill-security" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-transportation"><i data-lucide="fuel"></i> Transportation</label><input id="bill-transportation" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-health"><i data-lucide="stethoscope"></i> Health Insurance</label><input id="bill-health" type="number" step="0.01" placeholder="Amount / month" /></div>
         </div>
 
-        <!-- Subscriptions (Blue) -->
-        <div class="card">
-          <h2 class="subbig">Subscriptions</h2>
+        <!-- Subscriptions -->
+        <div class="card card-subs">
+          <div class="card-head">
+            <span class="card-title"><i data-lucide="badge-dollar-sign"></i> Subscriptions</span>
+            <span class="cat-total" id="ttl-subs">—</span>
+          </div>
           <div class="bill-row"><label for="bill-amazon"><i data-lucide="package"></i> Amazon</label><input id="bill-amazon" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-netflix"><i data-lucide="tv"></i> Netflix</label><input id="bill-netflix" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-disney"><i data-lucide="tv"></i> Disney Plus</label><input id="bill-disney" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-crunchy"><i data-lucide="tv"></i> Crunchyroll</label><input id="bill-crunchy" type="number" step="0.01" placeholder="Amount / month" /></div>
-          <!-- NEW -->
           <div class="bill-row"><label for="bill-barkbox"><i data-lucide="bone"></i> Barkbox</label><input id="bill-barkbox" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-chatgpt"><i data-lucide="bot"></i> ChatGPT</label><input id="bill-chatgpt" type="number" step="0.01" placeholder="Amount / month" /></div>
         </div>
 
-        <!-- Date Nights (Pink) -->
-        <div class="card">
-          <h2 class="subbig">Date Nights</h2>
+        <!-- Date Nights -->
+        <div class="card card-dates">
+          <div class="card-head">
+            <span class="card-title"><i data-lucide="wine"></i> Date Nights</span>
+            <span class="cat-total" id="ttl-dates">—</span>
+          </div>
           <div class="bill-row"><label for="bill-lunches"><i data-lucide="wine"></i> Lunches & Dinners</label><input id="bill-lunches" type="number" step="0.01" placeholder="Amount / month" /></div>
-          <!-- CONSOLIDATED -->
           <div class="bill-row"><label for="bill-themeparks"><i data-lucide="ticket"></i> Theme Parks</label><input id="bill-themeparks" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-parking"><i data-lucide="parking-meter"></i> Parking</label><input id="bill-parking" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-shopping"><i data-lucide="shopping-bag"></i> Shopping</label><input id="bill-shopping" type="number" step="0.01" placeholder="Amount / month" /></div>
         </div>
 
-        <!-- Investments (Orange) -->
-        <div class="card">
-          <h2 class="subbig">Investments</h2>
+        <!-- Investments -->
+        <div class="card card-invest">
+          <div class="card-head">
+            <span class="card-title"><i data-lucide="candlestick-chart"></i> Investments</span>
+            <span class="cat-total" id="ttl-invest">—</span>
+          </div>
           <div class="bill-row"><label for="bill-stocks"><i data-lucide="candlestick-chart"></i> Stocks</label><input id="bill-stocks" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-crypto"><i data-lucide="bitcoin"></i> Crypto</label><input id="bill-crypto" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-collectibles"><i data-lucide="trophy"></i> Collectibles</label><input id="bill-collectibles" type="number" step="0.01" placeholder="Amount / month" /></div>
@@ -127,9 +189,12 @@
           <div class="bill-row"><label for="bill-emergency"><i data-lucide="siren"></i> Emergency Fund</label><input id="bill-emergency" type="number" step="0.01" placeholder="Amount / month" /></div>
         </div>
 
-        <!-- One-off Purchases (Sky blue) -->
-        <div class="card">
-          <h2 class="subbig">One-off Purchases</h2>
+        <!-- One-off Purchases -->
+        <div class="card card-oneoff">
+          <div class="card-head">
+            <span class="card-title"><i data-lucide="shopping-bag"></i> One-off Purchases</span>
+            <span class="cat-total" id="ttl-oneoff">—</span>
+          </div>
           <div class="bill-row"><label for="bill-art"><i data-lucide="shopping-bag"></i> Art, Pops, Clothes, etc.</label><input id="bill-art" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-fishing"><i data-lucide="ship"></i> Fishing trips</label><input id="bill-fishing" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-travel"><i data-lucide="map"></i> Travel</label><input id="bill-travel" type="number" step="0.01" placeholder="Amount / month" /></div>
@@ -165,12 +230,6 @@
               <option>Date Nights</option>
               <option>Investments</option>
               <option>One-off Purchases</option>
-              <option>Streaming</option>
-              <option>Big Experiences</option>
-              <option>Pet</option>
-              <option>Savings</option>
-              <option>Work-Expenses</option>
-              <option>Fun</option>
             </select>
             <button id="add"><i data-lucide="receipt-text"></i>Add</button>
           </div>
@@ -211,6 +270,8 @@
   </nav>
 
   <script type="module" src="app.js"></script>
-  <script> if (window.lucide?.createIcons) window.lucide.createIcons(); </script>
+  <script>
+    if (window.lucide?.createIcons) window.lucide.createIcons();
+  </script>
 </body>
 </html>
