@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0ea5e9" />
   <title>Budget</title>
-  <!-- Lucide icons -->
+  <!-- Lucide icons (vanilla) -->
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
     :root { --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; }
@@ -24,9 +24,8 @@
     .row>*{flex:1 1 180px}
     .muted{color:var(--muted);font-size:12px}
     .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
-    .subbig{font-size:18px;font-weight:700;margin:6px 0}
     .bill-row{display:flex;gap:10px;align-items:center;margin:8px 0}
-    .bill-row label{min-width:150px;display:flex;align-items:center;gap:8px}
+    .bill-row label{min-width:170px;display:flex;align-items:center;gap:8px}
     .bill-row input{flex:1}
     /* Tabs */
     .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
@@ -59,7 +58,7 @@
         </div>
 
         <div class="card">
-          <h2 class="subbig">Non-Negotiable Bills</h2>
+          <h2 class="big">Non-Negotiable Bills</h2>
           <p class="muted">These are your necessities—if you lost your job today, you would stop putting money into every other category except this one.</p>
 
           <div class="bill-row">
@@ -85,6 +84,10 @@
           <div class="bill-row">
             <label for="bill-groceries"><i data-lucide="carrot"></i> Groceries</label>
             <input id="bill-groceries" type="number" step="0.01" placeholder="Amount / month" />
+          </div>
+          <div class="bill-row">
+            <label for="bill-phone"><i data-lucide="phone"></i> Phone</label>
+            <input id="bill-phone" type="number" step="0.01" placeholder="Amount / month" />
           </div>
         </div>
       </section>
