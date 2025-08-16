@@ -191,7 +191,7 @@ function initSetupUI(){
     if (!input) continue;
     input.value = setup.totals[cat] ?? '';
     input.addEventListener('input', () => {
-      setup.totals[cat] = input.value;
+      setup.totals[cat] = input.value; // persist, but compute from DOM live
       saveJSON(KEY_SETUP, setup);
       updatePlayAmount();
     });
@@ -268,7 +268,7 @@ function toMonthly(amount, freq){
   const a = num(amount);
   switch (freq) {
     case 'weekly':      return a * (52/12);
-    case 'bi-monthly':  return a * 2;
+    case 'bi-monthly':  return a * 2;     // twice a month
     case 'quarterly':   return a / 3;
     case 'yearly':      return a / 12;
     case 'monthly':
@@ -276,26 +276,36 @@ function toMonthly(amount, freq){
   }
 }
 
-// Category monthly: prefer top-level total; else sum details (for supported cats)
+// Category monthly: prefer live DOM total; else saved total; else sum details (for supported cats)
 function categoryMonthly(cat){
-  const top = num(setup.totals[cat]);
-  if (top > 0) return top;
+  // 1) Live DOM input (most up-to-date)
+  const domInput = totalsInputs[cat];
+  const domVal = domInput ? num(domInput.value) : 0;
+  if (domVal > 0) return domVal;
 
+  // 2) Saved top-level total
+  const savedTop = num(setup.totals[cat]);
+  if (savedTop > 0) return savedTop;
+
+  // 3) Sum detail rows (supported categories)
   if (cat === 'Non-Negotiables') {
     return setup.nonNegotiables.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
-  }
+    }
   if (cat === 'Streaming') {
     return setup.streaming.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
   }
   if (cat === 'Big Experiences') {
     return setup.big.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
   }
-  return 0; // other categories rely on top-level total only
+  return 0; // others rely on top total only
 }
 
 // Compute & show “play money”
 function updatePlayAmount(){
-  const net = setup.net ? setup.net : num(netIncomeEl.value);
+  // Prefer live net-income input; fallback to saved
+  const liveNet = num(netIncomeEl.value);
+  const net = liveNet > 0 ? liveNet : num(setup.net);
+
   const totalFixed = CATEGORIES.reduce((sum, cat) => sum + categoryMonthly(cat), 0);
   const play = Math.max(0, net - totalFixed);
   playAmountEl.textContent = `${toCurrency(play)}/mo`;
