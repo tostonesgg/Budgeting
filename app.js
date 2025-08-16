@@ -16,7 +16,7 @@ const netIncomeEl = $('net-income');
 const saveNetBtn = $('save-net');
 const netYearlyEl = $('net-yearly');
 
-// Bill inputs (including the new ones)
+// Bill inputs (including all new ones)
 const billEls = {
   rent: $('bill-rent'),
   hoa: $('bill-hoa'),
@@ -31,7 +31,7 @@ const billEls = {
   health: $('bill-health'),
 };
 
-// Metrics block (from index.html)
+// Metrics block (Setup tab)
 const nnTotalEl = $('nn-total');
 const playLeftEl = $('play-left');
 
@@ -45,7 +45,7 @@ const listEl = $('list');
 const searchEl = $('search');
 const clearBtn = $('clear');
 
-// Pie
+// Income Split (Pie tab)
 const pieCanvas = $('pie');
 const pieLegend = $('pie-legend');
 const ctx = pieCanvas.getContext('2d');
@@ -62,31 +62,22 @@ const KEY_TX = 'budget:tx';
 
 let netIncome = load(KEY_NET, 0);
 let bills = load(KEY_BILLS, {
-  rent: '',
-  hoa: '',
-  electric: '',
-  internet: '',
-  gas: '',
-  water: '',
-  groceries: '',
-  phone: '',
-  security: '',
-  transportation: '',
-  health: '',
+  rent: '', hoa: '', electric: '', internet: '', gas: '', water: '',
+  groceries: '', phone: '', security: '', transportation: '', health: ''
 });
 let items = load(KEY_TX, []);
 
 // ========= Init =========
 initTabs();
 initSetup();
-updateMetrics();          // show numbers on first load
+updateMetrics();          // show numbers on first load (Setup)
 renderTransactions();
-drawPie();
+updateIncomeSplit();      // render initial Income Split
 
 // Rehydrate Lucide icons once on load
 if (window.lucide?.createIcons) window.lucide.createIcons();
 
-// Register SW (keep your sw.js as-is)
+// Register SW
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
 // ========= Tabs =========
@@ -97,7 +88,7 @@ function initTabs() {
       tabButtons.forEach((b) => b.classList.toggle('active', b === btn));
       Object.entries(sections).forEach(([k, sec]) => sec.classList.toggle('active', k === tab));
       if (window.lucide?.createIcons) window.lucide.createIcons();
-      if (tab === 'pie') drawPie();
+      if (tab === 'pie') updateIncomeSplit();
     });
   });
 }
@@ -114,6 +105,7 @@ function initSetup() {
     netIncome = num(netIncomeEl.value);
     save(KEY_NET, netIncome);
     updateMetrics();
+    updateIncomeSplit();
   });
 
   saveNetBtn.addEventListener('click', () => {
@@ -122,6 +114,7 @@ function initSetup() {
     save(KEY_NET, netIncome);
     updateYearly();
     updateMetrics();
+    updateIncomeSplit();
   });
 
   // Bills: load + wire events
@@ -132,6 +125,7 @@ function initSetup() {
       bills[k] = el.value;
       save(KEY_BILLS, bills);
       updateMetrics();
+      updateIncomeSplit();
     });
   }
 }
@@ -159,7 +153,7 @@ function totalNonNegotiables() {
   );
 }
 
-// Update the two numbers + color of the banner
+// Update the two numbers + color of the banner (Setup tab)
 function updateMetrics() {
   const net = num(netIncomeEl.value) || num(netIncome);
   const nn = totalNonNegotiables();
@@ -199,7 +193,7 @@ addBtn.addEventListener('click', () => {
   descEl.value = '';
   amountEl.value = '';
   renderTransactions();
-  drawPie();
+  updateIncomeSplit();
 });
 
 clearBtn.addEventListener('click', () => {
@@ -208,7 +202,7 @@ clearBtn.addEventListener('click', () => {
     items = [];
     save(KEY_TX, items);
     renderTransactions();
-    drawPie();
+    updateIncomeSplit();
   }
 });
 
@@ -237,78 +231,90 @@ function renderTransactions() {
       items = items.filter((x) => String(x.id) !== String(id));
       save(KEY_TX, items);
       renderTransactions();
-      drawPie();
+      updateIncomeSplit();
     });
   });
 
   if (window.lucide?.createIcons) window.lucide.createIcons();
 }
 
-// ========= Income Split (Pie): income by category =========
-const CATEGORIES = [
-  'Non-Negotiables',
-  'Streaming',
-  'Big Experiences',
-  'Date Nights',
-  'Pet',
-  'Investments',
-  'Savings',
-  'Work-Expenses',
-  'Fun',
-];
+// ========= Income Split (NEW): Income (green) vs Non-Negotiables (red) =========
+function updateIncomeSplit() {
+  const income = num(netIncomeEl.value) || num(netIncome); // from Setup (not transactions)
+  const nn = totalNonNegotiables();
+  const remainder = income - nn;
 
-function drawPie() {
-  const byCat = Object.fromEntries(CATEGORIES.map((c) => [c, 0]));
-  for (const it of items) {
-    if (it.type !== 'income') continue;
-    const cat = CATEGORIES.includes(it.category) ? it.category : 'Non-Negotiables';
-    byCat[cat] += it.amount;
-  }
-  const labels = Object.keys(byCat);
-  const values = labels.map((k) => byCat[k]);
-  const total = values.reduce((t, v) => t + v, 0);
+  // Draw two-slice pie
+  drawIncomeVsNNPie({ income, nn });
 
-  const palette = ['#60a5fa', '#34d399', '#f472b6', '#f59e0b', '#22d3ee', '#a78bfa', '#fb7185', '#84cc16', '#f97316'];
-  const colors = labels.map((_, i) => palette[i % palette.length]);
+  // Build category pills + remainder + message
+  const green = '#22c55e'; // Tailwind green-500
+  const red   = '#ef4444'; // Tailwind red-500
 
-  ctx.clearRect(0, 0, pieCanvas.width, pieCanvas.height);
-  if (!total) {
-    ctx.fillStyle = '#9ca3af';
-    ctx.font = '14px system-ui, sans-serif';
-    ctx.fillText('No income recorded yet.', 10, 20);
-    pieLegend.innerHTML = '<span class="muted">Add income transactions to see the split.</span>';
-    return;
-  }
-  const cx = pieCanvas.width / 2,
-    cy = pieCanvas.height / 2,
-    r = Math.min(cx, cy) - 8;
-  let start = -Math.PI / 2;
-  values.forEach((val, i) => {
-    const angle = (val / total) * Math.PI * 2;
-    const end = start + angle;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, start, end);
-    ctx.closePath();
-    ctx.fillStyle = colors[i];
-    ctx.fill();
-    start = end;
-  });
+  const pillsHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+      <span style="display:inline-flex;align-items:center;gap:8px;background:${green};color:#0b1220;padding:6px 10px;border-radius:999px;font-weight:700">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0b1220"></span>
+        Income: ${money(income)}
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:8px;background:${red};color:#fff;padding:6px 10px;border-radius:999px;font-weight:700">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff"></span>
+        Non-Negotiables: ${money(nn)}
+      </span>
+    </div>
+    <div style="margin-top:12px;font-size:16px;font-weight:800">
+      Remainder: ${money(remainder)}
+    </div>
+    <div style="margin-top:6px;font-size:14px;">
+      ${
+        remainder >= 0
+          ? `<span style="color:${green};font-weight:700">Congrats, you're within budget!</span>`
+          : `<span style="color:${red};font-weight:700">Uh oh, looks like you need to lower your spending!</span>`
+      }
+    </div>
+  `;
 
-  pieLegend.innerHTML = labels
-    .map((lab, i) => {
-      const pct = total ? Math.round((values[i] / total) * 100) : 0;
-      return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0">
-        <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${colors[i]}"></span>
-        <span>${lab}</span>
-        <span style="margin-left:auto" class="muted">${pct}% • ${money(values[i])}</span>
-      </div>`;
-    })
-    .join('');
+  pieLegend.innerHTML = pillsHTML;
 }
 
+function drawIncomeVsNNPie({ income, nn }) {
+  const total = Math.max(0, income) + Math.max(0, nn);
+  ctx.clearRect(0, 0, pieCanvas.width, pieCanvas.height);
+
+  // If both are zero, show hint
+  if (total <= 0) {
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.fillText('Add income and bills to see the split.', 10, 20);
+    return;
+  }
+
+  const green = '#22c55e';
+  const red   = '#ef4444';
+
+  const cx = pieCanvas.width / 2;
+  const cy = pieCanvas.height / 2;
+  const r  = Math.min(cx, cy) - 8;
+
+  let start = -Math.PI / 2;
+
+  // Income slice
+  const incAngle = total ? (Math.max(0, income) / total) * Math.PI * 2 : 0;
+  let end = start + incAngle;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
+  ctx.fillStyle = green; ctx.fill();
+  start = end;
+
+  // Non-Negotiables slice
+  const nnAngle = total ? (Math.max(0, nn) / total) * Math.PI * 2 : 0;
+  end = start + nnAngle;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
+  ctx.fillStyle = red; ctx.fill();
+}
+
+// Keep canvas responsive
 window.addEventListener('resize', () => {
-  if (sections.pie.classList.contains('active')) drawPie();
+  if (sections.pie.classList.contains('active')) updateIncomeSplit();
 });
 
 // ========= Storage helpers =========
