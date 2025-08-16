@@ -1,4 +1,4 @@
-const CACHE = 'budget-setup-refined-v5';
+const CACHE = 'budget-restart-v1';
 const ASSETS = [
   'index.html',
   'app.js',
@@ -29,8 +29,7 @@ self.addEventListener('fetch', (e) => {
   if (url.origin === location.origin) {
     e.respondWith(
       caches.match(req).then(cached => cached || fetch(req).then(resp => {
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(req, copy));
+        const copy = resp.clone(); caches.open(CACHE).then(c => c.put(req, copy));
         return resp;
       }))
     );
@@ -40,8 +39,7 @@ self.addEventListener('fetch', (e) => {
   if (req.url.includes('unpkg.com/lucide')) {
     e.respondWith(
       fetch(req).then(resp => {
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(req, copy));
+        const copy = resp.clone(); caches.open(CACHE).then(c => c.put(req, copy));
         return resp;
       }).catch(() => caches.match(req))
     );
