@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>Budget (Minimal)</title>
+  <style>
+    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:#0b1220;color:#e5e7eb}
+    .wrap{max-width:860px;margin:0 auto;padding:16px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    h1{font-size:20px;margin:0}
+    .card{background:#0f172a;border:1px solid #1f2937;border-radius:12px;padding:12px;margin-bottom:12px}
+    input,button{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
+    input:focus,button:focus{outline:2px solid #0ea5e9}
+    button{cursor:pointer}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .row>*{flex:1 1 160px}
+    ul{list-style:none;padding:0;margin:0}
+    li{padding:10px;border-bottom:1px solid #1f2937}
+    .muted{color:#9ca3af;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>💸 Budget (Minimal)</h1>
+      <button id="install-help">Install</button>
+    </header>
+
+    <section class="card">
+      <p class="muted">This is a minimal PWA shell. We’ll add real storage together later. For now, it installs and works offline.</p>
+      <div class="row">
+        <input id="desc" placeholder="Description (placeholder)" />
+        <input id="amount" type="number" step="0.01" placeholder="Amount (placeholder)" />
+        <button id="add">Add (noop)</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="muted" style="margin:0 0 8px 0;">Preview List (static)</h2>
+      <ul id="list">
+        <li>Example: Coffee — $3.50</li>
+      </ul>
+    </section>
+
+    <p class="muted">Install on iPhone/iPad: open in Safari → Share → <strong>Add to Home Screen</strong>.</p>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
