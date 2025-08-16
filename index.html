@@ -43,6 +43,48 @@
     .tab-btn span{font-size:11px;color:var(--muted)}
     main section{display:none}
     main section.active{display:block}
+    
+    /* --- mobile overflow fixes --- */
+.wrap { 
+  overflow-x: hidden; /* prevent horizontal scroll */
+}
+
+.bill-row {
+  display: grid;                          /* label | input */
+  grid-template-columns: 1fr minmax(140px, 48%);
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.bill-row label {
+  min-width: 0;           /* allow shrink */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;    /* keep label on one line */
+}
+
+.bill-row input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* make generic .row children a bit narrower on phones */
+.row > * { 
+  flex: 1 1 160px;
+}
+
+/* very small screens: stack label over input */
+@media (max-width: 420px) {
+  .bill-row {
+    grid-template-columns: 1fr; /* label above, input below */
+  }
+  .bill-row label {
+    white-space: normal;        /* allow wrapping if needed */
+  }
+}
   </style>
 </head>
 <body>
