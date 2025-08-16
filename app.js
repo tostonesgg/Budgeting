@@ -1,8 +1,8 @@
-// helpers
+// Helpers
 const $ = (id) => document.getElementById(id);
-const toCurrency = (n) => (n ?? 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+const toCurrency = (n) => (Number.isFinite(n) ? n : 0).toLocaleString(undefined,{style:'currency',currency:'USD'});
 
-// tabs
+// Tabs
 const sections = {
   onboarding: $('view-onboarding'),
   analyze: $('view-analyze'),
@@ -11,10 +11,26 @@ const sections = {
 };
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 
-// onboarding elements
+// Elements: Setup
 const netIncomeEl = $('net-income');
-const netNoteEl = $('net-note');
 const saveNetBtn = $('save-net');
+const netYearlyNote = $('net-yearly-note');
+const playAmountEl = $('play-amount');
+
+// Totals inputs
+const totalsInputs = {
+  'Non-Negotiables': $('total-nonneg'),
+  'Streaming': $('total-streaming'),
+  'Big Experiences': $('total-big'),
+  'Date Nights': $('total-date-nights'),
+  'Pet': $('total-pet'),
+  'Investments': $('total-investments'),
+  'Savings': $('total-savings'),
+  'Work-Expenses': $('total-work'),
+  'Fun': $('total-fun'),
+};
+
+// Detail lists
 const nnList = $('nn-list');
 const nnAdd = $('nn-add');
 const streamList = $('stream-list');
@@ -22,7 +38,7 @@ const streamAdd = $('stream-add');
 const bigList = $('big-list');
 const bigAdd = $('big-add');
 
-// transactions elements
+// Elements: Transactions
 const descEl = $('desc');
 const amountEl = $('amount');
 const typeEl = $('type');
@@ -32,7 +48,7 @@ const listEl = $('list');
 const searchEl = $('search');
 const clearBtn = $('clear');
 
-// analyze + pie
+// Analyze + Pie
 const catTotalsEl = $('cat-totals');
 const pieCanvas = $('pie');
 const pieLegend = $('pie-legend');
@@ -40,18 +56,40 @@ const ctx = pieCanvas.getContext('2d');
 
 const installHelp = $('install-help');
 
-// storage keys
-const KEY_TX   = 'budget:minimal:tx';
-const KEY_CATS = 'budget:minimal:categories';
-const KEY_NET  = 'budget:minimal:net';
-const KEY_SETUP = 'budget:minimal:setup'; // all questionnaire data
+// Storage keys
+const KEY_TX    = 'budget:minimal:tx';
+const KEY_NET   = 'budget:minimal:net';
+const KEY_SETUP = 'budget:minimal:setup';
+const KEY_CATS  = 'budget:minimal:categories';
 
-// data
-const DEFAULT_CATEGORIES = ['Necessary', 'Date Nights', 'Emergency Fund'];
-let categories = loadJSON(KEY_CATS, []);
-let items = loadJSON(KEY_TX, []);
-let netIncome = loadJSON(KEY_NET, 0);
+// Canonical categories (global)
+const CATEGORIES = [
+  'Non-Negotiables',
+  'Streaming',
+  'Big Experiences',
+  'Date Nights',
+  'Pet',
+  'Investments',
+  'Savings',
+  'Work-Expenses',
+  'Fun'
+];
+
+// Setup default payload
 let setup = loadJSON(KEY_SETUP, {
+  net: 0,
+  totals: { // monthly ballparks
+    'Non-Negotiables': '',
+    'Streaming': '',
+    'Big Experiences': '',
+    'Date Nights': '',
+    'Pet': '',
+    'Investments': '',
+    'Savings': '',
+    'Work-Expenses': '',
+    'Fun': ''
+  },
+  // details rows for selected categories
   nonNegotiables: [
     { name:'Mortgage', amount:'', freq:'monthly' },
     { name:'HOA', amount:'', freq:'monthly' },
@@ -75,12 +113,15 @@ let setup = loadJSON(KEY_SETUP, {
   ]
 });
 
-// init
-ensureDefaultCategories();
+// Transactions + categories
+let items = loadJSON(KEY_TX, []);
+saveJSON(KEY_CATS, CATEGORIES); // keep a single source of truth
+
+// Init UI
+initTabs();
+initSetupUI();
 populateCategorySelect();
-initOnboardingUI();
 renderAll();
-setupTabs();
 if (window.lucide?.createIcons) window.lucide.createIcons();
 
 // SW
@@ -88,9 +129,160 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
 
-// event handlers
+// ---------- Tabs ----------
+function initTabs(){
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+      Object.entries(sections).forEach(([k,sec]) => sec.classList.toggle('active', k === tab));
+      if (window.lucide?.createIcons) window.lucide.createIcons();
+      if (tab === 'pie') drawPie();
+    });
+  });
+}
+
+// ---------- Setup UI ----------
+function initSetupUI(){
+  // Net income
+  if (setup.net) netIncomeEl.value = setup.net;
+  updateNetYearly();
+  netIncomeEl.addEventListener('input', updateNetYearly);
+  saveNetBtn.addEventListener('click', () => {
+    const val = parseFloat(netIncomeEl.value);
+    if (!Number.isFinite(val) || val <= 0) return alert('Enter a valid monthly net income.');
+    setup.net = val;
+    saveJSON(KEY_NET, val);
+    saveJSON(KEY_SETUP, setup);
+    updateNetYearly();
+    updatePlayAmount();
+  });
+
+  // Top-level totals
+  for (const cat of CATEGORIES) {
+    const input = totalsInputs[cat];
+    if (!input) continue;
+    input.value = setup.totals[cat] ?? '';
+    input.addEventListener('input', () => {
+      setup.totals[cat] = input.value;
+      saveJSON(KEY_SETUP, setup);
+      updatePlayAmount();
+    });
+  }
+
+  // Detail lists render + add handlers
+  renderSetupList(nnList, setup.nonNegotiables, 'nonNegotiables');
+  nnAdd.addEventListener('click', () => {
+    setup.nonNegotiables.push({ name:'', amount:'', freq:'monthly' });
+    saveJSON(KEY_SETUP, setup);
+    renderSetupList(nnList, setup.nonNegotiables, 'nonNegotiables');
+    updatePlayAmount();
+  });
+
+  renderSetupList(streamList, setup.streaming, 'streaming');
+  streamAdd.addEventListener('click', () => {
+    setup.streaming.push({ name:'', amount:'', freq:'monthly' });
+    saveJSON(KEY_SETUP, setup);
+    renderSetupList(streamList, setup.streaming, 'streaming');
+    updatePlayAmount();
+  });
+
+  renderSetupList(bigList, setup.big, 'big');
+  bigAdd.addEventListener('click', () => {
+    setup.big.push({ name:'', amount:'', freq:'yearly' });
+    saveJSON(KEY_SETUP, setup);
+    renderSetupList(bigList, setup.big, 'big');
+    updatePlayAmount();
+  });
+
+  // Initial “play” compute
+  updatePlayAmount();
+}
+
+function updateNetYearly(){
+  const m = parseFloat(netIncomeEl.value);
+  const y = Number.isFinite(m) && m > 0 ? m * 12 : 0;
+  netYearlyNote.textContent = `Yearly: ${y ? toCurrency(y) : '—'}`;
+}
+
+function renderSetupList(root, arr, key){
+  root.innerHTML = arr.map((row, i) => `
+    <div class="row" data-idx="${i}">
+      <input class="name" placeholder="Name" value="${row.name || ''}">
+      <input class="amt" type="number" step="0.01" placeholder="Amount" value="${row.amount || ''}">
+      <select class="freq">
+        ${['weekly','monthly','bi-monthly','quarterly','yearly'].map(opt => `<option value="${opt}" ${row.freq===opt?'selected':''}>${opt}</option>`).join('')}
+      </select>
+      <button class="mini-btn" data-remove title="Remove"><i data-lucide="x"></i></button>
+    </div>
+  `).join('');
+
+  root.querySelectorAll('.row').forEach(div => {
+    const idx = Number(div.dataset.idx);
+    const nameEl = div.querySelector('.name');
+    const amtEl  = div.querySelector('.amt');
+    const freqEl = div.querySelector('.freq');
+    const rmBtn  = div.querySelector('[data-remove]');
+
+    nameEl.addEventListener('input', () => { arr[idx].name = nameEl.value; saveJSON(KEY_SETUP, setup); });
+    amtEl.addEventListener('input',  () => { arr[idx].amount = amtEl.value;  saveJSON(KEY_SETUP, setup); updatePlayAmount(); });
+    freqEl.addEventListener('change',() => { arr[idx].freq = freqEl.value;   saveJSON(KEY_SETUP, setup); updatePlayAmount(); });
+
+    rmBtn.addEventListener('click', () => {
+      arr.splice(idx, 1);
+      saveJSON(KEY_SETUP, setup);
+      renderSetupList(root, arr, key);
+      updatePlayAmount();
+    });
+  });
+
+  if (window.lucide?.createIcons) window.lucide.createIcons();
+}
+
+// Convert a detail-row to its monthly equivalent based on frequency
+function toMonthly(amount, freq){
+  const a = parseFloat(amount);
+  if (!Number.isFinite(a) || a <= 0) return 0;
+  switch (freq) {
+    case 'weekly':      return a * (52/12);
+    case 'bi-monthly':  return a * 2;      // twice a month
+    case 'quarterly':   return a / 3;
+    case 'yearly':      return a / 12;
+    case 'monthly':
+    default:            return a;
+  }
+}
+
+// Category monthly number: prefer top-level total if present; else sum details
+function categoryMonthly(cat){
+  const top = parseFloat(setup.totals[cat]);
+  if (Number.isFinite(top) && top > 0) return top;
+
+  if (cat === 'Non-Negotiables') {
+    return setup.nonNegotiables.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
+  }
+  if (cat === 'Streaming') {
+    return setup.streaming.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
+  }
+  if (cat === 'Big Experiences') {
+    return setup.big.reduce((t,r)=> t + toMonthly(r.amount, r.freq), 0);
+  }
+  // categories without details rely on top total only
+  return 0;
+}
+
+// Compute & show “play” amount
+function updatePlayAmount(){
+  const net = parseFloat(setup.net || netIncomeEl.value);
+  const validNet = Number.isFinite(net) && net > 0 ? net : 0;
+  const totalFixed = CATEGORIES.reduce((sum, cat) => sum + categoryMonthly(cat), 0);
+  const play = Math.max(0, validNet - totalFixed);
+  playAmountEl.textContent = `${toCurrency(play)}/mo`;
+}
+
+// ---------- Transactions ----------
 installHelp.addEventListener('click', () => {
-  alert('Open in Safari → Share → Add to Home Screen to install.');
+  alert('Open this site in Safari → Share → Add to Home Screen to install.');
 });
 
 addBtn.addEventListener('click', () => {
@@ -101,18 +293,8 @@ addBtn.addEventListener('click', () => {
   if (!desc || !Number.isFinite(amount)) return alert('Enter a description and a valid amount.');
 
   const now = new Date();
-  items.unshift({
-    id: Date.now(),
-    date: now.toISOString().slice(0,10),
-    desc, amount, type, category
-  });
+  items.unshift({ id: Date.now(), date: now.toISOString().slice(0,10), desc, amount, type, category });
   saveJSON(KEY_TX, items);
-
-  if (category && !categories.includes(category)) {
-    categories.push(category);
-    saveJSON(KEY_CATS, categories);
-    populateCategorySelect();
-  }
 
   descEl.value = '';
   amountEl.value = '';
@@ -128,118 +310,16 @@ clearBtn.addEventListener('click', () => {
   }
 });
 
-// storage helpers
-function loadJSON(key, fallback){
-  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
-  catch { return fallback; }
-}
-function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
-
-// categories
-function ensureDefaultCategories(){
-  if (!categories.length) {
-    categories = [...DEFAULT_CATEGORIES];
-    saveJSON(KEY_CATS, categories);
-  }
-}
 function populateCategorySelect(){
-  categoryEl.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  categoryEl.innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
-// tabs
-function setupTabs(){
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      tabButtons.forEach(b => b.classList.toggle('active', b === btn));
-      Object.entries(sections).forEach(([k,sec]) => sec.classList.toggle('active', k === tab));
-      if (window.lucide?.createIcons) window.lucide.createIcons();
-      if (tab === 'pie') drawPie();
-    });
-  });
-}
-
-// onboarding UI
-function initOnboardingUI(){
-  // net income
-  netIncomeEl.value = netIncome || '';
-  updateNetNote();
-  saveNetBtn.addEventListener('click', () => {
-    netIncome = parseFloat(netIncomeEl.value);
-    if (!Number.isFinite(netIncome) || netIncome <= 0) {
-      alert('Please enter a valid monthly net income.');
-      return;
-    }
-    saveJSON(KEY_NET, netIncome);
-    updateNetNote();
-  });
-
-  // lists
-  renderSetupList(nnList, setup.nonNegotiables, 'red');
-  renderSetupList(streamList, setup.streaming, 'blue');
-  renderSetupList(bigList, setup.big, 'yellow');
-
-  nnAdd.addEventListener('click', () => {
-    setup.nonNegotiables.push({ name:'', amount:'', freq:'monthly' });
-    saveJSON(KEY_SETUP, setup);
-    renderSetupList(nnList, setup.nonNegotiables, 'red');
-  });
-  streamAdd.addEventListener('click', () => {
-    setup.streaming.push({ name:'', amount:'', freq:'monthly' });
-    saveJSON(KEY_SETUP, setup);
-    renderSetupList(streamList, setup.streaming, 'blue');
-  });
-  bigAdd.addEventListener('click', () => {
-    setup.big.push({ name:'', amount:'', freq:'yearly' });
-    saveJSON(KEY_SETUP, setup);
-    renderSetupList(bigList, setup.big, 'yellow');
-  });
-}
-
-function updateNetNote(){
-  netNoteEl.textContent = netIncome ? `Saved net income: ${toCurrency(netIncome)} per month.` : 'Enter your post-tax monthly income.';
-}
-
-function renderSetupList(root, arr, color){
-  root.innerHTML = arr.map((row, i) => `
-    <div class="row" data-idx="${i}">
-      <input class="name" placeholder="Name" value="${row.name || ''}">
-      <input class="amt" type="number" step="0.01" placeholder="Amount" value="${row.amount || ''}">
-      <select class="freq">
-        ${['weekly','monthly','bi-monthly','quarterly','yearly'].map(opt => `<option value="${opt}" ${row.freq===opt?'selected':''}>${opt}</option>`).join('')}
-      </select>
-      <button class="mini-btn" data-action="remove" title="Remove"><i data-lucide="x"></i></button>
-    </div>
-  `).join('');
-
-  // wire input changes
-  root.querySelectorAll('.row').forEach(div => {
-    const idx = Number(div.dataset.idx);
-    const nameEl = div.querySelector('.name');
-    const amtEl  = div.querySelector('.amt');
-    const freqEl = div.querySelector('.freq');
-    const rmBtn  = div.querySelector('button[data-action="remove"]');
-
-    nameEl.addEventListener('input', () => { rowAt(arr, idx).name = nameEl.value; saveJSON(KEY_SETUP, setup); });
-    amtEl.addEventListener('input',  () => { rowAt(arr, idx).amount = amtEl.value;  saveJSON(KEY_SETUP, setup); });
-    freqEl.addEventListener('change',() => { rowAt(arr, idx).freq = freqEl.value;   saveJSON(KEY_SETUP, setup); });
-
-    rmBtn.addEventListener('click', () => {
-      arr.splice(idx,1);
-      saveJSON(KEY_SETUP, setup);
-      renderSetupList(root, arr, color);
-    });
-  });
-
-  if (window.lucide?.createIcons) window.lucide.createIcons();
-}
-function rowAt(arr, idx){ return arr[idx]; }
-
-// main renders
+// ---------- Analyze / Pie / List ----------
 function renderAll(){
   renderTransactions();
   renderCategoryTotals();
   drawPie();
+  if (window.lucide?.createIcons) window.lucide.createIcons();
 }
 
 function renderTransactions(){
@@ -266,19 +346,18 @@ function renderTransactions(){
       renderAll();
     });
   });
-
-  if (window.lucide?.createIcons) window.lucide.createIcons();
 }
 
 function renderCategoryTotals(){
-  const expenseByCat = {};
+  // Sum EXPENSES by category, keep zeros for all categories
+  const byCat = Object.fromEntries(CATEGORIES.map(c => [c, 0]));
   for (const it of items) {
     if (it.type !== 'expense') continue;
-    const cat = it.category || 'Uncategorized';
-    expenseByCat[cat] = (expenseByCat[cat] || 0) + it.amount;
+    const c = CATEGORIES.includes(it.category) ? it.category : 'Non-Negotiables';
+    byCat[c] += it.amount;
   }
-  for (const c of categories) if (!(c in expenseByCat)) expenseByCat[c] = 0;
-  const entries = Object.entries(expenseByCat).sort((a,b)=>b[1]-a[1]);
+
+  const entries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const max = Math.max(1, ...entries.map(([,v])=>v));
   catTotalsEl.innerHTML = entries.map(([cat, val]) => `
     <div style="margin:10px 0">
@@ -291,21 +370,19 @@ function renderCategoryTotals(){
   `).join('');
 }
 
-// pie: income by category
 function drawPie(){
-  const byCat = {};
+  // Income by category
+  const byCat = Object.fromEntries(CATEGORIES.map(c => [c, 0]));
   for (const it of items) {
     if (it.type !== 'income') continue;
-    const cat = it.category || 'Uncategorized';
-    byCat[cat] = (byCat[cat] || 0) + it.amount;
+    const c = CATEGORIES.includes(it.category) ? it.category : 'Non-Negotiables';
+    byCat[c] += it.amount;
   }
-  for (const c of categories) if (!(c in byCat)) byCat[c] = 0;
-
   const labels = Object.keys(byCat);
   const values = labels.map(k => byCat[k]);
   const total = values.reduce((t,v)=>t+v,0);
 
-  const palette = ['#60a5fa','#34d399','#f472b6','#f59e0b','#22d3ee','#a78bfa','#fb7185','#84cc16','#f97316','#10b981'];
+  const palette = ['#60a5fa','#34d399','#f472b6','#f59e0b','#22d3ee','#a78bfa','#fb7185','#84cc16','#f97316'];
   const colors = labels.map((_,i)=>palette[i % palette.length]);
 
   ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height);
@@ -336,7 +413,13 @@ function drawPie(){
   }).join('');
 }
 
-// redraw pie on resize when active
 window.addEventListener('resize', () => {
   if (sections.pie.classList.contains('active')) drawPie();
 });
+
+// Storage helpers
+function loadJSON(key, fallback){
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+  catch { return fallback; }
+}
+function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
