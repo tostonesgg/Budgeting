@@ -13,7 +13,7 @@
   <style>
     :root { --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; }
     html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:#e5e7eb}
-    .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom,0))}
+    .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0))}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
     .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
@@ -21,7 +21,7 @@
     input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
     button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
     .row{display:flex;gap:8px;flex-wrap:wrap}
-    .row>*{flex:1 1 160px}
+    .row>*{flex:1 1 180px}
     .muted{color:var(--muted);font-size:12px}
     ul{list-style:none;padding:0;margin:0}
     li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--line)}
@@ -29,11 +29,12 @@
     .pill.red{background:#2b0c10}
     .pill.blue{background:#0b1830}
     .pill.yellow{background:#2b230b}
+    .flex-row{display:flex;gap:8px;align-items:center}
+    .big{font-size:22px;font-weight:700;margin:0 0 6px 0}
+    .big-amount{font-size:22px;font-weight:800}
     .bar{height:8px;background:#111827;border:1px solid #374151;border-radius:999px;overflow:hidden}
     .bar>i{display:block;height:100%;background:#0ea5e9;width:0%}
     .mini-btn{padding:6px 8px;border-radius:8px}
-    .mini-btn.warn{background:#3b0d0d;border-color:#7f1d1d}
-    .mini-btn.good{background:#06240e;border-color:#14532d}
 
     /* Bottom Tabs */
     .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
@@ -44,7 +45,7 @@
     main section{display:none}
     main section.active{display:block}
     canvas{max-width:100%;height:auto}
-    .flex-row{display:flex;gap:8px;align-items:center}
+    .section-title{display:flex;align-items:center;gap:8px;margin:0 0 6px 0}
   </style>
 </head>
 <body>
@@ -55,59 +56,66 @@
     </header>
 
     <main>
-      <!-- Onboarding / Questionnaire -->
+      <!-- SETUP -->
       <section id="view-onboarding" class="active">
         <div class="card">
-          <div class="row" style="align-items:center">
-            <span class="pill"><i data-lucide="banknote"></i> Setup</span>
+          <h2 class="big">What is your monthly net income?</h2>
+          <div class="row">
+            <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home (post-tax)" />
+            <button id="save-net" class="mini-btn"><i data-lucide="save"></i>Save</button>
           </div>
-
-          <!-- Net monthly -->
-          <div class="row" style="margin-top:6px">
-            <input id="net-income" type="number" step="0.01" placeholder="Net monthly income (post-tax)" />
-            <button id="save-net" class="mini-btn good"><i data-lucide="save"></i>Save</button>
-          </div>
-          <p class="muted" id="net-note"></p>
+          <p class="muted" id="net-yearly-note">Yearly: —</p>
         </div>
 
-        <!-- Non-Negotiables (red) -->
         <div class="card">
-          <div class="flex-row">
-            <span class="pill red"><i data-lucide="shield"></i> Non-Negotiables</span>
-            <span class="muted">Mortgage, utilities, insurance…</span>
+          <h2 class="big">Fill out your mandatory expenses</h2>
+          <p class="muted" style="margin-top:-4px">You can enter a total now and break it down later.</p>
+
+          <!-- Non-Negotiables total -->
+          <div class="row">
+            <input id="total-nonneg" type="number" step="0.01" placeholder="Non-Negotiables total (monthly)" />
           </div>
+
+          <!-- Non-Negotiables details -->
+          <h3 class="section-title"><span class="pill red"><i data-lucide="shield"></i> Non-Negotiables (details)</span></h3>
           <div id="nn-list" style="margin-top:8px"></div>
-          <div class="row">
-            <button id="nn-add" class="mini-btn"><i data-lucide="plus"></i>Add Row</button>
-          </div>
+          <div class="row"><button id="nn-add" class="mini-btn"><i data-lucide="plus"></i>Add Row</button></div>
         </div>
 
-        <!-- Streaming (blue) -->
+        <!-- The “you’ve got … to play with” line -->
         <div class="card">
-          <div class="flex-row">
-            <span class="pill blue"><i data-lucide="tv"></i> Streaming</span>
-            <span class="muted">e.g., Netflix, Disney+, etc.</span>
-          </div>
+          <h2 class="big">You’ve got <span id="play-amount" class="big-amount">$0.00/mo</span> to play with, how do you want to allocate it?</h2>
+        </div>
+
+        <!-- Other categories with top-level totals -->
+        <div class="card">
+          <h3 class="section-title"><span class="pill blue"><i data-lucide="tv"></i> Streaming</span></h3>
+          <div class="row"><input id="total-streaming" type="number" step="0.01" placeholder="Streaming total (monthly)" /></div>
           <div id="stream-list" style="margin-top:8px"></div>
-          <div class="row">
-            <button id="stream-add" class="mini-btn"><i data-lucide="plus"></i>Add Row</button>
-          </div>
+          <div class="row"><button id="stream-add" class="mini-btn"><i data-lucide="plus"></i>Add Streaming Row</button></div>
         </div>
 
-        <!-- Big Experiences (yellow) -->
         <div class="card">
-          <div class="flex-row">
-            <span class="pill yellow"><i data-lucide="sun"></i> Big Experiences</span>
-            <span class="muted">Trips, concerts, big days out.</span>
-          </div>
+          <h3 class="section-title"><span class="pill yellow"><i data-lucide="sun"></i> Big Experiences</span></h3>
+          <div class="row"><input id="total-big" type="number" step="0.01" placeholder="Big Experiences total (monthly)" /></div>
           <div id="big-list" style="margin-top:8px"></div>
+          <div class="row"><button id="big-add" class="mini-btn"><i data-lucide="plus"></i>Add Big Row</button></div>
+        </div>
+
+        <!-- Simple totals only for the remaining categories -->
+        <div class="card">
           <div class="row">
-            <button id="big-add" class="mini-btn"><i data-lucide="plus"></i>Add Row</button>
+            <input id="total-date-nights" type="number" step="0.01" placeholder="Date Nights total (monthly)" />
+            <input id="total-pet"          type="number" step="0.01" placeholder="Pet total (monthly)" />
+            <input id="total-investments"  type="number" step="0.01" placeholder="Investments total (monthly)" />
+            <input id="total-savings"      type="number" step="0.01" placeholder="Savings total (monthly)" />
+            <input id="total-work"         type="number" step="0.01" placeholder="Work-Expenses total (monthly)" />
+            <input id="total-fun"          type="number" step="0.01" placeholder="Fun total (monthly)" />
           </div>
         </div>
       </section>
 
-      <!-- Analyze (existing) -->
+      <!-- ANALYZE -->
       <section id="view-analyze">
         <div class="card">
           <div class="row" style="align-items:center">
@@ -118,7 +126,7 @@
         </div>
       </section>
 
-      <!-- Transactions (existing) -->
+      <!-- TRANSACTIONS -->
       <section id="view-transactions">
         <div class="card">
           <div class="row">
@@ -143,7 +151,7 @@
         </div>
       </section>
 
-      <!-- Income Split (existing) -->
+      <!-- INCOME SPLIT -->
       <section id="view-pie">
         <div class="card">
           <div class="row" style="align-items:center">
