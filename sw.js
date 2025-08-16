@@ -1,4 +1,4 @@
-const CACHE = 'budget-restart-v1';
+const CACHE = 'budget-restart-v2';
 const ASSETS = [
   'index.html',
   'app.js',
