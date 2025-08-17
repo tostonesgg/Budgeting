@@ -85,31 +85,40 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('input', onBillInput);
   });
 
-  // Render custom rows from storage
+  // Ensure delete buttons exist for ALL rows (static in HTML)
+  ensureRowDeleteButtons();
+
+  // Render custom rows from storage (each row includes its own delete button)
   ['nn','subs','dates','invest','oneoff'].forEach(renderCustomCategory);
 
-  // --- NEW: Delegated click handler for Add-expense buttons ---
+  // Delegated click handler for Add-expense buttons
   document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.btn-add[data-add]');
-    if (!btn) return;
-    e.preventDefault();
-    modalOpenFor = btn.getAttribute('data-add'); // 'nn' | 'subs' | 'dates' | 'invest' | 'oneoff'
-    openIconModal();
+    const addBtn = e.target.closest('.btn-add[data-add]');
+    if (addBtn) {
+      e.preventDefault();
+      modalOpenFor = addBtn.getAttribute('data-add');
+      openIconModal();
+      return;
+    }
+    const delBtn = e.target.closest('.row-del');
+    if (delBtn) {
+      e.preventDefault();
+      handleDeleteRow(delBtn);
+      return;
+    }
   });
 
   // Modal controls
   iconCancel.addEventListener('click', closeIconModal);
   iconSave.addEventListener('click', handleAddCustom);
   iconSearch.addEventListener('input', renderIconList);
-
-  // --- NEW: Close modal on backdrop click + ESC ---
   modal.addEventListener('click', (e) => { if (e.target === modal) closeIconModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.style.display === 'flex') closeIconModal(); });
 
   // First paint
   updateAll();
 
-  // SW register (keep as-is)
+  // SW (kept)
   if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch {} }
 });
 
@@ -117,7 +126,21 @@ document.addEventListener('DOMContentLoaded', () => {
 function onIncomeChange(){ netIncome = num(netIncomeEl.value); save(KEY_NET, netIncome); updateAll(); }
 function onBillInput(e){ const el=e.currentTarget; values[el.id] = el.value; save(KEY_VALUES, values); updateAll(); }
 
-// ---------- custom rows ----------
+// ---------- add/remove rows ----------
+function ensureRowDeleteButtons(){
+  document.querySelectorAll('.bill-row').forEach(row=>{
+    if (!row.querySelector('.row-del')) {
+      const btn = document.createElement('button');
+      btn.className = 'row-del';
+      btn.type = 'button';
+      btn.setAttribute('aria-label','Remove');
+      btn.innerHTML = '<i data-lucide="x"></i>';
+      row.appendChild(btn);
+    }
+  });
+  try { window.lucide?.createIcons?.(); } catch {}
+}
+
 function renderCustomCategory(cat){
   const wrap = $(`custom-${cat}`);
   if (!wrap) return;
@@ -127,9 +150,13 @@ function renderCustomCategory(cat){
     const inputId = `bill-${cat}-${id}`;
     const row = document.createElement('div');
     row.className = 'bill-row';
+    row.setAttribute('data-custom','1');
+    row.setAttribute('data-cat', cat);
+    row.setAttribute('data-custom-id', String(id));
     row.innerHTML = `
       <label for="${inputId}"><i data-lucide="${icon}"></i> ${escapeHtml(label)}</label>
       <input class="bill-input" id="${inputId}" type="number" step="0.01" placeholder="Amount / month" />
+      <button class="row-del" type="button" aria-label="Remove"><i data-lucide="x"></i></button>
     `;
     wrap.appendChild(row);
     const input = row.querySelector('input');
@@ -139,17 +166,25 @@ function renderCustomCategory(cat){
   try { window.lucide?.createIcons?.(); } catch {}
 }
 
-function handleAddCustom(){
-  const label = (customLabel.value || '').trim();
-  if (!modalOpenFor) return;
-  if (!label) { alert('Please enter a name for this expense.'); return; }
-  const icon = selectedIcon || 'circle';
-  const entry = { id: Date.now(), label, icon };
-  custom[modalOpenFor] = custom[modalOpenFor] || [];
-  custom[modalOpenFor].push(entry);
-  save(KEY_CUSTOM, custom);
-  renderCustomCategory(modalOpenFor);
-  closeIconModal();
+function handleDeleteRow(btn){
+  const row = btn.closest('.bill-row');
+  if (!row) return;
+  const input = row.querySelector('input.bill-input');
+  if (input && input.id) {
+    // clear stored value for this field
+    delete values[input.id];
+    save(KEY_VALUES, values);
+  }
+  // If custom, remove from custom store as well
+  if (row.hasAttribute('data-custom')) {
+    const cat = row.getAttribute('data-cat');
+    const cid = Number(row.getAttribute('data-custom-id'));
+    if (cat && Number.isFinite(cid)) {
+      custom[cat] = (custom[cat] || []).filter(x => x.id !== cid);
+      save(KEY_CUSTOM, custom);
+    }
+  }
+  row.remove();
   updateAll();
 }
 
