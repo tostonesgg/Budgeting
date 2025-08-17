@@ -10,7 +10,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const categoriesEl = document.getElementById("categories");
 
   let income = 0;
-  let categories = [];
+  let categories = [
+  {
+    name: "Essentials",
+    color: "#ef4444", // Default red (adjust if you want a different base color)
+    icon: "crown",
+    expenses: [
+      { name: "Mortgage", amount: 0, icon: "house" },
+      { name: "HOA", amount: 0, icon: "house" },
+      { name: "Property Tax", amount: 0, icon: "banknote" },
+      { name: "Electricity", amount: 0, icon: "zap" },
+      { name: "Gas", amount: 0, icon: "cooking-pot" },
+      { name: "Water", amount: 0, icon: "droplet" },
+      { name: "Internet", amount: 0, icon: "wifi" },
+      { name: "Phone", amount: 0, icon: "phone" },
+      { name: "Groceries", amount: 0, icon: "carrot" },
+      { name: "Transportation", amount: 0, icon: "fuel" },
+      { name: "Car Insurance", amount: 0, icon: "car" },
+      { name: "Car Registration", amount: 0, icon: "file-text" },
+      { name: "Car Maintenance", amount: 0, icon: "wrench" },
+      { name: "Pet Insurance", amount: 0, icon: "paw-print" },
+      { name: "Pet Food", amount: 0, icon: "beef" },
+      { name: "Health Insurance", amount: 0, icon: "stethoscope" }
+    ]
+  }
+];
+
 
   // Hook up category color button to hidden color input
   const colorBtn = document.getElementById("cat-color-btn");
