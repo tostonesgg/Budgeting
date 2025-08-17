@@ -9,88 +9,130 @@
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
   <style>
-    :root{
-      --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; --text:#e5e7eb;
-      --bg-light:#f8fafc; --card-light:#ffffff; --muted-light:#475569; --line-light:#e2e8f0; --field-light:#ffffff; --text-dark:#111827;
-    }
-    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    [data-theme="light"] body{background:var(--bg-light);color:var(--text-dark)}
+  :root{
+    --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; --text:#e5e7eb;
+    --bg-light:#f8fafc; --card-light:#ffffff; --muted-light:#475569; --line-light:#e2e8f0; --field-light:#ffffff; --text-dark:#111827;
+  }
 
-    .wrap{max-width:860px;margin:0 auto;padding:16px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
-    h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
+  html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  [data-theme="light"] body{background:var(--bg-light);color:var(--text-dark)}
 
-    /* Header actions */
-    .hdr-actions{display:flex;gap:8px}
-    .btn{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
-    .btn:focus{outline:2px solid var(--focus)}
-    [data-theme="light"] .btn{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
+  .wrap{max-width:860px;margin:0 auto;padding:16px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+  h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
 
-    /* Cards / form controls */
-    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-    [data-theme="light"] .card{background:var(--card-light);border-color:var(--line-light)}
-    input,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
-    input:focus,button:focus{outline:2px solid var(--focus)}
-    [data-theme="light"] input,[data-theme="light"] button{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    .row>*{flex:1 1 min(240px,100%)}
-    .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
-    .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
+  /* Header actions */
+  .hdr-actions{display:flex;gap:8px}
+  .btn{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+  .btn:focus{outline:2px solid var(--focus)}
+  [data-theme="light"] .btn{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
 
-    /* Category cards */
-    .category-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .category-title{display:flex;gap:8px;align-items:center;font-weight:900;font-size:20px}
-    .cat-total{font-weight:800}
+  /* Cards / form controls */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  [data-theme="light"] .card{background:var(--card-light);border-color:var(--line-light)}
+  input,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
+  input:focus,button:focus{outline:2px solid var(--focus)}
+  [data-theme="light"] input,[data-theme="light"] button{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row>*{flex:1 1 min(240px,100%)}
+  .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
+  .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
 
-    /* Expense rows: label | input | freq | edit | delete */
-    .bill-row{
-      display:grid;
-      grid-template-columns: 1fr 120px 60px 40px 40px;
-      gap:10px;align-items:center;margin:8px 0
-    }
-    .bill-row label{
-      min-width:0;display:flex;align-items:center;gap:8px;
-      white-space:normal;overflow-wrap:anywhere;font-size:14px;
-    }
-    .bill-row label svg{width:1em;height:1em}
-    .bill-row input{width:100%;max-width:100%;box-sizing:border-box}
-    .btn-icon{
-      display:inline-flex;align-items:center;justify-content:center;
-      width:40px;height:40px;border-radius:8px;border:1px solid var(--line);
-      background:transparent;color:inherit;cursor:pointer
-    }
-    .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
-    [data-theme="light"] .btn-icon{border-color:var(--line-light)}
-    .btn-freq{
-      height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer
-    }
-    [data-theme="light"] .btn-freq{border-color:var(--line-light)}
-    @media (max-width:480px){
-      .bill-row{grid-template-columns:1fr 100px 56px 40px 40px}
-      .btn-freq{font-size:12px;padding:0 6px}
-    }
+  /* Category cards */
+  .category-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .category-title{display:flex;gap:8px;align-items:center;font-weight:900;font-size:20px}
+  .cat-total{font-weight:800}
 
-    .card-actions{display:flex;gap:8px;margin-top:8px;align-items:center}
-    .btn-add{flex:1;border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px;justify-content:center;display:inline-flex;align-items:center;gap:6px}
-    [data-theme="light"] .btn-add{border-color:var(--line-light)}
-    .btn-cat{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit}
-    [data-theme="light"] .btn-cat{border-color:var(--line-light)}
+  /* =========================
+     EXPENSE ROW – compact mode
+     label | input | freq | edit | delete
+     ========================= */
+  .bill-row{
+    display:grid;
+    grid-template-columns: 1fr 110px 56px 36px 36px; /* tighter columns */
+    gap:8px;
+    align-items:center;
+    margin:6px 0;
+  }
+  @media (max-width:480px){
+    .bill-row{ grid-template-columns: 1fr 90px 52px 36px 36px; gap:6px; }
+  }
 
-    /* Non-monthly notes */
-    .notes{margin-top:6px;font-size:12px;color:var(--muted)}
-    [data-theme="light"] .notes{color:var(--muted-light)}
+  /* Label (icon + name) smaller */
+  .bill-row label{
+    min-width:0;display:flex;align-items:center;gap:6px;
+    white-space:normal;overflow-wrap:anywhere;
+    font-size:13px;            /* ↓ from ~16px */
+    line-height:1.2;
+  }
+  .bill-row label svg{
+    width:14px; height:14px;   /* ↓ smaller icon */
+  }
 
-    /* Color picker (Safari-safe: use label[for]) */
-    .color-input{
-      position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
-      clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;opacity:0;
-    }
-    .color-btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
-    .color-btn .swatch{
-      width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block
-    }
-    [data-theme="light"] .color-btn .swatch{border-color:var(--line-light)}
-  </style>
+  /* Input smaller */
+  .bill-row input{
+    width:100%;max-width:100%;box-sizing:border-box;
+    padding:6px 8px;           /* ↓ tighter padding */
+    height:36px;               /* ↓ shorter control */
+    font-size:13px;
+  }
+
+  /* Frequency pill smaller */
+  .btn-freq{
+    height:36px;               /* ↓ matches input height */
+    padding:0 8px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:transparent;color:inherit;cursor:pointer;
+    font-size:12px;            /* ↓ smaller text */
+  }
+  [data-theme="light"] .btn-freq{border-color:var(--line-light)}
+
+  /* Row icon buttons (edit/delete) smaller */
+  .btn-icon{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:36px;height:36px;    /* ↓ from 40px */
+    border-radius:8px;border:1px solid var(--line);
+    background:transparent;color:inherit;cursor:pointer
+  }
+  .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
+  [data-theme="light"] .btn-icon{border-color:var(--line-light)}
+
+  /* Category footer actions: smaller, add stays flexible width, edit/delete are compact */
+  .card-actions{display:flex;gap:8px;margin-top:8px;align-items:center}
+  .btn-add{
+    flex:1;
+    border:1px dashed var(--line);
+    background:transparent;
+    padding:5px 8px;           /* ↓ */
+    border-radius:8px;
+    justify-content:center;display:inline-flex;align-items:center;gap:6px;
+    font-size:0.9rem;          /* slightly smaller text */
+  }
+  [data-theme="light"] .btn-add{border-color:var(--line-light)}
+  .btn-cat{
+    width:36px;height:36px;    /* ↓ from 40px */
+    display:inline-flex;align-items:center;justify-content:center;
+    border-radius:8px;border:1px solid var(--line);
+    background:transparent;color:inherit;cursor:pointer
+  }
+  [data-theme="light"] .btn-cat{border-color:var(--line-light)}
+
+  /* Non-monthly notes */
+  .notes{margin-top:6px;font-size:12px;color:var(--muted)}
+  [data-theme="light"] .notes{color:var(--muted-light)}
+
+  /* Color picker (Safari-safe: use label[for]) */
+  .color-input{
+    position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+    clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;opacity:0;
+  }
+  .color-btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+  .color-btn .swatch{
+    width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block
+  }
+  [data-theme="light"] .color-btn .swatch{border-color:var(--line-light)}
+</style>
 </head>
 <body>
 <div class="wrap">
