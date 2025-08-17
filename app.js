@@ -27,10 +27,10 @@ document.addEventListener("DOMContentLoaded", () => {
       expenses: [
         { name: "Mortgage", amount: 0, icon: "house", freq: "mo" },
         { name: "HOA", amount: 0, icon: "house", freq: "mo" },
-        { name: "Property Tax", amount: 0, icon: "banknote", freq: "yr" },
         { name: "Electricity", amount: 0, icon: "zap", freq: "mo" },
-        { name: "Gas", amount: 0, icon: "cooking-pot", freq: "mo" },
         { name: "Water", amount: 0, icon: "droplet", freq: "mo" },
+        { name: "Gas", amount: 0, icon: "cooking-pot", freq: "mo" },
+        { name: "Waste", amount: 0, icon: "trash-2", freq: "qtr" },
         { name: "Internet", amount: 0, icon: "wifi", freq: "mo" },
         { name: "Phone", amount: 0, icon: "phone", freq: "mo" },
         { name: "Home Security", amount: 0, icon: "cctv", freq: "mo" },
@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
         { name: "Car Registration", amount: 0, icon: "file-text", freq: "yr" },
         { name: "Car Maintenance", amount: 0, icon: "wrench", freq: "qtr" },
         { name: "Pet Insurance", amount: 0, icon: "paw-print", freq: "mo" },
-        { name: "Pet Food", amount: 0, icon: "beef", freq: "mo" },
+        { name: "Pet Food", amount: 0, icon: "beef", freq: "qtr" },
         { name: "Health Insurance", amount: 0, icon: "stethoscope", freq: "mo" }
       ]
     }
