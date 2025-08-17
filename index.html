@@ -25,6 +25,12 @@
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
 
+    #theme-toggle{background:transparent;border:1px solid var(--line);border-radius:10px;color:inherit;padding:8px 10px;display:flex;gap:6px;align-items:center}
+    [data-theme="light"] #theme-toggle{border-color:var(--line-light)}
+    .icon-sun{display:none}
+    [data-theme="light"] .icon-moon{display:none}
+    [data-theme="light"] .icon-sun{display:inline}
+
     .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
     [data-theme="light"] .card{background:var(--card-light);border-color:var(--line-light)}
 
@@ -54,6 +60,11 @@
     .tab-btn.active{background:#111827;border-color:#374151}
     [data-theme="light"] .tab-btn.active{background:#e5e7eb;border-color:var(--line-light)}
 
+    main section{display:none} main section.active{display:block}
+    [data-theme="light"] .tabs{background:var(--card-light);border-top-color:var(--line-light)}
+
+    canvas{max-width:100%;height:auto}
+
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
     .modal{background:var(--card);border:1px solid var(--line);border-radius:12px;max-width:500px;width:92vw;padding:12px}
     [data-theme="light"] .modal{background:var(--card-light);border-color:var(--line-light)}
@@ -64,11 +75,34 @@
 <div class="wrap">
   <header>
     <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
+    <button id="theme-toggle"><i class="icon-moon" data-lucide="moon"></i><i class="icon-sun" data-lucide="sun"></i></button>
   </header>
 
   <main>
     <section id="view-setup" class="active">
       <div id="categories"></div>
+      <div class="card" id="metrics-card">
+        <div class="row" style="align-items:center;gap:12px">
+          <div style="flex:1"><strong>Non-Negotiables total:</strong> <span id="nn-total">—</span></div>
+          <div id="play-left" style="flex:1;padding:10px;border-radius:8px;text-align:center;font-weight:700">You’ve got —/mo to play with</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-transactions">
+      <div class="card">
+        <p class="muted">Transactions section placeholder</p>
+      </div>
+    </section>
+
+    <section id="view-pie">
+      <div class="card">
+        <div class="row" style="align-items:center">
+          <span style="display:flex;align-items:center;gap:8px;font-weight:600"><i data-lucide="chart-pie"></i> Income Split</span>
+        </div>
+        <canvas id="pie" width="400" height="400"></canvas>
+        <div id="pie-legend" class="muted" style="margin-top:8px"></div>
+      </div>
     </section>
   </main>
 </div>
@@ -96,7 +130,7 @@
   </div>
 </div>
 
-<script defer src="app.js?v=edit1"></script>
+<script defer src="app.js?v=edit2"></script>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
   try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
