@@ -10,7 +10,25 @@
 
   <title>Budget</title>
 
+  <!-- Try unpkg first -->
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- Fallback to jsDelivr if unpkg fails or is blocked -->
+  <script>
+    (function ensureLucide(){
+      function init(){ try{ if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); }catch(e){} }
+      // If lucide didn't load yet, inject fallback
+      if (!window.lucide) {
+        var s = document.createElement('script');
+        s.src = "https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js";
+        s.defer = true;
+        s.onload = init;
+        document.head.appendChild(s);
+      }
+      // Also try to init after DOM is ready (covers fast/slow loads)
+      window.addEventListener('DOMContentLoaded', init);
+      window.addEventListener('load', init);
+    })();
+  </script>
 
   <style>
     /* ---------- Theme + palette ---------- */
@@ -115,7 +133,7 @@
   <div class="wrap">
     <header>
       <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
-      <button id="theme-toggle" title="Toggle theme">
+      <button id="theme-toggle" type="button" title="Toggle theme">
         <i class="icon-moon" data-lucide="moon"></i>
         <i class="icon-sun" data-lucide="sun"></i>
         Theme
@@ -277,9 +295,13 @@
     </div>
   </nav>
 
-  <script type="module" src="app.js"></script>
+  <!-- IMPORTANT: use defer (not type=module) for max Safari/iPad compatibility -->
+  <script defer src="app.js"></script>
+  <!-- Try to (re)render icons once everything is in the DOM -->
   <script>
-    if (window.lucide?.createIcons) window.lucide.createIcons();
+    window.addEventListener('DOMContentLoaded', function(){
+      try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
+    });
   </script>
 </body>
 </html>
