@@ -3,185 +3,77 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
   <title>Budget</title>
-
-  <!-- Lucide (icons) -->
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="manifest" href="manifest.webmanifest" />
 
   <style>
     :root {
-      --nn:#ef4444;          --nn-200:#fecaca;
-      --subs:#3b82f6;        --subs-200:#bfdbfe;
-      --dates:#ec4899;       --dates-200:#fbcfe8;
-      --invest:#f59e0b;      --invest-200:#fed7aa;
-      --oneoff:#38bdf8;      --oneoff-200:#bae6fd;
+      --nn:#ef4444; --nn-200:#fecaca;
+      --subs:#3b82f6; --subs-200:#bfdbfe;
+      --dates:#ec4899; --dates-200:#fbcfe8;
+      --invest:#f59e0b; --invest-200:#fed7aa;
+      --oneoff:#38bdf8; --oneoff-200:#bae6fd;
 
       --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; --text:#e5e7eb;
       --bg-light:#f8fafc; --card-light:#ffffff; --muted-light:#475569; --line-light:#e2e8f0; --field-light:#ffffff; --text-dark:#111827;
     }
-    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    body{margin:0;padding:0;font-family:ui-sans-serif,system-ui;background:var(--bg);color:var(--text)}
     [data-theme="light"] body{ background:var(--bg-light); color:var(--text-dark); }
 
-    .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0));overflow-x:hidden}
+    .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:90px}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
 
-    #theme-toggle{background:transparent;border:1px solid var(--line);border-radius:10px;color:inherit;padding:8px 10px;display:flex;gap:6px;align-items:center}
-    [data-theme="light"] #theme-toggle{ border-color:var(--line-light); }
-    .icon-sun{display:none}
-    [data-theme="light"] .icon-moon{display:none}
-    [data-theme="light"] .icon-sun{display:inline}
-
     .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-    [data-theme="light"] .card{background:var(--card-light);border:1px solid var(--line-light)}
+    [data-theme="light"] .card{background:var(--card-light);border-color:var(--line-light)}
 
-    input,select,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
-    input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
-    button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
-    [data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] button{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
-
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    .row>*{flex:1 1 min(240px,100%)}
-    .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
-    .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
-
-    .subbig{font-size:22px;font-weight:900;margin:6px 0}
-    .card-head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:8px}
-    .card-title{display:inline-flex;align-items:center;gap:8px;font-weight:900;font-size:20px}
+    .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .card-title{display:flex;align-items:center;gap:8px;font-weight:900;font-size:20px}
     .cat-total{font-weight:800}
 
-    .btn-add{border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px;width:100%;justify-content:center}
-    [data-theme="light"] .btn-add{border-color:var(--line-light)}
-    .card-actions{margin-top:8px}
+    .card-nn{border-color:var(--nn)} [data-theme="light"] .card-nn{background:var(--nn-200)}
+    .card-subs{border-color:var(--subs)} [data-theme="light"] .card-subs{background:var(--subs-200)}
+    .card-dates{border-color:var(--dates)} [data-theme="light"] .card-dates{background:var(--dates-200)}
+    .card-invest{border-color:var(--invest)} [data-theme="light"] .card-invest{background:var(--invest-200)}
+    .card-oneoff{border-color:var(--oneoff)} [data-theme="light"] .card-oneoff{background:var(--oneoff-200)}
 
-    .card-nn{ border-color:var(--nn) }         [data-theme="light"] .card-nn{ background:var(--nn-200) }
-    .card-subs{ border-color:var(--subs) }     [data-theme="light"] .card-subs{ background:var(--subs-200) }
-    .card-dates{ border-color:var(--dates) }   [data-theme="light"] .card-dates{ background:var(--dates-200) }
-    .card-invest{ border-color:var(--invest) } [data-theme="light"] .card-invest{ background:var(--invest-200) }
-    .card-oneoff{ border-color:var(--oneoff) } [data-theme="light"] .card-oneoff{ background:var(--oneoff-200) }
-
-    /* Expense row: label | input | edit | delete */
-    .bill-row{
-      display:grid;
-      grid-template-columns:minmax(0,1fr) minmax(0,44%) 40px 40px;
-      gap:10px;align-items:center;margin:8px 0
-    }
-    .bill-row label{min-width:0;display:flex;align-items:center;gap:8px;white-space:normal;overflow-wrap:anywhere}
-    .bill-row input{width:100%;max-width:100%;box-sizing:border-box}
-    .row-btn{
-      display:inline-flex;align-items:center;justify-content:center;
-      width:40px;height:40px;border-radius:8px;border:1px solid var(--line);
-      background:transparent;color:inherit
-    }
+    .bill-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,44%) 40px 40px;gap:10px;align-items:center;margin:8px 0}
+    .bill-row label{display:flex;align-items:center;gap:8px}
+    .bill-row input{width:100%;box-sizing:border-box}
+    .row-btn{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit}
     .row-btn:hover{outline:2px solid var(--focus);outline-offset:-2px}
     [data-theme="light"] .row-btn{border-color:var(--line-light)}
-    @media (max-width:420px){
-      .bill-row{grid-template-columns:1fr 1fr 40px 40px}
-      .bill-row label{grid-column:1 / -1}
-    }
 
-    canvas{max-width:100%;height:auto}
+    .btn-add{border:1px dashed var(--line);background:transparent;padding:6px;border-radius:8px;width:100%;justify-content:center}
+    [data-theme="light"] .btn-add{border-color:var(--line-light)}
 
-    .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0))}
+    .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px}
     .tabs .inner{max-width:860px;margin:0 auto;display:flex;gap:12px;justify-content:space-between}
-    .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:inherit}
+    .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:10px;border:1px solid transparent;background:transparent;color:inherit}
     .tab-btn.active{background:#111827;border-color:#374151}
     [data-theme="light"] .tab-btn.active{background:#e5e7eb;border-color:var(--line-light)}
-    .tab-btn span{font-size:11px;color:var(--muted)} [data-theme="light"] .tab-btn span{color:var(--muted-light)}
-    main section{display:none} main section.active{display:block}
 
-    [data-theme="light"] .tabs{ background: var(--card-light); border-top-color: var(--line-light) }
-    [data-theme="light"] .tabs .tab-btn span{ color: var(--muted-light) }
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
+    .modal{background:var(--card);border:1px solid var(--line);border-radius:12px;max-width:500px;width:92vw;padding:12px}
+    [data-theme="light"] .modal{background:var(--card-light);border-color:var(--line-light)}
+    .modal h3{margin-top:0}
   </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
-    <button id="theme-toggle" type="button" title="Toggle theme">
-      <i class="icon-moon" data-lucide="moon"></i>
-      <i class="icon-sun" data-lucide="sun"></i>
-      Theme
-    </button>
   </header>
 
   <main>
-    <!-- SETUP -->
     <section id="view-setup" class="active">
-      <div class="card">
-        <h2 class="big">What is your monthly net income?</h2>
-        <div class="row">
-          <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home (post-tax)" />
-          <button id="save-net"><i data-lucide="save"></i>Save</button>
-        </div>
-        <p class="muted" id="net-yearly">Yearly: —</p>
-      </div>
-
-      <!-- Categories will be injected here -->
       <div id="categories"></div>
-
-      <!-- Dynamic metrics -->
-      <div class="card" id="metrics-card">
-        <div class="row" style="align-items:center;gap:12px">
-          <div style="flex:1"><strong>Non-Negotiables total:</strong> <span id="nn-total">—</span></div>
-          <div id="play-left" style="flex:1;padding:10px;border-radius:8px;text-align:center;font-weight:700">You’ve got —/mo to play with</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TRANSACTIONS -->
-    <section id="view-transactions">
-      <div class="card">
-        <div class="row">
-          <input id="desc" placeholder="Description" />
-          <input id="amount" type="number" step="0.01" placeholder="Amount" />
-          <select id="type" aria-label="Type">
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
-          </select>
-          <select id="category" aria-label="Category">
-            <option>Non-Negotiables</option>
-            <option>Subscriptions</option>
-            <option>Date Nights</option>
-            <option>Investments</option>
-            <option>One-off Purchases</option>
-          </select>
-          <button id="add"><i data-lucide="receipt-text"></i>Add</button>
-        </div>
-        <p class="muted">Pick a type + category, then Add. Data stays on-device.</p>
-      </div>
-
-      <div class="card">
-        <div class="row">
-          <input id="search" placeholder="Search description" />
-          <button id="clear"><i data-lucide="eraser"></i>Clear All</button>
-        </div>
-        <ul id="list"></ul>
-      </div>
-    </section>
-
-    <!-- INCOME SPLIT -->
-    <section id="view-pie">
-      <div class="card">
-        <div class="row" style="align-items:center">
-          <span style="display:inline-flex;align-items:center;gap:8px;font-weight:600;">
-            <i data-lucide="chart-pie"></i> Income Split
-          </span>
-        </div>
-        <canvas id="pie" width="400" height="400"></canvas>
-        <div id="pie-legend" class="muted" style="margin-top:8px"></div>
-      </div>
     </section>
   </main>
 </div>
 
-<!-- Bottom Tabs -->
-<nav class="tabs" role="navigation" aria-label="Tabs">
+<nav class="tabs">
   <div class="inner">
     <button class="tab-btn active" data-tab="setup"><i data-lucide="banknote"></i><span>Setup</span></button>
     <button class="tab-btn" data-tab="transactions"><i data-lucide="receipt-text"></i><span>Transactions</span></button>
@@ -189,11 +81,26 @@
   </div>
 </nav>
 
-<script defer src="app.js?v=templated"></script>
+<!-- Edit Modal -->
+<div class="modal-backdrop" id="edit-backdrop">
+  <div class="modal">
+    <h3>Edit expense</h3>
+    <div class="row">
+      <input id="edit-label" placeholder="Label" />
+      <input id="edit-icon" placeholder="Icon name (e.g. car, wifi)" />
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="edit-cancel"><i data-lucide="x"></i> Cancel</button>
+      <button id="edit-save"><i data-lucide="check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<script defer src="app.js?v=edit1"></script>
 <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
-  });
+window.addEventListener('DOMContentLoaded', () => {
+  try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
+});
 </script>
 </body>
 </html>
