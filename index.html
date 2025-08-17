@@ -32,7 +32,22 @@
     input,select,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
     input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
     button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
-    [data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] button{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
+/* keep input in DOM but invisible (Safari won't open picker if display:none) */
+.color-input{
+  position:absolute;
+  width:1px; height:1px;
+  opacity:0; pointer-events:none;
+  left:-9999px;
+}
+
+/* optional color preview on the button */
+.color-btn{ display:inline-flex; align-items:center; gap:8px; }
+.color-btn .swatch{
+  width:14px; height:14px; border-radius:4px;
+  border:1px solid var(--line);
+  display:inline-block;
+}
+[data-theme="light"] .color-btn .swatch{ border-color:var(--line-light); }
 
     .row{display:flex;gap:8px;flex-wrap:wrap}
     .row>*{flex:1 1 min(240px,100%)}
