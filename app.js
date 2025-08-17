@@ -36,6 +36,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 ];
 
+// Render defaults on startup
+renderCategories();
+
 
   // Hook up category color button to hidden color input
   const colorBtn = document.getElementById("cat-color-btn");
