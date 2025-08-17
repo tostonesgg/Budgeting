@@ -18,7 +18,7 @@ saveIncomeBtn.addEventListener("click", () => {
   updateIncome();
 });
 
-// Update on typing too
+// Update while typing too
 incomeInput.addEventListener("input", () => {
   updateIncome();
 });
@@ -26,8 +26,9 @@ incomeInput.addEventListener("input", () => {
 function updateIncome() {
   income = parseFloat(incomeInput.value) || 0;
   yearlyEl.textContent = `Yearly: $${(income * 12).toFixed(2)}`;
-  updateTotals();
+  updateTotals(); // this will refresh both yearly and play money
 }
+
 
 
   // Add category
