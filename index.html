@@ -48,10 +48,11 @@
     .row>*{flex:1 1 min(240px,100%)}
     .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
     .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
-    .subbig{font-size:18px;font-weight:700;margin:6px 0}
 
+    /* Category headers: bigger + black (900) */
+    .subbig{font-size:22px;font-weight:900;margin:6px 0}
     .card-head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:8px}
-    .card-title{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+    .card-title{display:inline-flex;align-items:center;gap:8px;font-weight:900;font-size:20px}
     .cat-total{font-weight:800}
 
     .btn-add{border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px;width:100%;justify-content:center}
@@ -64,10 +65,25 @@
     .card-invest{ border-color:var(--invest) } [data-theme="light"] .card-invest{ background:var(--invest-200) }
     .card-oneoff{ border-color:var(--oneoff) } [data-theme="light"] .card-oneoff{ background:var(--oneoff-200) }
 
-    .bill-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,44%);gap:10px;align-items:center;margin:8px 0}
+    /* Expense row: label | input | delete */
+    .bill-row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,44%) 40px;
+      gap:10px;align-items:center;margin:8px 0
+    }
     .bill-row label{min-width:0;display:flex;align-items:center;gap:8px;white-space:normal;overflow-wrap:anywhere}
     .bill-row input{width:100%;max-width:100%;box-sizing:border-box}
-    @media (max-width:420px){ .bill-row{grid-template-columns:1fr} }
+    .row-del{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:40px;height:40px;border-radius:8px;border:1px solid var(--line);
+      background:transparent;color:inherit
+    }
+    .row-del:hover{outline:2px solid var(--focus);outline-offset:-2px}
+    [data-theme="light"] .row-del{border-color:var(--line-light)}
+    @media (max-width:420px){
+      .bill-row{grid-template-columns:1fr 1fr 40px}
+      .bill-row label{grid-column:1 / -1}
+    }
 
     canvas{max-width:100%;height:auto}
 
@@ -145,9 +161,7 @@
           <div class="bill-row"><label for="bill-transportation"><i data-lucide="fuel"></i> Transportation</label><input class="bill-input" id="bill-transportation" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-health"><i data-lucide="stethoscope"></i> Health Insurance</label><input class="bill-input" id="bill-health" type="number" step="0.01" placeholder="Amount / month" /></div>
 
-          <!-- Custom rows render here -->
           <div class="custom-container" id="custom-nn"></div>
-
           <div class="card-actions">
             <button class="btn-add" data-add="nn"><i data-lucide="plus"></i>Add expense</button>
           </div>
@@ -167,7 +181,6 @@
           <div class="bill-row"><label for="bill-chatgpt"><i data-lucide="bot"></i> ChatGPT</label><input class="bill-input" id="bill-chatgpt" type="number" step="0.01" placeholder="Amount / month" /></div>
 
           <div class="custom-container" id="custom-subs"></div>
-
           <div class="card-actions">
             <button class="btn-add" data-add="subs"><i data-lucide="plus"></i>Add expense</button>
           </div>
@@ -185,7 +198,6 @@
           <div class="bill-row"><label for="bill-shopping"><i data-lucide="shopping-bag"></i> Shopping</label><input class="bill-input" id="bill-shopping" type="number" step="0.01" placeholder="Amount / month" /></div>
 
           <div class="custom-container" id="custom-dates"></div>
-
           <div class="card-actions">
             <button class="btn-add" data-add="dates"><i data-lucide="plus"></i>Add expense</button>
           </div>
@@ -194,7 +206,7 @@
         <!-- Investments -->
         <div class="card card-invest" id="card-invest">
           <div class="card-head">
-            <span class="card-title"><i data-lucide="candlestick-chart"></i> Investments</span>
+            <span class="card-title"><i data-lucide="coins"></i> Investments</span>
             <span class="cat-total" id="ttl-invest">—</span>
           </div>
           <div class="bill-row"><label for="bill-stocks"><i data-lucide="candlestick-chart"></i> Stocks</label><input class="bill-input" id="bill-stocks" type="number" step="0.01" placeholder="Amount / month" /></div>
@@ -204,7 +216,6 @@
           <div class="bill-row"><label for="bill-emergency"><i data-lucide="siren"></i> Emergency Fund</label><input class="bill-input" id="bill-emergency" type="number" step="0.01" placeholder="Amount / month" /></div>
 
           <div class="custom-container" id="custom-invest"></div>
-
           <div class="card-actions">
             <button class="btn-add" data-add="invest"><i data-lucide="plus"></i>Add expense</button>
           </div>
@@ -222,7 +233,6 @@
           <div class="bill-row"><label for="bill-smeegother"><i data-lucide="dog"></i> Other Smeeg-related toys, creams</label><input class="bill-input" id="bill-smeegother" type="number" step="0.01" placeholder="Amount / month" /></div>
 
           <div class="custom-container" id="custom-oneoff"></div>
-
           <div class="card-actions">
             <button class="btn-add" data-add="oneoff"><i data-lucide="plus"></i>Add expense</button>
           </div>
@@ -312,8 +322,8 @@
     </div>
   </div>
 
-<!-- near the end, before </body> -->
-<script defer src="app.js?v=fix1"></script>
+  <!-- cache-bust the app file when you update it -->
+  <script defer src="app.js?v=remove-rows-1"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function(){
       try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
