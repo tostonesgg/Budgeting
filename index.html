@@ -43,60 +43,57 @@
   .category-title{display:flex;gap:8px;align-items:center;font-weight:900;font-size:20px}
   .cat-total{font-weight:800}
 
-  /* =========================
-     EXPENSE ROW – compact mode
-     label | input | freq | edit | delete
-     ========================= */
-  .bill-row{
-    display:grid;
-    grid-template-columns: 1fr 110px 56px 36px 36px; /* tighter columns */
-    gap:8px;
-    align-items:center;
-    margin:6px 0;
-  }
-  @media (max-width:480px){
-    .bill-row{ grid-template-columns: 1fr 90px 52px 36px 36px; gap:6px; }
-  }
+/* =========================
+   EXPENSE ROW – refined compact
+   ========================= */
+.bill-row{
+  display:grid;
+  grid-template-columns: 1fr 90px 48px 32px 32px; /* shorter input + smaller buttons */
+  gap:6px;
+  align-items:center;
+  margin:6px 0;
+}
+@media (max-width:480px){
+  .bill-row{ grid-template-columns: 1fr 80px 44px 32px 32px; gap:4px; }
+}
 
-  /* Label (icon + name) smaller */
-  .bill-row label{
-    min-width:0;display:flex;align-items:center;gap:6px;
-    white-space:normal;overflow-wrap:anywhere;
-    font-size:13px;            /* ↓ from ~16px */
-    line-height:1.2;
-  }
-  .bill-row label svg{
-    width:14px; height:14px;   /* ↓ smaller icon */
-  }
+/* Label (icon + name) */
+.bill-row label{
+  min-width:0;display:flex;align-items:center;gap:6px;
+  font-size:13px;line-height:1.2;
+  white-space:normal;overflow-wrap:anywhere;
+}
+.bill-row label svg{ width:14px; height:14px; }
 
-  /* Input smaller */
-  .bill-row input{
-    width:100%;max-width:100%;box-sizing:border-box;
-    padding:6px 8px;           /* ↓ tighter padding */
-    height:36px;               /* ↓ shorter control */
-    font-size:13px;
-  }
+/* Input trimmed */
+.bill-row input{
+  width:100%;box-sizing:border-box;
+  padding:4px 6px;       /* tighter */
+  height:32px;           /* smaller */
+  font-size:13px;
+}
 
-  /* Frequency pill smaller */
-  .btn-freq{
-    height:36px;               /* ↓ matches input height */
-    padding:0 8px;
-    border-radius:8px;
-    border:1px solid var(--line);
-    background:transparent;color:inherit;cursor:pointer;
-    font-size:12px;            /* ↓ smaller text */
-  }
-  [data-theme="light"] .btn-freq{border-color:var(--line-light)}
+/* Frequency pill trimmed */
+.btn-freq{
+  height:32px; padding:0 6px;
+  font-size:11px;
+  border-radius:6px;
+  border:1px solid var(--line);
+  background:transparent;color:inherit;cursor:pointer;
+}
+[data-theme="light"] .btn-freq{border-color:var(--line-light)}
 
-  /* Row icon buttons (edit/delete) smaller */
-  .btn-icon{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:36px;height:36px;    /* ↓ from 40px */
-    border-radius:8px;border:1px solid var(--line);
-    background:transparent;color:inherit;cursor:pointer
-  }
-  .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
-  [data-theme="light"] .btn-icon{border-color:var(--line-light)}
+/* Edit / Delete smaller */
+.btn-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;  /* smaller square */
+  border-radius:6px;
+  border:1px solid var(--line);
+  background:transparent;color:inherit;cursor:pointer;
+}
+.btn-icon svg{width:14px;height:14px;}
+.btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
+[data-theme="light"] .btn-icon{border-color:var(--line-light)}
 
   /* Category footer actions: smaller, add stays flexible width, edit/delete are compact */
   .card-actions{display:flex;gap:8px;margin-top:8px;align-items:center}
