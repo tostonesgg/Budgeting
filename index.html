@@ -11,31 +11,25 @@
 
   <title>Budget</title>
 
-  <!-- Lucide icons (vanilla UMD) -->
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
-  <!-- Styling -->
   <style>
     :root {
       --bg:#0b1220; --card:#0f172a; --muted:#9ca3af;
       --line:#1f2937; --line-light:#d1d5db;
       --field:#111827; --focus:#0ea5e9;
     }
-    html,body {
-      margin:0;padding:0;
-      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      background:var(--bg);color:#e5e7eb;
-    }
-    .wrap {max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0))}
+    html,body {margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:#e5e7eb}
+    .wrap{max-width:860px;margin:0 auto;padding:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0))}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
     .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
     input,select,button{background:var(--field);color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
     input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
-    button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+    button{cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
     .muted{color:var(--muted);font-size:12px}
     .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
-    .subbig{font-size:20px;font-weight:900;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
+    .subbig{font-size:20px;font-weight:900;margin:6px 0}
 
     /* Expense row: label | input | edit | delete */
     .bill-row {
@@ -46,9 +40,8 @@
     .bill-row label{min-width:0;display:flex;align-items:center;gap:8px;white-space:normal;overflow-wrap:anywhere}
     .bill-row input{width:100%;max-width:100%;box-sizing:border-box}
     .row-btn {
-      display:inline-flex;align-items:center;justify-content:center;
       width:40px;height:40px;border-radius:8px;border:1px solid var(--line);
-      background:transparent;color:inherit
+      background:transparent;color:inherit;display:flex;align-items:center;justify-content:center;
     }
     .row-btn:hover{outline:2px solid var(--focus);outline-offset:-2px}
     [data-theme="light"] .row-btn{border-color:var(--line-light)}
@@ -74,7 +67,7 @@
   <div class="wrap">
     <header>
       <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
-      <button id="install-help" title="Install"><i data-lucide="download"></i>Install</button>
+      <button id="install-help"><i data-lucide="download"></i>Install</button>
     </header>
 
     <main>
@@ -83,34 +76,46 @@
         <div class="card">
           <h2 class="big">What is your monthly net income?</h2>
           <div class="row">
-            <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home (post-tax)" />
+            <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home" />
             <button id="save-net"><i data-lucide="save"></i>Save</button>
           </div>
           <p class="muted" id="net-yearly">Yearly: —</p>
         </div>
 
-        <!-- Example Category -->
+        <!-- Non-Negotiables -->
         <div class="card">
-          <h2 class="subbig">Non-Negotiable Bills <span id="nn-total">—</span></h2>
+          <h2 class="subbig">Non-Negotiable Bills</h2>
           <div class="bill-row">
             <label for="bill-rent"><i data-lucide="house"></i> Rent/Mortgage</label>
-            <input id="bill-rent" class="bill-input" type="number" step="0.01" placeholder="Amount / month" />
+            <input id="bill-rent" type="number" step="0.01" placeholder="Amount / month" />
             <button class="row-btn btn-edit" data-id="bill-rent"><i data-lucide="cog"></i></button>
             <button class="row-btn btn-remove" data-id="bill-rent"><i data-lucide="x"></i></button>
           </div>
           <div class="bill-row">
             <label for="bill-electric"><i data-lucide="zap"></i> Electricity</label>
-            <input id="bill-electric" class="bill-input" type="number" step="0.01" placeholder="Amount / month" />
+            <input id="bill-electric" type="number" step="0.01" placeholder="Amount / month" />
             <button class="row-btn btn-edit" data-id="bill-electric"><i data-lucide="cog"></i></button>
             <button class="row-btn btn-remove" data-id="bill-electric"><i data-lucide="x"></i></button>
           </div>
-          <!-- Repeat for all other fixed rows -->
+          <!-- repeat this structure for all other fields -->
         </div>
 
-        <!-- Add other categories here, all rows following the same structure -->
+        <!-- Subscriptions -->
+        <div class="card">
+          <h2 class="subbig">Subscriptions</h2>
+          <div class="bill-row">
+            <label for="bill-amazon"><i data-lucide="package"></i> Amazon</label>
+            <input id="bill-amazon" type="number" step="0.01" placeholder="Amount / month" />
+            <button class="row-btn btn-edit" data-id="bill-amazon"><i data-lucide="cog"></i></button>
+            <button class="row-btn btn-remove" data-id="bill-amazon"><i data-lucide="x"></i></button>
+          </div>
+          <!-- etc... -->
+        </div>
+
+        <!-- Add more categories here -->
       </section>
 
-      <!-- TRANSACTIONS -->
+      <!-- Transactions -->
       <section id="view-transactions">
         <div class="card">
           <div class="row">
@@ -120,29 +125,24 @@
             <select id="category"><option>Non-Negotiables</option></select>
             <button id="add"><i data-lucide="receipt-text"></i>Add</button>
           </div>
-          <p class="muted">Pick a type + category, then Add. Data stays on-device.</p>
         </div>
         <div class="card">
-          <div class="row">
-            <input id="search" placeholder="Search description" />
-            <button id="clear"><i data-lucide="eraser"></i>Clear All</button>
-          </div>
           <ul id="list"></ul>
         </div>
       </section>
 
-      <!-- INCOME SPLIT -->
+      <!-- Pie -->
       <section id="view-pie">
         <div class="card">
           <h2 class="subbig"><i data-lucide="chart-pie"></i> Income Split</h2>
           <canvas id="pie" width="400" height="400"></canvas>
-          <div id="pie-legend" class="muted" style="margin-top:8px"></div>
+          <div id="pie-legend"></div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Bottom Tabs -->
+  <!-- Tabs -->
   <nav class="tabs">
     <div class="inner">
       <button class="tab-btn active" data-tab="setup"><i data-lucide="banknote"></i><span>Setup</span></button>
@@ -151,7 +151,7 @@
     </div>
   </nav>
 
-  <script type="module" src="app.js?v=cog1"></script>
-  <script>if (window.lucide?.createIcons) window.lucide.createIcons();</script>
+  <script type="module" src="app.js?v=cog2"></script>
+  <script>if(window.lucide?.createIcons)window.lucide.createIcons();</script>
 </body>
 </html>
