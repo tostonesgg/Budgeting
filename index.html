@@ -42,9 +42,28 @@
     .category-title{display:flex;gap:8px;align-items:center;font-weight:900;font-size:20px}
     .cat-total{font-weight:800}
 
-    .bill-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,44%) 40px 40px;gap:10px;align-items:center;margin:8px 0}
+    .bill-row {
+  display:grid;
+  grid-template-columns: 1fr 120px 40px 40px; /* label | input | edit | delete */
+  gap:10px;
+  align-items:center;
+  margin:8px 0;
+}
+
+.bill-row input {
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+/* Mobile adjustment */
+@media (max-width:480px) {
+  .bill-row {
+    grid-template-columns: 1fr 100px 40px 40px; /* tighten input on narrow screens */
+  }
+}
+
     .bill-row label{min-width:0;display:flex;align-items:center;gap:8px;white-space:normal;overflow-wrap:anywhere}
-    .bill-row input{width:100%;max-width:100%;box-sizing:border-box}
     .btn-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit}
     .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
     [data-theme="light"] .btn-icon{border-color:var(--line-light)}
