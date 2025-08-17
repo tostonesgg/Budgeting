@@ -23,11 +23,17 @@ incomeInput.addEventListener("input", () => {
   updateIncome();
 });
 
-function updateIncome() {
-  income = parseFloat(incomeInput.value) || 0;
-  yearlyEl.textContent = `Yearly: $${(income * 12).toFixed(2)}`;
-  updateTotals(); // this will refresh both yearly and play money
+function updateTotals() {
+  // calculate totals from categories…
+  const nnTotal = /* sum non-negotiables */ 0;
+  const play = income - nnTotal;
+
+  // update UI
+  document.getElementById("nn-total").textContent = `$${nnTotal.toFixed(2)}`;
+  document.getElementById("play-left").textContent = 
+    `You’ve got $${play.toFixed(2)}/mo to play with`;
 }
+
 
 
 
