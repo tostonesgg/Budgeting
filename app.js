@@ -1,8 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const incomeInput = document.getElementById("net-income");
-  const saveIncomeBtn = document.getElementById("save-income");
   const yearlyEl = document.getElementById("net-yearly");
-  const playEl = document.getElementById("play-money");
+  const playEl = document.getElementById("play-left");
 
   const catName = document.getElementById("cat-name");
   const catColor = document.getElementById("cat-color");
@@ -13,35 +12,25 @@ document.addEventListener("DOMContentLoaded", () => {
   let income = 0;
   let categories = [];
 
-
   // Hook up category color button to hidden color input
-const colorBtn = document.getElementById("cat-color-btn");
-const colorInput = document.getElementById("cat-color");
+  const colorBtn = document.getElementById("cat-color-btn");
+  const colorInput = document.getElementById("cat-color");
+  if (colorBtn && colorInput) {
+    colorBtn.addEventListener("click", () => {
+      colorInput.click();
+    });
+  }
 
-if (colorBtn && colorInput) {
-  colorBtn.addEventListener("click", () => {
-    colorInput.click();
+  // Update yearly + play money while typing
+  incomeInput.addEventListener("input", () => {
+    income = parseFloat(incomeInput.value) || 0;
+    yearlyEl.textContent = `Yearly: $${(income * 12).toFixed(2)}`;
+    updateTotals();
   });
-}
 
-// Update while typing too
-incomeInput.addEventListener("input", () => {
-  updateIncome();
-});
-
-function updateTotals() {
-  // calculate totals from categories…
-  const nnTotal = /* sum non-negotiables */ 0;
-  const play = income - nnTotal;
-
-  // update UI
-  document.getElementById("nn-total").textContent = `$${nnTotal.toFixed(2)}`;
-  document.getElementById("play-left").textContent = 
-    `You’ve got $${play.toFixed(2)}/mo to play with`;
-}
-
-
-
+  // ------------------------
+  // Categories
+  // ------------------------
 
   // Add category
   addCatBtn.addEventListener("click", () => {
@@ -85,6 +74,8 @@ function updateTotals() {
         addExpense(i);
       });
     });
+
+    updateTotals();
   }
 
   // Add expense row
