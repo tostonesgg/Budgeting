@@ -13,11 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let income = 0;
   let categories = [];
 
-  // Save income
-saveIncomeBtn.addEventListener("click", () => {
-  updateIncome();
-});
-
 // Update while typing too
 incomeInput.addEventListener("input", () => {
   updateIncome();
