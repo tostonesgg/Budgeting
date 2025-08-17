@@ -14,11 +14,21 @@ document.addEventListener("DOMContentLoaded", () => {
   let categories = [];
 
   // Save income
-  saveIncomeBtn.addEventListener("click", () => {
-    income = parseFloat(incomeInput.value) || 0;
-    yearlyEl.textContent = `Yearly: $${(income * 12).toFixed(2)}`;
-    updateTotals();
-  });
+saveIncomeBtn.addEventListener("click", () => {
+  updateIncome();
+});
+
+// Update on typing too
+incomeInput.addEventListener("input", () => {
+  updateIncome();
+});
+
+function updateIncome() {
+  income = parseFloat(incomeInput.value) || 0;
+  yearlyEl.textContent = `Yearly: $${(income * 12).toFixed(2)}`;
+  updateTotals();
+}
+
 
   // Add category
   addCatBtn.addEventListener("click", () => {
