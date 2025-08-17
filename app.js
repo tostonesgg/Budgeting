@@ -109,11 +109,56 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Modal controls
-  iconCancel.addEventListener('click', closeIconModal);
-  iconSave.addEventListener('click', handleAddCustom);
-  iconSearch.addEventListener('input', renderIconList);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeIconModal(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.style.display === 'flex') closeIconModal(); });
+iconCancel.addEventListener('click', closeIconModal);
+iconSearch.addEventListener('input', renderIconList);
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeIconModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && modal.style.display === 'flex') closeIconModal();
+});
+
+// Save new custom expense
+iconSave.addEventListener('click', () => {
+  const label = (document.getElementById('custom-label')?.value || '').trim();
+  const chosen = document.querySelector('.icon-item.selected');
+  if (!label || !chosen) {
+    alert('Please enter a name and select an icon.');
+    return;
+  }
+
+  const iconName = chosen.dataset.icon;
+  const id = `custom-${Date.now()}`;
+  const cat = modalOpenFor || 'nn';
+
+  // Add to our state
+  if (!custom[cat]) custom[cat] = [];
+  custom[cat].push({ id, label, icon: iconName });
+  save(KEY_CUSTOM, custom);
+
+  // Render new input field into the right category
+  const container = document.getElementById(`card-${cat}`);
+  if (container) {
+    const row = document.createElement('div');
+    row.className = 'bill-row';
+    row.innerHTML = `
+      <label for="${id}"><i data-lucide="${iconName}"></i> ${label}</label>
+      <input id="${id}" class="bill-input" type="number" step="0.01" placeholder="Amount / month" />
+    `;
+    container.appendChild(row);
+
+    // Wire input saving
+    const input = row.querySelector('input');
+    input.addEventListener('input', () => {
+      values[id] = input.value;
+      save(KEY_VALUES, values);
+      updateAll();
+    });
+  }
+
+  closeIconModal();
+  updateAll();
+});
 
   // First paint
   updateAll();
