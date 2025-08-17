@@ -88,7 +88,11 @@
         <h2 class="subbig">Add Category</h2>
         <div class="row">
           <input id="cat-name" placeholder="Category name" />
-          <input id="cat-color" type="color" value="#3b82f6" />
+          <button type="button" id="cat-color-btn">
+  <i data-lucide="paintbrush-vertical"></i> Pick color
+</button>
+<input type="color" id="cat-color" style="display:none" />
+
           <input id="cat-icon" placeholder="Icon name (e.g., 'tv')" />
           <button id="add-category"><i data-lucide="plus"></i> Add</button>
         </div>
