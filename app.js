@@ -48,35 +48,41 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Render categories
-  function renderCategories() {
-    categoriesEl.innerHTML = "";
-    categories.forEach((cat, i) => {
-      const div = document.createElement("div");
-      div.className = "card category";
+function renderCategories() {
+  categoriesEl.innerHTML = "";
+  categories.forEach((cat, i) => {
+    const div = document.createElement("div");
+    div.className = "card category";
+
+    // apply adaptive color
+    if (document.documentElement.dataset.theme === "dark") {
       div.style.borderColor = cat.color;
+      div.style.background = ""; // transparent in dark mode
+    } else {
+      div.style.borderColor = ""; 
+      div.style.background = cat.color + "33"; // 20% opacity of chosen color
+    }
 
-      div.innerHTML = `
-        <div class="category-head">
-          <span class="category-title"><i data-lucide="${cat.icon}"></i> ${cat.name}</span>
-          <span class="cat-total" id="cat-total-${i}">—</span>
-        </div>
-        <div class="expenses" id="expenses-${i}"></div>
-        <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
-      `;
-      categoriesEl.appendChild(div);
+    div.innerHTML = `
+      <div class="category-head">
+        <span class="category-title"><i data-lucide="${cat.icon}"></i> ${cat.name}</span>
+        <span class="cat-total" id="cat-total-${i}">—</span>
+      </div>
+      <div class="expenses" id="expenses-${i}"></div>
+      <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
+    `;
+    categoriesEl.appendChild(div);
+  });
+
+  if (window.lucide?.createIcons) window.lucide.createIcons();
+
+  document.querySelectorAll(".btn-add").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = btn.dataset.index;
+      addExpense(i);
     });
-
-    if (window.lucide?.createIcons) window.lucide.createIcons();
-
-    document.querySelectorAll(".btn-add").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const i = btn.dataset.index;
-        addExpense(i);
-      });
-    });
-
-    updateTotals();
-  }
+  });
+}
 
   // Add expense row
   function addExpense(catIndex) {
@@ -140,9 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
     playEl.textContent = `You’ve got $${play.toFixed(2)}/mo to play with`;
   }
 
-  // Theme toggle
-  document.getElementById("theme-toggle").addEventListener("click", () => {
-    const html = document.documentElement;
-    html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
-  });
+// Theme toggle
+document.getElementById("theme-toggle").addEventListener("click", () => {
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
+  renderCategories(); // re-render to apply correct colors
+});
 });
