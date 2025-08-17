@@ -1,30 +1,32 @@
-// -------- DEV flag: add ?dev=1 to URL to bypass SW while developing
-const DEV = /[?&]dev=1\b/.test(location.search);
-
-// -------- Tiny on-screen error banner (so we see failures on iPad)
+// ---------- tiny on-screen error banner ----------
 window.addEventListener('error', (e) => {
   const b = document.createElement('div');
   b.style.cssText = 'position:fixed;left:0;right:0;bottom:68px;background:#7f1d1d;color:#fff;padding:6px 10px;font:12px system-ui;z-index:9999';
   b.textContent = 'Script error: ' + (e.message || 'unknown');
   document.body.appendChild(b);
-  setTimeout(() => b.remove(), 6000);
+  setTimeout(() => b.remove(), 5000);
 });
 
-// -------- Helpers + storage
+// ---------- helpers ----------
 const $ = (id) => document.getElementById(id);
 const money = (v) => (Number.isFinite(v) ? v : 0).toLocaleString(undefined,{style:'currency',currency:'USD'});
 const num = (v) => { const s=String(v??'').replace(/[^0-9.\-]/g,''); const n=parseFloat(s); return Number.isFinite(n)?n:0; };
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+// ---------- storage ----------
 const KEY_NET='budget:net', KEY_VALUES='budget:values', KEY_TX='budget:tx', KEY_THEME='budget:theme', KEY_CUSTOM='budget:custom';
 const load = (k, fb) => { try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(fb)); } catch { return fb; } };
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-// -------- State
-let values = load(KEY_VALUES, {});        // inputId -> string
+// ---------- state ----------
+let values = load(KEY_VALUES, {}); // inputId -> string value
 let netIncome = load(KEY_NET, 0);
+let items = load(KEY_TX, []);
 let theme = load(KEY_THEME, document.documentElement.getAttribute('data-theme') || 'dark');
+// custom: { nn: [{id,label,icon}], subs: [...], dates: [...], invest: [...], oneoff: [...] }
 let custom = load(KEY_CUSTOM, { nn:[], subs:[], dates:[], invest:[], oneoff:[] });
 
-// -------- DOM
+// ---------- DOM refs ----------
 const sections = { setup:$('view-setup'), transactions:$('view-transactions'), pie:$('view-pie') };
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const themeToggle = $('theme-toggle');
@@ -36,7 +38,19 @@ const headTotals = { nn:$('ttl-nn'), subs:$('ttl-subs'), dates:$('ttl-dates'), i
 const pieCanvas = $('pie'), pieLegend = $('pie-legend');
 const ctx = pieCanvas ? pieCanvas.getContext('2d') : null;
 
-// -------- Boot
+// Icon modal
+const modal = $('icon-backdrop');
+const listBox = $('icon-list');       // two-column list container
+const iconSearch = $('icon-search');
+const customLabel = $('custom-label');
+const iconCancel = $('icon-cancel');
+const iconSave = $('icon-save');
+
+let modalOpenFor = null;  // 'nn' | 'subs' | 'dates' | 'invest' | 'oneoff'
+let selectedIcon = null;
+let selectedRow = null;
+
+// ---------- init ----------
 document.addEventListener('DOMContentLoaded', () => {
   // Theme
   applyTheme(theme);
@@ -50,37 +64,135 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', ()=>{
       const tab = btn.dataset.tab;
       tabButtons.forEach(b=>b.classList.toggle('active', b===btn));
-      Object.entries(sections).forEach(([k,sec])=> sec && sec.classList.toggle('active', k===tab));
+      Object.entries(sections).forEach(([k,sec])=> sec.classList.toggle('active', k===tab));
       if (tab==='pie') updateIncomeSplit();
-      // render icons only if lucide is loaded (no hard dependency)
       try { window.lucide?.createIcons?.(); } catch {}
     });
   });
 
-  // Income
+  // Restore income
   if (netIncome) netIncomeEl.value = String(netIncome);
-  netIncomeEl.addEventListener('input', ()=>{ netIncome=num(netIncomeEl.value); save(KEY_NET, netIncome); updateAll(); });
-  saveNetBtn.addEventListener('click', ()=>{ netIncome=num(netIncomeEl.value); if (netIncome<=0) return alert('Enter a valid monthly net income.'); save(KEY_NET,netIncome); updateAll(); });
+  netIncomeEl.addEventListener('input', onIncomeChange);
+  saveNetBtn.addEventListener('click', () => {
+    netIncome = num(netIncomeEl.value);
+    if (netIncome <= 0) return alert('Please enter a valid monthly net income.');
+    save(KEY_NET, netIncome); updateAll();
+  });
 
-  // Wire all cost inputs
+  // Wire static inputs
   document.querySelectorAll('input.bill-input').forEach(el=>{
     if (values[el.id] != null) el.value = values[el.id];
-    el.addEventListener('input', (e)=>{ values[el.id]=e.currentTarget.value; save(KEY_VALUES, values); updateAll(); });
+    el.addEventListener('input', onBillInput);
   });
+
+  // Render custom rows from storage
+  ['nn','subs','dates','invest','oneoff'].forEach(renderCustomCategory);
+
+  // --- NEW: Delegated click handler for Add-expense buttons ---
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-add[data-add]');
+    if (!btn) return;
+    e.preventDefault();
+    modalOpenFor = btn.getAttribute('data-add'); // 'nn' | 'subs' | 'dates' | 'invest' | 'oneoff'
+    openIconModal();
+  });
+
+  // Modal controls
+  iconCancel.addEventListener('click', closeIconModal);
+  iconSave.addEventListener('click', handleAddCustom);
+  iconSearch.addEventListener('input', renderIconList);
+
+  // --- NEW: Close modal on backdrop click + ESC ---
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeIconModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.style.display === 'flex') closeIconModal(); });
 
   // First paint
   updateAll();
 
-  // Service worker: register only when NOT in dev
-  if ('serviceWorker' in navigator && !DEV) {
-    try { navigator.serviceWorker.register('sw.js'); } catch {}
-  }
-
-  // Resize re-draw
-  window.addEventListener('resize', ()=>{ if (sections.pie?.classList.contains('active')) updateIncomeSplit(); });
+  // SW register (keep as-is)
+  if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch {} }
 });
 
-// -------- Totals
+// ---------- events ----------
+function onIncomeChange(){ netIncome = num(netIncomeEl.value); save(KEY_NET, netIncome); updateAll(); }
+function onBillInput(e){ const el=e.currentTarget; values[el.id] = el.value; save(KEY_VALUES, values); updateAll(); }
+
+// ---------- custom rows ----------
+function renderCustomCategory(cat){
+  const wrap = $(`custom-${cat}`);
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const rows = custom[cat] || [];
+  rows.forEach(({id,label,icon})=>{
+    const inputId = `bill-${cat}-${id}`;
+    const row = document.createElement('div');
+    row.className = 'bill-row';
+    row.innerHTML = `
+      <label for="${inputId}"><i data-lucide="${icon}"></i> ${escapeHtml(label)}</label>
+      <input class="bill-input" id="${inputId}" type="number" step="0.01" placeholder="Amount / month" />
+    `;
+    wrap.appendChild(row);
+    const input = row.querySelector('input');
+    if (values[inputId] != null) input.value = values[inputId];
+    input.addEventListener('input', onBillInput);
+  });
+  try { window.lucide?.createIcons?.(); } catch {}
+}
+
+function handleAddCustom(){
+  const label = (customLabel.value || '').trim();
+  if (!modalOpenFor) return;
+  if (!label) { alert('Please enter a name for this expense.'); return; }
+  const icon = selectedIcon || 'circle';
+  const entry = { id: Date.now(), label, icon };
+  custom[modalOpenFor] = custom[modalOpenFor] || [];
+  custom[modalOpenFor].push(entry);
+  save(KEY_CUSTOM, custom);
+  renderCustomCategory(modalOpenFor);
+  closeIconModal();
+  updateAll();
+}
+
+// ---------- modal + icons (two-column list) ----------
+function openIconModal(){
+  selectedIcon = null; selectedRow = null;
+  customLabel.value = '';
+  iconSearch.value = '';
+  renderIconList();
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden','false');
+}
+function closeIconModal(){
+  modal.style.display = 'none';
+  modal.setAttribute('aria-hidden','true');
+}
+
+function renderIconList(){
+  const all = Object.keys(window.lucide?.icons || {});
+  const q = iconSearch.value?.toLowerCase().trim();
+  const filtered = q ? all.filter(n => n.includes(q)) : all;
+  const top = filtered.slice(0, 400);
+
+  listBox.innerHTML = top.map(n => `
+    <div class="icon-row" data-icon="${n}">
+      <div class="icon-cell"><i data-lucide="${n}"></i></div>
+      <div class="name-cell">${n}</div>
+    </div>
+  `).join('');
+
+  listBox.querySelectorAll('.icon-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      if (selectedRow) selectedRow.classList.remove('active');
+      selectedRow = row;
+      selectedRow.classList.add('active');
+      selectedIcon = row.getAttribute('data-icon');
+      try { window.lucide?.createIcons?.(); } catch {}
+    });
+  });
+  try { window.lucide?.createIcons?.(); } catch {}
+}
+
+// ---------- totals ----------
 function sectionTotal(sectionId){
   const els = document.querySelectorAll(`#${sectionId} input.bill-input`);
   return Array.from(els).reduce((t,el)=> t + num(el.value), 0);
@@ -91,29 +203,29 @@ function totalDates(){ return sectionTotal('card-dates'); }
 function totalInvest(){ return sectionTotal('card-invest'); }
 function totalOne(){ return sectionTotal('card-oneoff'); }
 
-// -------- Update cluster
+// ---------- update cluster ----------
 function updateAll(){ updateYearly(); updateHeaderTotals(); updateMetrics(); updateIncomeSplit(); try { window.lucide?.createIcons?.(); } catch {} }
-function updateYearly(){ const m=num(netIncomeEl.value)||num(netIncome); const y=m>0?m*12:0; if (netYearlyEl) netYearlyEl.textContent=`Yearly: ${y?money(y):'—'}`; }
+function updateYearly(){ const m=num(netIncomeEl.value)||num(netIncome); const y=m>0?m*12:0; netYearlyEl.textContent=`Yearly: ${y?money(y):'—'}`; }
 function updateHeaderTotals(){
-  if (headTotals.nn)     headTotals.nn.textContent     = money(totalNN());
-  if (headTotals.subs)   headTotals.subs.textContent   = money(totalSubs());
-  if (headTotals.dates)  headTotals.dates.textContent  = money(totalDates());
-  if (headTotals.invest) headTotals.invest.textContent = money(totalInvest());
-  if (headTotals.oneoff) headTotals.oneoff.textContent = money(totalOne());
+  headTotals.nn.textContent     = money(totalNN());
+  headTotals.subs.textContent   = money(totalSubs());
+  headTotals.dates.textContent  = money(totalDates());
+  headTotals.invest.textContent = money(totalInvest());
+  headTotals.oneoff.textContent = money(totalOne());
 }
 function updateMetrics(){
-  if (!nnTotalEl || !playLeftEl) return;
   const net = num(netIncomeEl.value) || num(netIncome);
   const nn = totalNN(), subs = totalSubs(), dates = totalDates(), inv = totalInvest(), one = totalOne();
   const allocated = nn + subs + dates + inv + one;
   const play = allocated > 0 ? (net - allocated) : net;
   nnTotalEl.textContent = money(nn);
-  playLeftEl.textContent = play >= 0 ? `You’ve got ${money(play)}/mo to play with` : `Over by ${money(Math.abs(play))}/mo`;
+  playLeftEl.textContent = play >= 0 ? `You’ve got ${money(play)}/mo to play with`
+                                     : `Over by ${money(Math.abs(play))}/mo`;
   playLeftEl.style.background = play >= 0 ? '#166534' : '#7f1d1d';
   playLeftEl.style.color = '#fff';
 }
 
-// -------- Pie
+// ---------- pie ----------
 function updateIncomeSplit(){
   if (!ctx || !pieLegend) return;
   const slices = [
@@ -165,8 +277,11 @@ function drawLegend(slices){
     </div>`;
 }
 
-// -------- Theme
+// ---------- theme ----------
 function applyTheme(mode){
   document.documentElement.setAttribute('data-theme', mode);
   try { window.lucide?.createIcons?.(); } catch {}
 }
+
+// Redraw pie on resize
+window.addEventListener('resize', ()=>{ if (sections.pie?.classList.contains('active')) updateIncomeSplit(); });
