@@ -13,6 +13,17 @@ document.addEventListener("DOMContentLoaded", () => {
   let income = 0;
   let categories = [];
 
+
+  // Hook up category color button to hidden color input
+const colorBtn = document.getElementById("cat-color-btn");
+const colorInput = document.getElementById("cat-color");
+
+if (colorBtn && colorInput) {
+  colorBtn.addEventListener("click", () => {
+    colorInput.click();
+  });
+}
+
 // Update while typing too
 incomeInput.addEventListener("input", () => {
   updateIncome();
