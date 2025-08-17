@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Budget Simplified</title>
+  <title>Budget</title>
 
-  <!-- Lucide icons -->
+  <!-- Lucide -->
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
   <style>
@@ -13,114 +13,95 @@
       --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; --text:#e5e7eb;
       --bg-light:#f8fafc; --card-light:#ffffff; --muted-light:#475569; --line-light:#e2e8f0; --field-light:#ffffff; --text-dark:#111827;
     }
-    html,body { margin:0; padding:0; font-family:system-ui, sans-serif; background:var(--bg); color:var(--text); }
-    [data-theme="light"] body { background:var(--bg-light); color:var(--text-dark); }
+    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    [data-theme="light"] body{ background:var(--bg-light); color:var(--text-dark); }
 
-    .wrap { max-width:860px; margin:0 auto; padding:16px; padding-bottom:84px; }
+    .wrap{max-width:860px;margin:0 auto;padding:16px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
 
-    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-    h1 { font-size:20px; margin:0; display:flex; align-items:center; gap:8px; }
+    #theme-toggle{background:transparent;border:1px solid var(--line);border-radius:10px;color:inherit;padding:8px 10px;display:flex;gap:6px;align-items:center}
+    [data-theme="light"] #theme-toggle{ border-color:var(--line-light); }
+    .icon-sun{display:none}
+    [data-theme="light"] .icon-moon{display:none}
+    [data-theme="light"] .icon-sun{display:inline}
 
-    #theme-toggle { background:transparent; border:1px solid var(--line); border-radius:8px; padding:8px 10px; display:flex; gap:6px; align-items:center; cursor:pointer; }
-    [data-theme="light"] #theme-toggle { border-color:var(--line-light); }
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+    [data-theme="light"] .card{background:var(--card-light);border:1px solid var(--line-light)}
 
-    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
-    [data-theme="light"] .card { background:var(--card-light); border-color:var(--line-light); }
+    input,select,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
+    input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
+    button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+    [data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] button{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
 
-    input,button { background:var(--field); color:inherit; border:1px solid var(--line); border-radius:8px; padding:8px; }
-    input:focus,button:focus { outline:2px solid var(--focus); }
-    [data-theme="light"] input,[data-theme="light"] button { background:var(--field-light); border-color:var(--line-light); color:var(--text-dark); }
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .row>*{flex:1 1 min(240px,100%)}
+    .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
+    .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
+    .category-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .category-title{display:flex;gap:8px;align-items:center;font-weight:900;font-size:20px}
+    .cat-total{font-weight:800}
 
-    .row { display:flex; gap:8px; flex-wrap:wrap; }
-    .row>* { flex:1 1 200px; }
+    .bill-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,44%) 40px 40px;gap:10px;align-items:center;margin:8px 0}
+    .bill-row label{min-width:0;display:flex;align-items:center;gap:8px;white-space:normal;overflow-wrap:anywhere}
+    .bill-row input{width:100%;max-width:100%;box-sizing:border-box}
+    .btn-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit}
+    .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
+    [data-theme="light"] .btn-icon{border-color:var(--line-light)}
 
-    .muted { color:var(--muted); font-size:12px; }
-    [data-theme="light"] .muted { color:var(--muted-light); }
-
-    .subbig { font-size:20px; font-weight:800; margin:0 0 8px 0; display:flex; justify-content:space-between; align-items:center; }
-
-    .bill-row { display:grid; grid-template-columns:1fr minmax(100px, 120px) 40px 40px; gap:8px; align-items:center; margin:6px 0; }
-    .bill-row input { width:100%; }
-
-    .btn { cursor:pointer; display:inline-flex; align-items:center; gap:6px; justify-content:center; }
-    .btn-icon { width:40px; height:40px; border-radius:8px; border:1px solid var(--line); background:transparent; display:flex; align-items:center; justify-content:center; }
-    [data-theme="light"] .btn-icon { border-color:var(--line-light); }
-
-    .category { margin-bottom:16px; }
-    .category-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-    .category-title { font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; }
-    .cat-total { font-weight:800; }
-
-    .btn-add { width:100%; border:1px dashed var(--line); background:transparent; padding:6px; border-radius:8px; justify-content:center; margin-top:8px; }
-    [data-theme="light"] .btn-add { border-color:var(--line-light); }
-
-    /* Tabs */
-    .tabs { position:fixed; left:0; right:0; bottom:0; background:var(--card); border-top:1px solid var(--line); padding:10px 16px; }
-    .tabs .inner { max-width:860px; margin:0 auto; display:flex; gap:12px; justify-content:space-between; }
-    .tab-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px; border-radius:10px; border:1px solid transparent; background:transparent; color:inherit; }
-    .tab-btn.active { background:#111827; border-color:#374151; }
-    [data-theme="light"] .tab-btn.active { background:#e5e7eb; border-color:var(--line-light); }
-    main section { display:none; }
-    main section.active { display:block; }
+    .btn-add{border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px;width:100%;justify-content:center;margin-top:8px}
+    [data-theme="light"] .btn-add{border-color:var(--line-light)}
   </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1><i data-lucide="piggy-bank"></i> Budget</h1>
-    <button id="theme-toggle"><i data-lucide="moon"></i><i data-lucide="sun"></i> Theme</button>
+    <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
+    <button id="theme-toggle" type="button" title="Toggle theme">
+      <i class="icon-moon" data-lucide="moon"></i>
+      <i class="icon-sun" data-lucide="sun"></i>
+      Theme
+    </button>
   </header>
 
   <main>
-    <!-- SETUP -->
-    <section id="view-setup" class="active">
-      <!-- Income -->
-      <div class="card">
-        <h2 class="subbig">Monthly Income</h2>
-        <div class="row">
-          <input id="net-income" type="number" placeholder="Enter monthly net income" />
-        </div>
-        <p class="muted" id="net-yearly">Yearly: —</p>
+    <!-- Income -->
+    <div class="card">
+      <h2 class="big">What is your monthly net income?</h2>
+      <div class="row">
+        <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home" />
       </div>
+      <p class="muted" id="net-yearly">Yearly: —</p>
+    </div>
 
-      <!-- Category Creator -->
-      <div class="card">
-        <h2 class="subbig">Add Category</h2>
-        <div class="row">
-          <input id="cat-name" placeholder="Category name" />
-          <button type="button" id="cat-color-btn">
-  <i data-lucide="paintbrush-vertical"></i> Pick color
-</button>
-<input type="color" id="cat-color" style="display:none" />
-
-          <input id="cat-icon" placeholder="Icon name (e.g., 'tv')" />
-          <button id="add-category"><i data-lucide="plus"></i> Add</button>
-        </div>
-        <p class="muted">Pick a name, icon, and color. Expenses can be added inside each category.</p>
+    <!-- Category Creator -->
+    <div class="card">
+      <h2 class="big">Add a Category</h2>
+      <div class="row">
+        <input id="cat-name" placeholder="Category name" />
+        <input id="cat-icon" placeholder="Lucide icon name (e.g., 'car')" />
+        <input id="cat-color" type="color" style="display:none" />
+        <button id="cat-color-btn"><i data-lucide="paintbrush-vertical"></i> Pick Color</button>
+        <button id="add-category"><i data-lucide="plus"></i> Add</button>
       </div>
+    </div>
 
-      <!-- Categories will render here -->
-      <div id="categories"></div>
+    <!-- Categories -->
+    <div id="categories"></div>
 
-      <!-- Play money -->
-      <div class="card">
-        <div id="play-money" style="text-align:center;font-weight:700;">You’ve got —/mo to play with</div>
+    <!-- Play Money -->
+    <div class="card" id="metrics-card">
+      <div id="play-left" style="padding:10px;border-radius:8px;text-align:center;font-weight:700">
+        You’ve got —/mo to play with
       </div>
-    </section>
+    </div>
   </main>
 </div>
 
-<!-- Tabs -->
-<nav class="tabs">
-  <div class="inner">
-    <button class="tab-btn active" data-tab="setup"><i data-lucide="banknote"></i><span>Setup</span></button>
-  </div>
-</nav>
-
-<script src="app.js?v=simple1" defer></script>
+<script defer src="app.js?v=simple-1"></script>
 <script>
-window.addEventListener('DOMContentLoaded', () => {
-  if (window.lucide?.createIcons) window.lucide.createIcons();
+window.addEventListener('DOMContentLoaded', function(){
+  try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
 });
 </script>
 </body>
