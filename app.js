@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         { name: "Water", amount: 0, icon: "droplet" },
         { name: "Internet", amount: 0, icon: "wifi" },
         { name: "Phone", amount: 0, icon: "phone" },
+        { name: "Home Security", amount: 0, icon: "cctv" },
         { name: "Groceries", amount: 0, icon: "carrot" },
         { name: "Transportation", amount: 0, icon: "fuel" },
         { name: "Car Insurance", amount: 0, icon: "car" },
