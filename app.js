@@ -8,14 +8,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const addCatBtn = document.getElementById("add-category");
   const categoriesEl = document.getElementById("categories");
 
-  // Color picker elements
-  const colorBtn   = document.getElementById("cat-color-btn");
-  const colorInput = document.getElementById("cat-color");
+  // Color picker (label-for approach)
+  const colorBtn   = document.getElementById("cat-color-btn"); // <label>
+  const colorInput = document.getElementById("cat-color");     // <input type=color>
   const colorSwatch = colorBtn ? colorBtn.querySelector(".swatch") : null;
 
   let income = 0;
 
-  // Default categories (Essentials)
+  // Default categories: Essentials
   let categories = [
     {
       name: "Essentials",
@@ -36,43 +36,31 @@ document.addEventListener("DOMContentLoaded", () => {
         { name: "Car Insurance", amount: 0, icon: "car" },
         { name: "Car Registration", amount: 0, icon: "file-text" },
         { name: "Car Maintenance", amount: 0, icon: "wrench" },
-        { name: "Pet Insurance", amount: 0, icon: "dog" },   // ok to change to "paw-print" if you prefer
-        { name: "Pet Food", amount: 0, icon: "bone" },       // ok to change to "beef" if you prefer
+        { name: "Pet Insurance", amount: 0, icon: "paw-print" },
+        { name: "Pet Food", amount: 0, icon: "beef" },
         { name: "Health Insurance", amount: 0, icon: "stethoscope" }
       ]
     }
   ];
 
-  // ------------------------
-  // Color picker wiring (Safari-safe)
-  // ------------------------
-  if (colorBtn && colorInput) {
-    // init swatch from current input value
-    if (colorSwatch) colorSwatch.style.background = colorInput.value;
-
-    colorBtn.addEventListener("click", () => {
-      if (typeof colorInput.showPicker === "function") {
-        colorInput.showPicker();
-      } else {
-        colorInput.click();
-      }
-    });
-
+  // Initialize swatch and react to color changes
+  if (colorSwatch && colorInput) {
+    colorSwatch.style.background = colorInput.value;
+  }
+  if (colorInput) {
     colorInput.addEventListener("input", () => {
       if (colorSwatch) colorSwatch.style.background = colorInput.value;
-      // Optional: outline button with selected color in dark mode only
-      if (document.documentElement.dataset.theme === "dark") {
+      // Optional: outline label in dark mode for feedback
+      if (document.documentElement.dataset.theme === "dark" && colorBtn) {
         colorBtn.style.border = `1px solid ${colorInput.value}`;
         colorBtn.style.borderRadius = "8px";
-      } else {
+      } else if (colorBtn) {
         colorBtn.style.border = "";
       }
     });
   }
 
-  // ------------------------
-  // Income: update yearly + play money while typing
-  // ------------------------
+  // Income -> yearly + play money (live)
   if (incomeInput) {
     incomeInput.addEventListener("input", () => {
       income = parseFloat(incomeInput.value) || 0;
@@ -81,23 +69,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ------------------------
-  // Categories
-  // ------------------------
-
   // Add category
   if (addCatBtn) {
     addCatBtn.addEventListener("click", () => {
       const name = catName.value.trim();
       const icon = catIcon.value.trim() || "folder";
       const color = (colorInput && colorInput.value) ? colorInput.value : "#3b82f6";
-
       if (!name) return alert("Please enter a category name");
 
       categories.push({ name, color, icon, expenses: [] });
       renderCategories();
 
-      // reset text fields (keep color as last picked)
       catName.value = "";
       catIcon.value = "";
     });
@@ -110,10 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const div = document.createElement("div");
       div.className = "card category";
 
-      // adaptive color
+      // Adaptive color (dark: border, light: soft background)
       if (document.documentElement.dataset.theme === "dark") {
         div.style.borderColor = cat.color;
-        div.style.background = ""; // transparent in dark
+        div.style.background = "";
       } else {
         div.style.borderColor = "";
         div.style.background = cat.color + "33"; // ~20% opacity
@@ -129,13 +111,12 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       categoriesEl.appendChild(div);
 
-      // render its expenses immediately
       renderExpenses(i);
     });
 
     if (window.lucide?.createIcons) window.lucide.createIcons();
 
-    // wire add-expense buttons
+    // Wire per-category add-expense buttons
     document.querySelectorAll(".btn-add").forEach(btn => {
       btn.addEventListener("click", () => {
         const i = btn.dataset.index;
@@ -146,14 +127,14 @@ document.addEventListener("DOMContentLoaded", () => {
     updateTotals();
   }
 
-  // Add expense row
+  // Add a blank expense
   function addExpense(catIndex) {
     const exp = { name: "New Expense", amount: 0, icon: "circle" };
     categories[catIndex].expenses.push(exp);
     renderExpenses(catIndex);
   }
 
-  // Render expenses
+  // Render all expenses of a category
   function renderExpenses(catIndex) {
     const expEl = document.getElementById(`expenses-${catIndex}`);
     if (!expEl) return;
@@ -170,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       expEl.appendChild(row);
 
-      // Edit expense
+      // Edit expense name/icon
       row.querySelector(".edit").addEventListener("click", () => {
         const newName = prompt("Edit expense name:", exp.name);
         if (newName !== null && newName.trim() !== "") exp.name = newName.trim();
@@ -185,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderExpenses(catIndex);
       });
 
-      // Update amount
+      // Update amount live
       row.querySelector("input").addEventListener("input", (e) => {
         exp.amount = parseFloat(e.target.value) || 0;
         updateTotals();
@@ -196,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateTotals();
   }
 
-  // Update totals
+  // Totals (per-category + play money)
   function updateTotals() {
     let allExpenses = 0;
     categories.forEach((cat, i) => {
@@ -216,6 +197,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCategories(); // re-render to apply correct colors
   });
 
-  // ✅ Render defaults on startup
+  // Initial render
   renderCategories();
 });
