@@ -1,4 +1,4 @@
-const CACHE = 'budget-vanilla-v5';
+const CACHE = 'budget-vanilla-v6';
 const ASSETS = [
   'index.html',
   'app.js',
