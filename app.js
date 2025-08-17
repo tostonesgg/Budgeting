@@ -10,35 +10,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const categoriesEl = document.getElementById("categories");
 
   let income = 0;
+
+  // Default categories (Essentials)
   let categories = [
-  {
-    name: "Essentials",
-    color: "#ef4444", // Default red (adjust if you want a different base color)
-    icon: "crown",
-    expenses: [
-      { name: "Mortgage", amount: 0, icon: "house" },
-      { name: "HOA", amount: 0, icon: "house" },
-      { name: "Property Tax", amount: 0, icon: "banknote" },
-      { name: "Electricity", amount: 0, icon: "zap" },
-      { name: "Gas", amount: 0, icon: "cooking-pot" },
-      { name: "Water", amount: 0, icon: "droplet" },
-      { name: "Internet", amount: 0, icon: "wifi" },
-      { name: "Phone", amount: 0, icon: "phone" },
-      { name: "Groceries", amount: 0, icon: "carrot" },
-      { name: "Transportation", amount: 0, icon: "fuel" },
-      { name: "Car Insurance", amount: 0, icon: "car" },
-      { name: "Car Registration", amount: 0, icon: "file-text" },
-      { name: "Car Maintenance", amount: 0, icon: "wrench" },
-      { name: "Pet Insurance", amount: 0, icon: "paw-print" },
-      { name: "Pet Food", amount: 0, icon: "beef" },
-      { name: "Health Insurance", amount: 0, icon: "stethoscope" }
-    ]
-  }
-];
-
-// Render defaults on startup
-renderCategories();
-
+    {
+      name: "Essentials",
+      color: "#ef4444", // red
+      icon: "crown",
+      expenses: [
+        { name: "Mortgage", amount: 0, icon: "house" },
+        { name: "HOA", amount: 0, icon: "house" },
+        { name: "Property Tax", amount: 0, icon: "banknote" },
+        { name: "Electricity", amount: 0, icon: "zap" },
+        { name: "Gas", amount: 0, icon: "cooking-pot" },
+        { name: "Water", amount: 0, icon: "droplet" },
+        { name: "Internet", amount: 0, icon: "wifi" },
+        { name: "Phone", amount: 0, icon: "phone" },
+        { name: "Groceries", amount: 0, icon: "carrot" },
+        { name: "Transportation", amount: 0, icon: "fuel" },
+        { name: "Car Insurance", amount: 0, icon: "car" },
+        { name: "Car Registration", amount: 0, icon: "file-text" },
+        { name: "Car Maintenance", amount: 0, icon: "wrench" },
+        { name: "Pet Insurance", amount: 0, icon: "dog" },
+        { name: "Pet Food", amount: 0, icon: "bone" },
+        { name: "Health Insurance", amount: 0, icon: "stethoscope" }
+      ]
+    }
+  ];
 
   // Hook up category color button to hidden color input
   const colorBtn = document.getElementById("cat-color-btn");
@@ -76,41 +74,46 @@ renderCategories();
   });
 
   // Render categories
-function renderCategories() {
-  categoriesEl.innerHTML = "";
-  categories.forEach((cat, i) => {
-    const div = document.createElement("div");
-    div.className = "card category";
+  function renderCategories() {
+    categoriesEl.innerHTML = "";
+    categories.forEach((cat, i) => {
+      const div = document.createElement("div");
+      div.className = "card category";
 
-    // apply adaptive color
-    if (document.documentElement.dataset.theme === "dark") {
-      div.style.borderColor = cat.color;
-      div.style.background = ""; // transparent in dark mode
-    } else {
-      div.style.borderColor = ""; 
-      div.style.background = cat.color + "33"; // 20% opacity of chosen color
-    }
+      // adaptive color
+      if (document.documentElement.dataset.theme === "dark") {
+        div.style.borderColor = cat.color;
+        div.style.background = ""; // transparent in dark
+      } else {
+        div.style.borderColor = "";
+        div.style.background = cat.color + "33"; // 20% opacity
+      }
 
-    div.innerHTML = `
-      <div class="category-head">
-        <span class="category-title"><i data-lucide="${cat.icon}"></i> ${cat.name}</span>
-        <span class="cat-total" id="cat-total-${i}">—</span>
-      </div>
-      <div class="expenses" id="expenses-${i}"></div>
-      <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
-    `;
-    categoriesEl.appendChild(div);
-  });
+      div.innerHTML = `
+        <div class="category-head">
+          <span class="category-title"><i data-lucide="${cat.icon}"></i> ${cat.name}</span>
+          <span class="cat-total" id="cat-total-${i}">—</span>
+        </div>
+        <div class="expenses" id="expenses-${i}"></div>
+        <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
+      `;
+      categoriesEl.appendChild(div);
 
-  if (window.lucide?.createIcons) window.lucide.createIcons();
-
-  document.querySelectorAll(".btn-add").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const i = btn.dataset.index;
-      addExpense(i);
+      // render its expenses
+      renderExpenses(i);
     });
-  });
-}
+
+    if (window.lucide?.createIcons) window.lucide.createIcons();
+
+    document.querySelectorAll(".btn-add").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const i = btn.dataset.index;
+        addExpense(i);
+      });
+    });
+
+    updateTotals();
+  }
 
   // Add expense row
   function addExpense(catIndex) {
@@ -122,6 +125,7 @@ function renderCategories() {
   // Render expenses
   function renderExpenses(catIndex) {
     const expEl = document.getElementById(`expenses-${catIndex}`);
+    if (!expEl) return;
     expEl.innerHTML = "";
 
     categories[catIndex].expenses.forEach((exp, j) => {
@@ -174,10 +178,13 @@ function renderCategories() {
     playEl.textContent = `You’ve got $${play.toFixed(2)}/mo to play with`;
   }
 
-// Theme toggle
-document.getElementById("theme-toggle").addEventListener("click", () => {
-  const html = document.documentElement;
-  html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
-  renderCategories(); // re-render to apply correct colors
-});
+  // Theme toggle
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    const html = document.documentElement;
+    html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
+    renderCategories(); // re-render to apply correct colors
+  });
+
+  // ✅ Render defaults on startup
+  renderCategories();
 });
