@@ -9,96 +9,77 @@
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
   <style>
-    :root {
+    :root{
       --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; --text:#e5e7eb;
       --bg-light:#f8fafc; --card-light:#ffffff; --muted-light:#475569; --line-light:#e2e8f0; --field-light:#ffffff; --text-dark:#111827;
     }
     html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    [data-theme="light"] body{ background:var(--bg-light); color:var(--text-dark); }
+    [data-theme="light"] body{background:var(--bg-light);color:var(--text-dark)}
 
     .wrap{max-width:860px;margin:0 auto;padding:16px}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
 
-    #theme-toggle{background:transparent;border:1px solid var(--line);border-radius:10px;color:inherit;padding:8px 10px;display:flex;gap:6px;align-items:center}
-    [data-theme="light"] #theme-toggle{ border-color:var(--line-light); }
+    /* Theme toggle */
+    #theme-toggle{background:transparent;border:1px solid var(--line);border-radius:10px;color:inherit;padding:8px 10px;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+    [data-theme="light"] #theme-toggle{border-color:var(--line-light)}
     .icon-sun{display:none}
     [data-theme="light"] .icon-moon{display:none}
     [data-theme="light"] .icon-sun{display:inline}
 
+    /* Cards / form controls */
     .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-    [data-theme="light"] .card{background:var(--card-light);border:1px solid var(--line-light)}
-
-    input,select,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
-    input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
+    [data-theme="light"] .card{background:var(--card-light);border-color:var(--line-light)}
+    input,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
+    input:focus,button:focus{outline:2px solid var(--focus)}
+    [data-theme="light"] input,[data-theme="light"] button{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
     button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
-/* keep input in DOM but invisible (Safari won't open picker if display:none) */
-.color-input{
-  position:absolute;
-  width:1px; height:1px;
-  opacity:0; pointer-events:none;
-  left:-9999px;
-}
-
-/* optional color preview on the button */
-.color-btn{ display:inline-flex; align-items:center; gap:8px; }
-.color-btn .swatch{
-  width:14px; height:14px; border-radius:4px;
-  border:1px solid var(--line);
-  display:inline-block;
-}
-[data-theme="light"] .color-btn .swatch{ border-color:var(--line-light); }
-
     .row{display:flex;gap:8px;flex-wrap:wrap}
     .row>*{flex:1 1 min(240px,100%)}
     .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
     .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
+
+    /* Category cards */
     .category-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
     .category-title{display:flex;gap:8px;align-items:center;font-weight:900;font-size:20px}
     .cat-total{font-weight:800}
 
-    .bill-row {
-  display:grid;
-  grid-template-columns: 1fr 120px 40px 40px; /* label | input | edit | delete */
-  gap:10px;
-  align-items:center;
-  margin:8px 0;
-}
-
-.bill-row input {
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-}
-
-/* Mobile adjustment */
-@media (max-width:480px) {
-  .bill-row {
-    grid-template-columns: 1fr 100px 40px 40px; /* tighten input on narrow screens */
-  }
-}
-
-    .bill-row label {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  font-size: 13px;   /* 👈 add this */
-}
-    .bill-row label svg {
-  width: 1em;
-  height: 1em;
-}
-
-
-    .btn-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit}
+    /* Expense rows: label | input | edit | delete */
+    .bill-row{
+      display:grid;
+      grid-template-columns: 1fr 120px 40px 40px;
+      gap:10px;align-items:center;margin:8px 0
+    }
+    .bill-row label{
+      min-width:0;display:flex;align-items:center;gap:8px;
+      white-space:normal;overflow-wrap:anywhere;font-size:14px;
+    }
+    .bill-row label svg{width:1em;height:1em}
+    .bill-row input{width:100%;max-width:100%;box-sizing:border-box}
+    .btn-icon{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:40px;height:40px;border-radius:8px;border:1px solid var(--line);
+      background:transparent;color:inherit
+    }
     .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
     [data-theme="light"] .btn-icon{border-color:var(--line-light)}
+    @media (max-width:480px){
+      .bill-row{grid-template-columns:1fr 100px 40px 40px}
+    }
 
     .btn-add{border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px;width:100%;justify-content:center;margin-top:8px}
     [data-theme="light"] .btn-add{border-color:var(--line-light)}
+
+    /* Color picker (Safari-safe: use label[for]) */
+    .color-input{
+      position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+      clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;opacity:0;
+    }
+    .color-btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+    .color-btn .swatch{
+      width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block
+    }
+    [data-theme="light"] .color-btn .swatch{border-color:var(--line-light)}
   </style>
 </head>
 <body>
@@ -128,12 +109,13 @@
       <div class="row">
         <input id="cat-name" placeholder="Category name" />
         <input id="cat-icon" placeholder="Lucide icon name (e.g., 'car')" />
-        <input id="cat-color" type="color" class="color-input" value="#3b82f6" />
-<button id="cat-color-btn" class="color-btn">
-  <i data-lucide="paintbrush-vertical"></i>
-  <span class="swatch" aria-hidden="true"></span>
-  Pick Color
-</button>
+        <!-- Safari-safe color picker: label[for] opens the hidden input -->
+        <input id="cat-color" type="color" class="color-input" value="#3b82f6" aria-label="Pick category color" />
+        <label id="cat-color-btn" class="color-btn" for="cat-color">
+          <i data-lucide="paintbrush-vertical"></i>
+          <span class="swatch" aria-hidden="true"></span>
+          Pick Color
+        </label>
         <button id="add-category"><i data-lucide="plus"></i> Add</button>
       </div>
     </div>
@@ -150,11 +132,11 @@
   </main>
 </div>
 
-<script defer src="app.js?v=simple-1"></script>
+<script defer src="app.js?v=picker-label-1"></script>
 <script>
-window.addEventListener('DOMContentLoaded', function(){
-  try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
-});
+  window.addEventListener('DOMContentLoaded', function(){
+    try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
+  });
 </script>
 </body>
 </html>
