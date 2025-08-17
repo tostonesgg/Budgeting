@@ -4,10 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const playEl = document.getElementById("play-left");
 
   const catName = document.getElementById("cat-name");
-  const catColor = document.getElementById("cat-color");
   const catIcon = document.getElementById("cat-icon");
   const addCatBtn = document.getElementById("add-category");
   const categoriesEl = document.getElementById("categories");
+
+  // Color picker elements
+  const colorBtn   = document.getElementById("cat-color-btn");
+  const colorInput = document.getElementById("cat-color");
+  const colorSwatch = colorBtn ? colorBtn.querySelector(".swatch") : null;
 
   let income = 0;
 
@@ -32,47 +36,72 @@ document.addEventListener("DOMContentLoaded", () => {
         { name: "Car Insurance", amount: 0, icon: "car" },
         { name: "Car Registration", amount: 0, icon: "file-text" },
         { name: "Car Maintenance", amount: 0, icon: "wrench" },
-        { name: "Pet Insurance", amount: 0, icon: "dog" },
-        { name: "Pet Food", amount: 0, icon: "bone" },
+        { name: "Pet Insurance", amount: 0, icon: "dog" },   // ok to change to "paw-print" if you prefer
+        { name: "Pet Food", amount: 0, icon: "bone" },       // ok to change to "beef" if you prefer
         { name: "Health Insurance", amount: 0, icon: "stethoscope" }
       ]
     }
   ];
 
-  // Hook up category color button to hidden color input
-  const colorBtn = document.getElementById("cat-color-btn");
-  const colorInput = document.getElementById("cat-color");
+  // ------------------------
+  // Color picker wiring (Safari-safe)
+  // ------------------------
   if (colorBtn && colorInput) {
+    // init swatch from current input value
+    if (colorSwatch) colorSwatch.style.background = colorInput.value;
+
     colorBtn.addEventListener("click", () => {
-      colorInput.click();
+      if (typeof colorInput.showPicker === "function") {
+        colorInput.showPicker();
+      } else {
+        colorInput.click();
+      }
+    });
+
+    colorInput.addEventListener("input", () => {
+      if (colorSwatch) colorSwatch.style.background = colorInput.value;
+      // Optional: outline button with selected color in dark mode only
+      if (document.documentElement.dataset.theme === "dark") {
+        colorBtn.style.border = `1px solid ${colorInput.value}`;
+        colorBtn.style.borderRadius = "8px";
+      } else {
+        colorBtn.style.border = "";
+      }
     });
   }
 
-  // Update yearly + play money while typing
-  incomeInput.addEventListener("input", () => {
-    income = parseFloat(incomeInput.value) || 0;
-    yearlyEl.textContent = `Yearly: $${(income * 12).toFixed(2)}`;
-    updateTotals();
-  });
+  // ------------------------
+  // Income: update yearly + play money while typing
+  // ------------------------
+  if (incomeInput) {
+    incomeInput.addEventListener("input", () => {
+      income = parseFloat(incomeInput.value) || 0;
+      if (yearlyEl) yearlyEl.textContent = `Yearly: $${(income * 12).toFixed(2)}`;
+      updateTotals();
+    });
+  }
 
   // ------------------------
   // Categories
   // ------------------------
 
   // Add category
-  addCatBtn.addEventListener("click", () => {
-    const name = catName.value.trim();
-    const color = catColor.value;
-    const icon = catIcon.value.trim() || "folder";
+  if (addCatBtn) {
+    addCatBtn.addEventListener("click", () => {
+      const name = catName.value.trim();
+      const icon = catIcon.value.trim() || "folder";
+      const color = (colorInput && colorInput.value) ? colorInput.value : "#3b82f6";
 
-    if (!name) return alert("Please enter a category name");
+      if (!name) return alert("Please enter a category name");
 
-    const category = { name, color, icon, expenses: [] };
-    categories.push(category);
-    renderCategories();
-    catName.value = "";
-    catIcon.value = "";
-  });
+      categories.push({ name, color, icon, expenses: [] });
+      renderCategories();
+
+      // reset text fields (keep color as last picked)
+      catName.value = "";
+      catIcon.value = "";
+    });
+  }
 
   // Render categories
   function renderCategories() {
@@ -87,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
         div.style.background = ""; // transparent in dark
       } else {
         div.style.borderColor = "";
-        div.style.background = cat.color + "33"; // 20% opacity
+        div.style.background = cat.color + "33"; // ~20% opacity
       }
 
       div.innerHTML = `
@@ -100,12 +129,13 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       categoriesEl.appendChild(div);
 
-      // render its expenses
+      // render its expenses immediately
       renderExpenses(i);
     });
 
     if (window.lucide?.createIcons) window.lucide.createIcons();
 
+    // wire add-expense buttons
     document.querySelectorAll(".btn-add").forEach(btn => {
       btn.addEventListener("click", () => {
         const i = btn.dataset.index;
@@ -135,17 +165,17 @@ document.addEventListener("DOMContentLoaded", () => {
       row.innerHTML = `
         <label><i data-lucide="${exp.icon}"></i> ${exp.name}</label>
         <input type="number" value="${exp.amount}" step="0.01" />
-        <button class="btn-icon edit"><i data-lucide="pencil"></i></button>
-        <button class="btn-icon del"><i data-lucide="x"></i></button>
+        <button class="btn-icon edit" title="Edit"><i data-lucide="pencil"></i></button>
+        <button class="btn-icon del" title="Remove"><i data-lucide="x"></i></button>
       `;
       expEl.appendChild(row);
 
       // Edit expense
       row.querySelector(".edit").addEventListener("click", () => {
         const newName = prompt("Edit expense name:", exp.name);
-        if (newName) exp.name = newName;
+        if (newName !== null && newName.trim() !== "") exp.name = newName.trim();
         const newIcon = prompt("Edit icon name (lucide):", exp.icon);
-        if (newIcon) exp.icon = newIcon;
+        if (newIcon !== null && newIcon.trim() !== "") exp.icon = newIcon.trim();
         renderExpenses(catIndex);
       });
 
@@ -176,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (ttlEl) ttlEl.textContent = `$${total.toFixed(2)}`;
     });
     const play = income - allExpenses;
-    playEl.textContent = `You’ve got $${play.toFixed(2)}/mo to play with`;
+    if (playEl) playEl.textContent = `You’ve got $${play.toFixed(2)}/mo to play with`;
   }
 
   // Theme toggle
