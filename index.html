@@ -54,7 +54,6 @@
     input,select,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
     input:focus,select:focus,button:focus{outline:2px solid var(--focus)}
     button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
-
     [data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] button{
       background:var(--field-light); border-color:var(--line-light); color:var(--text-dark);
     }
@@ -101,6 +100,15 @@
     [data-theme="light"] .tab-btn span{color:var(--muted-light)}
     main section{display:none}
     main section.active{display:block}
+
+    /* --- FIX: Tabs container styles in light mode --- */
+    [data-theme="light"] .tabs{
+      background: var(--card-light);
+      border-top-color: var(--line-light);
+    }
+    [data-theme="light"] .tabs .tab-btn span{
+      color: var(--muted-light);
+    }
   </style>
 </head>
 <body>
