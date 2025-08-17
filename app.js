@@ -11,6 +11,7 @@ window.addEventListener('error', (e) => {
 const $ = (id) => document.getElementById(id);
 const money = (v) => (Number.isFinite(v) ? v : 0).toLocaleString(undefined,{style:'currency',currency:'USD'});
 const num = (v) => { const s=String(v??'').replace(/[^0-9.\-]/g,''); const n=parseFloat(s); return Number.isFinite(n)?n:0; };
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, m => ({'&':'&','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
 
 // ---------- storage ----------
 const KEY_NET='budget:net', KEY_VALUES='budget:values', KEY_TX='budget:tx', KEY_THEME='budget:theme', KEY_CUSTOM='budget:custom';
@@ -38,12 +39,16 @@ const pieCanvas = $('pie'), pieLegend = $('pie-legend');
 const ctx = pieCanvas ? pieCanvas.getContext('2d') : null;
 
 // Icon modal
-const modal = $('icon-backdrop'), iconGrid = $('icon-grid'), iconSearch = $('icon-search');
-const customLabel = $('custom-label'), iconCancel = $('icon-cancel'), iconSave = $('icon-save');
+const modal = $('icon-backdrop');
+const listBox = $('icon-list');       // NEW: two-column list container
+const iconSearch = $('icon-search');
+const customLabel = $('custom-label');
+const iconCancel = $('icon-cancel');
+const iconSave = $('icon-save');
 
-let modalOpenFor = null;        // 'nn' | 'subs' | ...
-let selectedIcon = null;         // string name from lucide
-let selectedIconCell = null;
+let modalOpenFor = null;  // 'nn' | 'subs' | 'dates' | 'invest' | 'oneoff'
+let selectedIcon = null;
+let selectedRow = null;
 
 // ---------- init ----------
 document.addEventListener('DOMContentLoaded', () => {
@@ -74,16 +79,16 @@ document.addEventListener('DOMContentLoaded', () => {
     save(KEY_NET, netIncome); updateAll();
   });
 
-  // Wire static inputs: any input with .bill-input
+  // Wire static inputs
   document.querySelectorAll('input.bill-input').forEach(el=>{
     if (values[el.id] != null) el.value = values[el.id];
     el.addEventListener('input', onBillInput);
   });
 
-  // Render custom rows from storage for each category
+  // Render custom rows from storage
   ['nn','subs','dates','invest','oneoff'].forEach(renderCustomCategory);
 
-  // Add-expense buttons
+  // Add-expense buttons (now at bottom of each card)
   document.querySelectorAll('.btn-add[data-add]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       modalOpenFor = btn.getAttribute('data-add');
@@ -94,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Modal controls
   iconCancel.addEventListener('click', closeIconModal);
   iconSave.addEventListener('click', handleAddCustom);
-  iconSearch.addEventListener('input', renderIconGrid);
+  iconSearch.addEventListener('input', renderIconList);
 
   // First paint
   updateAll();
@@ -104,16 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ---------- events ----------
-function onIncomeChange(){
-  netIncome = num(netIncomeEl.value); save(KEY_NET, netIncome);
-  updateAll();
-}
-function onBillInput(e){
-  const el = e.currentTarget;
-  values[el.id] = el.value;
-  save(KEY_VALUES, values);
-  updateAll();
-}
+function onIncomeChange(){ netIncome = num(netIncomeEl.value); save(KEY_NET, netIncome); updateAll(); }
+function onBillInput(e){ const el=e.currentTarget; values[el.id] = el.value; save(KEY_VALUES, values); updateAll(); }
 
 // ---------- custom rows ----------
 function renderCustomCategory(cat){
@@ -130,8 +127,6 @@ function renderCustomCategory(cat){
       <input class="bill-input" id="${inputId}" type="number" step="0.01" placeholder="Amount / month" />
     `;
     wrap.appendChild(row);
-
-    // restore value + wire
     const input = row.querySelector('input');
     if (values[inputId] != null) input.value = values[inputId];
     input.addEventListener('input', onBillInput);
@@ -153,12 +148,12 @@ function handleAddCustom(){
   updateAll();
 }
 
-// ---------- modal + icons ----------
+// ---------- modal + icons (two-column list) ----------
 function openIconModal(){
-  selectedIcon = null; selectedIconCell = null;
+  selectedIcon = null; selectedRow = null;
   customLabel.value = '';
   iconSearch.value = '';
-  renderIconGrid();
+  renderIconList();
   modal.style.display = 'flex';
   modal.setAttribute('aria-hidden','false');
 }
@@ -167,23 +162,25 @@ function closeIconModal(){
   modal.setAttribute('aria-hidden','true');
 }
 
-function renderIconGrid(){
+function renderIconList(){
   const all = Object.keys(window.lucide?.icons || {});
   const q = iconSearch.value?.toLowerCase().trim();
   const filtered = q ? all.filter(n => n.includes(q)) : all;
-  const top = filtered.slice(0, 240); // keep it light
-  iconGrid.innerHTML = top.map(n => `
-    <div class="icon-item" data-icon="${n}">
-      <i data-lucide="${n}"></i>
-      <small class="muted" style="font-size:10px">${n}</small>
+  const top = filtered.slice(0, 400); // bigger list ok due to compact rows
+
+  listBox.innerHTML = top.map(n => `
+    <div class="icon-row" data-icon="${n}">
+      <div class="icon-cell"><i data-lucide="${n}"></i></div>
+      <div class="name-cell">${n}</div>
     </div>
   `).join('');
-  iconGrid.querySelectorAll('.icon-item').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      if (selectedIconCell) selectedIconCell.classList.remove('active');
-      selectedIconCell = el;
-      selectedIconCell.classList.add('active');
-      selectedIcon = el.getAttribute('data-icon');
+
+  listBox.querySelectorAll('.icon-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      if (selectedRow) selectedRow.classList.remove('active');
+      selectedRow = row;
+      selectedRow.classList.add('active');
+      selectedIcon = row.getAttribute('data-icon');
       try { window.lucide?.createIcons?.(); } catch {}
     });
   });
@@ -202,18 +199,8 @@ function totalInvest(){ return sectionTotal('card-invest'); }
 function totalOne(){ return sectionTotal('card-oneoff'); }
 
 // ---------- update cluster ----------
-function updateAll(){
-  updateYearly();
-  updateHeaderTotals();
-  updateMetrics();
-  updateIncomeSplit();
-  try { window.lucide?.createIcons?.(); } catch {}
-}
-function updateYearly(){
-  const m = num(netIncomeEl.value) || num(netIncome);
-  const y = m > 0 ? m * 12 : 0;
-  netYearlyEl.textContent = `Yearly: ${y ? money(y) : '—'}`;
-}
+function updateAll(){ updateYearly(); updateHeaderTotals(); updateMetrics(); updateIncomeSplit(); try { window.lucide?.createIcons?.(); } catch {} }
+function updateYearly(){ const m=num(netIncomeEl.value)||num(netIncome); const y=m>0?m*12:0; netYearlyEl.textContent=`Yearly: ${y?money(y):'—'}`; }
 function updateHeaderTotals(){
   headTotals.nn.textContent     = money(totalNN());
   headTotals.subs.textContent   = money(totalSubs());
@@ -289,11 +276,6 @@ function drawLegend(slices){
 function applyTheme(mode){
   document.documentElement.setAttribute('data-theme', mode);
   try { window.lucide?.createIcons?.(); } catch {}
-}
-
-// ---------- utils ----------
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
 // Redraw pie on resize
