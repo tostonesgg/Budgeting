@@ -17,15 +17,14 @@
     [data-theme="light"] body{background:var(--bg-light);color:var(--text-dark)}
 
     .wrap{max-width:860px;margin:0 auto;padding:16px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
     h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
 
-    /* Theme toggle */
-    #theme-toggle{background:transparent;border:1px solid var(--line);border-radius:10px;color:inherit;padding:8px 10px;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
-    [data-theme="light"] #theme-toggle{border-color:var(--line-light)}
-    .icon-sun{display:none}
-    [data-theme="light"] .icon-moon{display:none}
-    [data-theme="light"] .icon-sun{display:inline}
+    /* Header actions */
+    .hdr-actions{display:flex;gap:8px}
+    .btn{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+    .btn:focus{outline:2px solid var(--focus)}
+    [data-theme="light"] .btn{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
 
     /* Cards / form controls */
     .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
@@ -33,7 +32,6 @@
     input,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
     input:focus,button:focus{outline:2px solid var(--focus)}
     [data-theme="light"] input,[data-theme="light"] button{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
-    button{cursor:pointer;display:inline-flex;gap:6px;align-items:center}
     .row{display:flex;gap:8px;flex-wrap:wrap}
     .row>*{flex:1 1 min(240px,100%)}
     .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
@@ -44,10 +42,10 @@
     .category-title{display:flex;gap:8px;align-items:center;font-weight:900;font-size:20px}
     .cat-total{font-weight:800}
 
-    /* Expense rows: label | input | edit | delete */
+    /* Expense rows: label | input | freq | edit | delete */
     .bill-row{
       display:grid;
-      grid-template-columns: 1fr 120px 40px 40px;
+      grid-template-columns: 1fr 120px 60px 40px 40px;
       gap:10px;align-items:center;margin:8px 0
     }
     .bill-row label{
@@ -59,16 +57,28 @@
     .btn-icon{
       display:inline-flex;align-items:center;justify-content:center;
       width:40px;height:40px;border-radius:8px;border:1px solid var(--line);
-      background:transparent;color:inherit
+      background:transparent;color:inherit;cursor:pointer
     }
     .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
     [data-theme="light"] .btn-icon{border-color:var(--line-light)}
+    .btn-freq{
+      height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer
+    }
+    [data-theme="light"] .btn-freq{border-color:var(--line-light)}
     @media (max-width:480px){
-      .bill-row{grid-template-columns:1fr 100px 40px 40px}
+      .bill-row{grid-template-columns:1fr 100px 56px 40px 40px}
+      .btn-freq{font-size:12px;padding:0 6px}
     }
 
-    .btn-add{border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px;width:100%;justify-content:center;margin-top:8px}
+    .card-actions{display:flex;gap:8px;margin-top:8px;align-items:center}
+    .btn-add{flex:1;border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px;justify-content:center;display:inline-flex;align-items:center;gap:6px}
     [data-theme="light"] .btn-add{border-color:var(--line-light)}
+    .btn-cat{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit}
+    [data-theme="light"] .btn-cat{border-color:var(--line-light)}
+
+    /* Non-monthly notes */
+    .notes{margin-top:6px;font-size:12px;color:var(--muted)}
+    [data-theme="light"] .notes{color:var(--muted-light)}
 
     /* Color picker (Safari-safe: use label[for]) */
     .color-input{
@@ -86,11 +96,14 @@
 <div class="wrap">
   <header>
     <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
-    <button id="theme-toggle" type="button" title="Toggle theme">
-      <i class="icon-moon" data-lucide="moon"></i>
-      <i class="icon-sun" data-lucide="sun"></i>
-      Theme
-    </button>
+    <div class="hdr-actions">
+      <button id="share-btn" class="btn" title="Share template"><i data-lucide="share-2"></i> Share</button>
+      <button id="theme-toggle" class="btn" type="button" title="Toggle theme">
+        <i class="icon-moon" data-lucide="moon"></i>
+        <i class="icon-sun" data-lucide="sun"></i>
+        Theme
+      </button>
+    </div>
   </header>
 
   <main>
@@ -116,7 +129,7 @@
           <span class="swatch" aria-hidden="true"></span>
           Pick Color
         </label>
-        <button id="add-category"><i data-lucide="plus"></i> Add</button>
+        <button id="add-category" class="btn"><i data-lucide="plus"></i> Add</button>
       </div>
     </div>
 
@@ -132,7 +145,7 @@
   </main>
 </div>
 
-<script defer src="app.js?v=picker-label-1"></script>
+<script defer src="app.js?v=share-freq-local-1"></script>
 <script>
   window.addEventListener('DOMContentLoaded', function(){
     try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
