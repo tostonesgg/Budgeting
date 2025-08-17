@@ -113,8 +113,12 @@
       <div class="row">
         <input id="cat-name" placeholder="Category name" />
         <input id="cat-icon" placeholder="Lucide icon name (e.g., 'car')" />
-        <input id="cat-color" type="color" style="display:none" />
-        <button id="cat-color-btn"><i data-lucide="paintbrush-vertical"></i> Pick Color</button>
+        <input id="cat-color" type="color" class="color-input" value="#3b82f6" />
+<button id="cat-color-btn" class="color-btn">
+  <i data-lucide="paintbrush-vertical"></i>
+  <span class="swatch" aria-hidden="true"></span>
+  Pick Color
+</button>
         <button id="add-category"><i data-lucide="plus"></i> Add</button>
       </div>
     </div>
