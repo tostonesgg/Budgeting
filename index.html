@@ -52,11 +52,11 @@
 
     .card-head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:8px}
     .card-title{display:inline-flex;align-items:center;gap:8px;font-weight:700}
-    .cat-cta{display:flex;gap:8px;align-items:center}
     .cat-total{font-weight:800}
 
-    .btn-add{border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px}
+    .btn-add{border:1px dashed var(--line);background:transparent;padding:6px 10px;border-radius:8px;width:100%;justify-content:center}
     [data-theme="light"] .btn-add{border-color:var(--line-light)}
+    .card-actions{margin-top:8px}
 
     .card-nn{ border-color:var(--nn) }         [data-theme="light"] .card-nn{ background:var(--nn-200) }
     .card-subs{ border-color:var(--subs) }     [data-theme="light"] .card-subs{ background:var(--subs-200) }
@@ -82,15 +82,21 @@
     [data-theme="light"] .tabs{ background: var(--card-light); border-top-color: var(--line-light) }
     [data-theme="light"] .tabs .tab-btn span{ color: var(--muted-light) }
 
-    /* Modal */
+    /* Modal (two-column icon list) */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
     .modal{background:var(--card);border:1px solid var(--line);border-radius:12px;max-width:720px;width:92vw;padding:12px}
     [data-theme="light"] .modal{background:var(--card-light);border-color:var(--line-light)}
     .modal h3{margin:0 0 8px 0}
-    .icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;max-height:40vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px}
-    [data-theme="light"] .icon-grid{border-color:var(--line-light)}
-    .icon-item{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid transparent;padding:8px;border-radius:8px;cursor:pointer}
-    .icon-item.active{border-color:var(--focus)}
+
+    .icon-list{max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:10px}
+    [data-theme="light"] .icon-list{border-color:var(--line-light)}
+    .icon-row{display:grid;grid-template-columns:56px 1fr;gap:8px;align-items:center;padding:8px;border-bottom:1px solid var(--line);cursor:pointer}
+    [data-theme="light"] .icon-row{border-bottom-color:var(--line-light)}
+    .icon-row:last-child{border-bottom:0}
+    .icon-row.active{outline:2px solid var(--focus);outline-offset:-2px;border-radius:8px}
+    .icon-cell{display:flex;align-items:center;justify-content:center}
+    .name-cell{font-size:12px;color:var(--muted)}
+    [data-theme="light"] .name-cell{color:var(--muted-light)}
   </style>
 </head>
 <body>
@@ -120,10 +126,7 @@
         <div class="card card-nn" id="card-nn">
           <div class="card-head">
             <span class="card-title"><i data-lucide="shield-alert"></i> Non-Negotiable Bills</span>
-            <span class="cat-cta">
-              <span class="cat-total" id="ttl-nn">—</span>
-              <button class="btn-add" data-add="nn"><i data-lucide="plus"></i>Add expense</button>
-            </span>
+            <span class="cat-total" id="ttl-nn">—</span>
           </div>
           <p class="muted">These are your necessities—if you lost your job today, you would stop putting money into every other category except this one.</p>
 
@@ -144,16 +147,17 @@
 
           <!-- Custom rows render here -->
           <div class="custom-container" id="custom-nn"></div>
+
+          <div class="card-actions">
+            <button class="btn-add" data-add="nn"><i data-lucide="plus"></i>Add expense</button>
+          </div>
         </div>
 
         <!-- Subscriptions -->
         <div class="card card-subs" id="card-subs">
           <div class="card-head">
             <span class="card-title"><i data-lucide="badge-dollar-sign"></i> Subscriptions</span>
-            <span class="cat-cta">
-              <span class="cat-total" id="ttl-subs">—</span>
-              <button class="btn-add" data-add="subs"><i data-lucide="plus"></i>Add expense</button>
-            </span>
+            <span class="cat-total" id="ttl-subs">—</span>
           </div>
           <div class="bill-row"><label for="bill-amazon"><i data-lucide="package"></i> Amazon</label><input class="bill-input" id="bill-amazon" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-netflix"><i data-lucide="tv"></i> Netflix</label><input class="bill-input" id="bill-netflix" type="number" step="0.01" placeholder="Amount / month" /></div>
@@ -163,16 +167,17 @@
           <div class="bill-row"><label for="bill-chatgpt"><i data-lucide="bot"></i> ChatGPT</label><input class="bill-input" id="bill-chatgpt" type="number" step="0.01" placeholder="Amount / month" /></div>
 
           <div class="custom-container" id="custom-subs"></div>
+
+          <div class="card-actions">
+            <button class="btn-add" data-add="subs"><i data-lucide="plus"></i>Add expense</button>
+          </div>
         </div>
 
         <!-- Date Nights -->
         <div class="card card-dates" id="card-dates">
           <div class="card-head">
             <span class="card-title"><i data-lucide="wine"></i> Date Nights</span>
-            <span class="cat-cta">
-              <span class="cat-total" id="ttl-dates">—</span>
-              <button class="btn-add" data-add="dates"><i data-lucide="plus"></i>Add expense</button>
-            </span>
+            <span class="cat-total" id="ttl-dates">—</span>
           </div>
           <div class="bill-row"><label for="bill-lunches"><i data-lucide="wine"></i> Lunches & Dinners</label><input class="bill-input" id="bill-lunches" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-themeparks"><i data-lucide="ticket"></i> Theme Parks</label><input class="bill-input" id="bill-themeparks" type="number" step="0.01" placeholder="Amount / month" /></div>
@@ -180,16 +185,17 @@
           <div class="bill-row"><label for="bill-shopping"><i data-lucide="shopping-bag"></i> Shopping</label><input class="bill-input" id="bill-shopping" type="number" step="0.01" placeholder="Amount / month" /></div>
 
           <div class="custom-container" id="custom-dates"></div>
+
+          <div class="card-actions">
+            <button class="btn-add" data-add="dates"><i data-lucide="plus"></i>Add expense</button>
+          </div>
         </div>
 
         <!-- Investments -->
         <div class="card card-invest" id="card-invest">
           <div class="card-head">
             <span class="card-title"><i data-lucide="candlestick-chart"></i> Investments</span>
-            <span class="cat-cta">
-              <span class="cat-total" id="ttl-invest">—</span>
-              <button class="btn-add" data-add="invest"><i data-lucide="plus"></i>Add expense</button>
-            </span>
+            <span class="cat-total" id="ttl-invest">—</span>
           </div>
           <div class="bill-row"><label for="bill-stocks"><i data-lucide="candlestick-chart"></i> Stocks</label><input class="bill-input" id="bill-stocks" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-crypto"><i data-lucide="bitcoin"></i> Crypto</label><input class="bill-input" id="bill-crypto" type="number" step="0.01" placeholder="Amount / month" /></div>
@@ -198,16 +204,17 @@
           <div class="bill-row"><label for="bill-emergency"><i data-lucide="siren"></i> Emergency Fund</label><input class="bill-input" id="bill-emergency" type="number" step="0.01" placeholder="Amount / month" /></div>
 
           <div class="custom-container" id="custom-invest"></div>
+
+          <div class="card-actions">
+            <button class="btn-add" data-add="invest"><i data-lucide="plus"></i>Add expense</button>
+          </div>
         </div>
 
         <!-- One-off Purchases -->
         <div class="card card-oneoff" id="card-oneoff">
           <div class="card-head">
             <span class="card-title"><i data-lucide="shopping-bag"></i> One-off Purchases</span>
-            <span class="cat-cta">
-              <span class="cat-total" id="ttl-oneoff">—</span>
-              <button class="btn-add" data-add="oneoff"><i data-lucide="plus"></i>Add expense</button>
-            </span>
+            <span class="cat-total" id="ttl-oneoff">—</span>
           </div>
           <div class="bill-row"><label for="bill-art"><i data-lucide="shopping-bag"></i> Art, Pops, Clothes, etc.</label><input class="bill-input" id="bill-art" type="number" step="0.01" placeholder="Amount / month" /></div>
           <div class="bill-row"><label for="bill-fishing"><i data-lucide="ship"></i> Fishing trips</label><input class="bill-input" id="bill-fishing" type="number" step="0.01" placeholder="Amount / month" /></div>
@@ -215,6 +222,10 @@
           <div class="bill-row"><label for="bill-smeegother"><i data-lucide="dog"></i> Other Smeeg-related toys, creams</label><input class="bill-input" id="bill-smeegother" type="number" step="0.01" placeholder="Amount / month" /></div>
 
           <div class="custom-container" id="custom-oneoff"></div>
+
+          <div class="card-actions">
+            <button class="btn-add" data-add="oneoff"><i data-lucide="plus"></i>Add expense</button>
+          </div>
         </div>
 
         <!-- Dynamic metrics -->
@@ -289,8 +300,11 @@
         <input id="custom-label" placeholder="Expense name (e.g., 'Gym', 'Therapy')" />
         <input id="icon-search" placeholder="Search icon (e.g., 'dumbbell', 'heart')" />
       </div>
-      <p class="muted" style="margin:8px 0">Tap an icon to select it.</p>
-      <div class="icon-grid" id="icon-grid"></div>
+      <p class="muted" style="margin:8px 0">Tap a row to select an icon.</p>
+
+      <!-- Two-column list (Icon | Name) -->
+      <div class="icon-list" id="icon-list"></div>
+
       <div class="row" style="margin-top:8px">
         <button id="icon-cancel"><i data-lucide="x"></i>Cancel</button>
         <button id="icon-save"><i data-lucide="check"></i>Add to category</button>
