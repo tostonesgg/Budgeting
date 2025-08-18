@@ -187,10 +187,10 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
 categoriesEl.appendChild(div);
 
-// tint all footer buttons with the category color
-const footerBtns = div.querySelectorAll(".card-actions .btn-icon, .card-actions .btn-add");
+// tint all footer buttons with the category color (add, paintbrush, pencil, X)
+const footerBtns = div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat");
 footerBtns.forEach(btn => {
-  btn.style.borderColor = cat.color;
+  btn.style.borderColor = cat.color;           // outline uses category color
 });
 
 
