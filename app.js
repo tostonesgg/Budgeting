@@ -476,20 +476,27 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =====================================
    *  Bootstrap
    * ===================================== */
-  if (!load()) {
-    income = 0;
-    categories = JSON.parse(JSON.stringify(defaults));
-  }
+  /* =====================================
+ *  Bootstrap (load -> fall back to defaults if empty)
+ * ===================================== */
+if (!load() || !Array.isArray(categories) || categories.length === 0) {
+  income = 0;
+  categories = JSON.parse(JSON.stringify(defaults));
+  save(); // persist defaults so future loads work
+}
 
-  // initial UI
-  if (incomeInput) {
-    incomeInput.value = income ? String(income) : "";
-    // prime sticky monthly with current income
-    incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0);
-  }
-  if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
+// initial UI
+if (incomeInput) {
+  incomeInput.value = income ? String(income) : "";
+  incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0); // seed sticky monthly
+}
+if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
-  renderCategories();
-  updateTotals();
-  setupSticky();
+renderCategories();
+updateTotals();
+setupSticky();
+
+// Kick the sticky logic once on boot so visibility is correct
+requestAnimationFrame(() => window.dispatchEvent(new Event('scroll')));
+
 });
