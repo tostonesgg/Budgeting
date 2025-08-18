@@ -499,4 +499,44 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCategories();
   updateTotals();
   setupSticky();
+
+  // --- Sticky bar: show when income card is off-screen, keep values in sync ---
+const sticky        = document.getElementById('income-sticky');
+const incomeCard    = document.getElementById('income-card');
+const stickyMonthly = document.getElementById('sticky-monthly');
+const stickyYearly  = document.getElementById('sticky-yearly');
+const stickyPlay    = document.getElementById('sticky-play');
+
+if (sticky && incomeCard && stickyMonthly && stickyYearly && stickyPlay) {
+  const updateSticky = () => {
+    // monthly = clean $ stored on the input (set in your incomeInput 'input' handler)
+    stickyMonthly.textContent = (incomeInput?.dataset.value) || (income ? fmt(income) : '—');
+
+    // yearly = strip "Yearly:" from the visible label
+    const y = (yearlyEl?.textContent || '').replace(/^Yearly:\s*/i, '').trim();
+    stickyYearly.textContent = y || (income ? fmt(income * 12) : '—');
+
+    // play money = clean $ stored on #play-left by updateTotals()
+    stickyPlay.textContent = playEl?.dataset.value || '—';
+  };
+
+  const onScroll = () => {
+    const rect = incomeCard.getBoundingClientRect();
+    if (rect.bottom <= 0) sticky.classList.remove('hidden');
+    else sticky.classList.add('hidden');
+  };
+
+  // wire up
+  window.addEventListener('scroll', onScroll, { passive: true });
+  incomeInput?.addEventListener('input', updateSticky);
+  try { new MutationObserver(updateSticky).observe(yearlyEl, { childList: true }); } catch {}
+  try { new MutationObserver(updateSticky).observe(playEl,  { attributes: true, attributeFilter: ['data-value'] }); } catch {}
+
+  // initial state
+  updateSticky();
+  onScroll();
+} else {
+  console.warn('[sticky] Missing nodes; not initialized.');
+}
+
 });
