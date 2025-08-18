@@ -1,54 +1,64 @@
+// app.js
 document.addEventListener("DOMContentLoaded", () => {
+  /* =====================================
+   *  DOM refs / constants
+   * ===================================== */
   const LS_KEY = "budget.v1";
-  const incomeInput = document.getElementById("net-income");
-  const yearlyEl = document.getElementById("net-yearly");
-  const playEl = document.getElementById("play-left");
-  const catName = document.getElementById("cat-name");
-  const catIcon = document.getElementById("cat-icon");
-  const addCatBtn = document.getElementById("add-category");
+  const incomeInput  = document.getElementById("net-income");
+  const yearlyEl     = document.getElementById("net-yearly");
+  const playEl       = document.getElementById("play-left");
+  const catName      = document.getElementById("cat-name");
+  const catIcon      = document.getElementById("cat-icon");
+  const addCatBtn    = document.getElementById("add-category");
   const categoriesEl = document.getElementById("categories");
-  const shareBtn = document.getElementById("share-btn");
-  const inlineColor = document.getElementById("inline-color");
+  const shareBtn     = document.getElementById("share-btn");
+  const inlineColor  = document.getElementById("inline-color");
   let colorPickIndex = null; // which category we’re editing
 
   // Color picker (label-for approach)
-  const colorBtn   = document.getElementById("cat-color-btn"); // <label/button>
-  const colorInput = document.getElementById("cat-color");     // <input type=color>
+  const colorBtn    = document.getElementById("cat-color-btn"); // <label/button>
+  const colorInput  = document.getElementById("cat-color");     // <input type=color>
   const colorSwatch = colorBtn ? colorBtn.querySelector(".swatch") : null;
 
-  // Helpers
+  /* =====================================
+   *  Helpers
+   * ===================================== */
   const clamp = (n) => (isFinite(n) ? n : 0);
-  const fmt = (n) => `$${(clamp(n)).toFixed(2)}`;
+  const fmt   = (n) => `$${(clamp(n)).toFixed(2)}`;
 
-  // Default categories: Essentials
+  /* =====================================
+   *  Defaults
+   * ===================================== */
   const defaults = [
     {
       name: "Essentials",
-      color: "#ef4444", // red
+      color: "#ef4444",
       icon: "crown",
       expenses: [
-        { name: "Mortgage", amount: 0, icon: "house", freq: "mo" },
-        { name: "HOA", amount: 0, icon: "house", freq: "mo" },
-        { name: "Electricity", amount: 0, icon: "zap", freq: "mo" },
-        { name: "Water", amount: 0, icon: "droplet", freq: "mo" },
-        { name: "Gas", amount: 0, icon: "cooking-pot", freq: "mo" },
-        { name: "Waste", amount: 0, icon: "trash-2", freq: "qtr" },
-        { name: "Internet", amount: 0, icon: "wifi", freq: "mo" },
-        { name: "Phone", amount: 0, icon: "phone", freq: "mo" },
-        { name: "Home Security", amount: 0, icon: "cctv", freq: "mo" },
-        { name: "Groceries", amount: 0, icon: "carrot", freq: "mo" },
-        { name: "Transportation", amount: 0, icon: "fuel", freq: "mo" },
-        { name: "Car Insurance", amount: 0, icon: "car", freq: "mo" },
-        { name: "Car Registration", amount: 0, icon: "file-text", freq: "yr" },
-        { name: "Car Maintenance", amount: 0, icon: "wrench", freq: "qtr" },
-        { name: "Pet Insurance", amount: 0, icon: "paw-print", freq: "mo" },
-        { name: "Pet Food", amount: 0, icon: "beef", freq: "qtr" },
+        { name: "Mortgage",         amount: 0, icon: "house",       freq: "mo" },
+        { name: "HOA",              amount: 0, icon: "house",       freq: "mo" },
+        { name: "Electricity",      amount: 0, icon: "zap",         freq: "mo" },
+        { name: "Water",            amount: 0, icon: "droplet",     freq: "mo" },
+        { name: "Gas",              amount: 0, icon: "cooking-pot", freq: "mo" },
+        { name: "Waste",            amount: 0, icon: "trash-2",     freq: "qtr" },
+        { name: "Internet",         amount: 0, icon: "wifi",        freq: "mo" },
+        { name: "Phone",            amount: 0, icon: "phone",       freq: "mo" },
+        { name: "Home Security",    amount: 0, icon: "cctv",        freq: "mo" },
+        { name: "Groceries",        amount: 0, icon: "carrot",      freq: "mo" },
+        { name: "Transportation",   amount: 0, icon: "fuel",        freq: "mo" },
+        { name: "Car Insurance",    amount: 0, icon: "car",         freq: "mo" },
+        { name: "Car Registration", amount: 0, icon: "file-text",   freq: "yr" },
+        { name: "Car Maintenance",  amount: 0, icon: "wrench",      freq: "qtr" },
+        { name: "Pet Insurance",    amount: 0, icon: "paw-print",   freq: "mo" },
+        { name: "Pet Food",         amount: 0, icon: "beef",        freq: "qtr" },
         { name: "Health Insurance", amount: 0, icon: "stethoscope", freq: "mo" }
       ]
     }
   ];
 
-  // Load state (from share link or localStorage)
+  /* =====================================
+   *  Load / Save
+   * ===================================== */
   let income = 0;
   let categories = [];
 
@@ -62,11 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof obj !== "object") return false;
       income = clamp(parseFloat(obj.income) || 0);
       categories = Array.isArray(obj.categories) ? obj.categories : [];
-      location.hash = ""; // clear hash after import
+      location.hash = "";
       return true;
-    } catch (_) {
-      return false;
-    }
+    } catch (_) { return false; }
   };
 
   const load = () => {
@@ -86,7 +94,9 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(LS_KEY, payload);
   };
 
-  // Color swatch init + updates
+  /* =====================================
+   *  Color swatch init + updates
+   * ===================================== */
   if (colorSwatch && colorInput) colorSwatch.style.background = colorInput.value;
   if (colorInput) {
     colorInput.addEventListener("input", () => {
@@ -100,28 +110,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
- // Income live updates
-if (incomeInput) {
-  incomeInput.addEventListener("input", () => {
-    income = parseFloat(incomeInput.value) || 0;
+  /* =====================================
+   *  Income live updates (+ sticky monthly dataset)
+   * ===================================== */
+  if (incomeInput) {
+    incomeInput.addEventListener("input", () => {
+      income = parseFloat(incomeInput.value) || 0;
 
-    // Update yearly
-    if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
+      if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
-    // NEW: store clean $value for sticky pill
-    incomeInput.dataset.value = fmt(income);
+      // Feed the sticky monthly pill a clean $ value
+      incomeInput.dataset.value = fmt(income);
 
-    updateTotals();
-    save();
-  });
-}
+      updateTotals();
+      save();
+    });
+  }
 
-
-  // Add category
+  /* =====================================
+   *  Add Category
+   * ===================================== */
   if (addCatBtn) {
     addCatBtn.addEventListener("click", () => {
-      const name = catName.value.trim();
-      const icon = catIcon.value.trim() || "folder";
+      const name  = catName.value.trim();
+      const icon  = catIcon.value.trim() || "folder";
       const color = (colorInput && colorInput.value) ? colorInput.value : "#3b82f6";
       if (!name) return alert("Please enter a category name");
 
@@ -133,7 +145,9 @@ if (incomeInput) {
     });
   }
 
-  // Share template
+  /* =====================================
+   *  Share Template
+   * ===================================== */
   if (shareBtn) {
     shareBtn.addEventListener("click", async () => {
       const obj = { income, categories };
@@ -148,6 +162,9 @@ if (incomeInput) {
     });
   }
 
+  /* =====================================
+   *  Inline color picker for category footer
+   * ===================================== */
   if (inlineColor) {
     inlineColor.addEventListener("input", () => {
       if (colorPickIndex == null) return;
@@ -160,9 +177,10 @@ if (incomeInput) {
     });
   }
 
-  // Render categories
+  /* =====================================
+   *  Render Categories
+   * ===================================== */
   function renderCategories() {
-    // Guard: avoid crashing if the container is missing
     if (!categoriesEl) {
       console.warn("Missing #categories in DOM; skipping render");
       return;
@@ -176,10 +194,10 @@ if (incomeInput) {
       // Adaptive color (dark: border, light: soft background)
       if (document.documentElement.dataset.theme === "dark") {
         div.style.borderColor = cat.color;
-        div.style.background = "";
+        div.style.background  = "";
       } else {
         div.style.borderColor = "";
-        div.style.background = cat.color + "33"; // ~20% opacity
+        div.style.background  = cat.color + "33";
       }
 
       div.innerHTML = `
@@ -199,13 +217,11 @@ if (incomeInput) {
 
       categoriesEl.appendChild(div);
 
-      // tint all footer buttons with the category color (add, paintbrush, pencil, X)
+      // Tint footer buttons with the category color
       const footerBtns = div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat");
-      footerBtns.forEach(btn => {
-        btn.style.borderColor = cat.color; // outline uses category color
-      });
+      footerBtns.forEach(btn => { btn.style.borderColor = cat.color; });
 
-      // change category color — scope to *this* card only (prevents multi-binding)
+      // Color change (scoped to this card)
       div.querySelectorAll(".cat-color").forEach(btn => {
         btn.addEventListener("click", () => {
           const idx = parseInt(btn.dataset.index, 10);
@@ -223,14 +239,13 @@ if (incomeInput) {
     if (window.lucide?.createIcons) window.lucide.createIcons();
 
     // Wire actions
-    // add-expense
     document.querySelectorAll(".btn-add").forEach(btn => {
       btn.addEventListener("click", () => {
         const i = parseInt(btn.dataset.index, 10);
         addExpense(i);
       });
     });
-    // edit category
+
     document.querySelectorAll(".cat-edit").forEach(btn => {
       btn.addEventListener("click", () => {
         const i = parseInt(btn.dataset.index, 10);
@@ -243,7 +258,7 @@ if (incomeInput) {
         save();
       });
     });
-    // delete category
+
     document.querySelectorAll(".cat-del").forEach(btn => {
       btn.addEventListener("click", () => {
         const i = parseInt(btn.dataset.index, 10);
@@ -258,7 +273,9 @@ if (incomeInput) {
     updateTotals();
   }
 
-  // Add a blank expense
+  /* =====================================
+   *  Expenses rendering / interactions
+   * ===================================== */
   function addExpense(catIndex) {
     const exp = { name: "New Expense", amount: 0, icon: "circle", freq: "mo" };
     categories[catIndex].expenses.push(exp);
@@ -266,22 +283,16 @@ if (incomeInput) {
     save();
   }
 
-  // Cycle frequency
-  function nextFreq(f) {
-    return f === "mo" ? "qtr" : f === "qtr" ? "yr" : "mo";
-  }
-  function freqLabel(f) {
-    return f === "mo" ? "/mo" : f === "qtr" ? "/3mo" : "/yr";
-  }
+  function nextFreq(f) { return f === "mo" ? "qtr" : f === "qtr" ? "yr" : "mo"; }
+  function freqLabel(f) { return f === "mo" ? "/mo" : f === "qtr" ? "/3mo" : "/yr"; }
   function monthlyFrom(amount, freq) {
     if (freq === "qtr") return amount / 3;
     if (freq === "yr")  return amount / 12;
     return amount; // mo
   }
 
-  // Render all expenses of a category
   function renderExpenses(catIndex) {
-    const expEl = document.getElementById(`expenses-${catIndex}`);
+    const expEl   = document.getElementById(`expenses-${catIndex}`);
     const notesEl = document.getElementById(`notes-${catIndex}`);
     if (!expEl) return;
     expEl.innerHTML = "";
@@ -301,7 +312,6 @@ if (incomeInput) {
       `;
       expEl.appendChild(row);
 
-      // Edit expense
       row.querySelector(".edit").addEventListener("click", () => {
         const newName = prompt("Edit expense name:", exp.name);
         if (newName !== null && newName.trim() !== "") exp.name = newName.trim();
@@ -311,44 +321,36 @@ if (incomeInput) {
         save();
       });
 
-      // Delete expense
       row.querySelector(".del").addEventListener("click", () => {
         cat.expenses.splice(j, 1);
         renderExpenses(catIndex);
         save();
       });
 
-      // Update amount live
       row.querySelector("input").addEventListener("input", (e) => {
         exp.amount = parseFloat(e.target.value) || 0;
         updateTotals();
-        // no re-render needed unless freq/label changes
         save();
       });
 
-      // Frequency cycler
       const freqBtn = row.querySelector(".btn-freq");
       freqBtn.addEventListener("click", () => {
         exp.freq = nextFreq(exp.freq || "mo");
         freqBtn.textContent = freqLabel(exp.freq);
         updateTotals();
-        // refresh notes because recommendations may change
         renderNotesForCategory(catIndex);
         save();
       });
 
-      // collect notes if non-monthly
       if ((exp.freq || "mo") !== "mo" && exp.amount > 0) {
         const perMo = monthlyFrom(exp.amount, exp.freq || "mo");
-        const when = (exp.freq === "qtr") ? "quarterly" : "yearly";
+        const when  = (exp.freq === "qtr") ? "quarterly" : "yearly";
         notes.push(`${exp.name} occurs ${when}, consider budgeting ${fmt(perMo)} /mo.`);
       }
     });
 
-    // Icons refresh for newly added SVGs
     if (window.lucide?.createIcons) window.lucide.createIcons();
 
-    // write notes
     if (notesEl) {
       notesEl.innerHTML = notes.length ? notes.map(n => `• ${n}`).join("<br/>") : "";
     }
@@ -371,7 +373,10 @@ if (incomeInput) {
     notesEl.innerHTML = notes.length ? notes.map(n => `• ${n}`).join("<br/>") : "";
   }
 
-  // Totals (per-category normalized monthly + play money)
+  /* =====================================
+   *  Totals (per-category + play money)
+   *  – also feeds sticky "play" pill via data-value
+   * ===================================== */
   function updateTotals() {
     let allExpenses = 0;
     categories.forEach((cat, i) => {
@@ -383,17 +388,21 @@ if (incomeInput) {
       const ttlEl = document.getElementById(`cat-total-${i}`);
       if (ttlEl) ttlEl.textContent = fmt(total);
     });
+
     const play = income - allExpenses;
+
     if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
     if (playEl) {
-      const clean = `${fmt(play)}/mo`;   // clean version for sticky
+      const clean = `${fmt(play)}/mo`;           // clean text used by sticky
       playEl.textContent = `You’ve got ${clean} to play with`;
-      playEl.dataset.value = clean;      // sticky reads this
+      playEl.dataset.value = clean;              // sticky reads this
     }
   }
 
-  // Theme toggle (guarded so null won't crash the app)
+  /* =====================================
+   *  Theme toggle
+   * ===================================== */
   const themeToggle = document.getElementById("theme-toggle");
   if (themeToggle) {
     themeToggle.addEventListener("click", () => {
@@ -403,16 +412,65 @@ if (incomeInput) {
     });
   }
 
-  // --- Bootstrap: load or init ---
+  /* =====================================
+   *  Sticky compact income bar (IntersectionObserver)
+   * ===================================== */
+  const incomeCard   = document.getElementById('income-card');
+  const sticky       = document.getElementById('income-sticky');
+  const stickyMonthly= document.getElementById('sticky-monthly');
+  const stickyYearly = document.getElementById('sticky-yearly');
+  const stickyPlay   = document.getElementById('sticky-play');
+
+  const hasStickyNodes =
+    incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay &&
+    incomeInput && yearlyEl && playEl;
+
+  function setupSticky() {
+    if (!hasStickyNodes) {
+      console.warn('[sticky] Skipping setup. Missing nodes.');
+      return;
+    }
+
+    const updateSticky = () => {
+      stickyMonthly.textContent = incomeInput.dataset.value || '—';
+      const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
+      stickyYearly.textContent = y || '—';
+      stickyPlay.textContent   = playEl.dataset.value || '—';
+    };
+
+    // keep contents in sync
+    incomeInput.addEventListener('input', updateSticky);
+    try { new MutationObserver(updateSticky).observe(yearlyEl, { childList: true }); } catch(e){}
+    try { new MutationObserver(updateSticky).observe(playEl,  { attributes: true, attributeFilter: ['data-value'] }); } catch(e){}
+
+    // show/hide based on visibility of income card
+    const io = new IntersectionObserver(entries => {
+      const e = entries[0];
+      if (e.isIntersecting) sticky.classList.add('hidden');
+      else sticky.classList.remove('hidden');
+    }, { threshold: 0.05 });
+
+    io.observe(incomeCard);
+    updateSticky(); // initial fill
+  }
+
+  /* =====================================
+   *  Bootstrap
+   * ===================================== */
   if (!load()) {
     income = 0;
     categories = JSON.parse(JSON.stringify(defaults));
   }
 
-  // set initial UI
-  if (incomeInput) incomeInput.value = income ? String(income) : "";
+  // initial UI
+  if (incomeInput) {
+    incomeInput.value = income ? String(income) : "";
+    // prime sticky monthly with current income
+    incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0);
+  }
   if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
   renderCategories();
   updateTotals();
+  setupSticky();
 });
