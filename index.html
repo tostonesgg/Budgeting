@@ -96,7 +96,14 @@
 [data-theme="light"] .btn-icon{border-color:var(--line-light)}
 
   /* Category footer actions: smaller, add stays flexible width, edit/delete are compact */
-  .card-actions{display:flex;gap:8px;margin-top:8px;align-items:center}
+  .card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px solid var(--line); /* default, replaced by JS */
+}
+
   .btn-add{
     flex:1;
     border:1px dashed var(--line);
