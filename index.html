@@ -279,7 +279,7 @@ window.addEventListener('DOMContentLoaded', function(){
 
   if (hasStickyNodes) {
     function updateSticky() {
-      stickyMonthly.textContent = incomeInput.value || '—';
+      stickyMonthly.textContent = incomeInput.dataset.value || '—';
       const y = (yearlyText.textContent || '').replace(/^Yearly:\s*/i, '').trim();
       stickyYearly.textContent = y || '—';
       stickyPlay.textContent = playLeft.dataset.value || '—'; // clean value from app.js
