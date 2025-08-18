@@ -125,6 +125,19 @@
   border-color: var(--line-light);
 }
 
+/* iOS-safe overlay for the footer paintbrush button */
+.paint-btn{ position:relative; overflow:hidden; }
+.paint-btn .color-overlay{
+  position:absolute;
+  inset:0;
+  opacity:0;           /* invisible but clickable */
+  border:0;
+  padding:0;
+  margin:0;
+  -webkit-appearance:none;
+  cursor:pointer;
+}
+
 /* Non-monthly notes – more vertical spacing */
 .notes{
   margin-top:10px;           /* space above notes block */
