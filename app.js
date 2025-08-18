@@ -381,7 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Theme toggle (safe if the button is missing)
+  // Theme toggle (guarded so null won't crash the app)
 const themeToggle = document.getElementById("theme-toggle");
 if (themeToggle) {
   themeToggle.addEventListener("click", () => {
