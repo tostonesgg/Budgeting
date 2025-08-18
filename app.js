@@ -172,19 +172,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       div.innerHTML = `
-        <div class="category-head">
-          <span class="category-title"><i data-lucide="${cat.icon}"></i> ${cat.name}</span>
-          <span class="cat-total" id="cat-total-${i}">—</span>
-        </div>
-        <div class="expenses" id="expenses-${i}"></div>
-        <div class="notes" id="notes-${i}"></div>
-        <div class="card-actions">
-        <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
-        <button class="btn-cat cat-color" data-index="${i}" title="Change color"><i data-lucide="paintbrush-vertical"></i></button>
-        <button class="btn-cat cat-edit" data-index="${i}" title="Edit category"><i data-lucide="pencil"></i></button>
-        <button class="btn-cat cat-del" data-index="${i}" title="Delete category"><i data-lucide="x"></i></button>
-        </div>
-      `;
+  <div class="category-head">
+    <span class="category-title"><i data-lucide="${cat.icon}"></i> ${cat.name}</span>
+    <span class="cat-total" id="cat-total-${i}">—</span>
+  </div>
+  <div class="expenses" id="expenses-${i}"></div>
+  <div class="notes" id="notes-${i}"></div>
+  <div class="card-actions">
+    <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
+    <button class="btn-cat paint-btn" data-index="${i}" title="Change color">
+      <i data-lucide="paintbrush-vertical"></i>
+      <input type="color" class="color-overlay" value="${cat.color || '#6b7280'}" />
+    </button>
+    <button class="btn-cat cat-edit" data-index="${i}" title="Edit category"><i data-lucide="pencil"></i></button>
+    <button class="btn-cat cat-del" data-index="${i}" title="Delete category"><i data-lucide="x"></i></button>
+  </div>
+`;
+
 categoriesEl.appendChild(div);
 
 // tint all footer buttons with the category color (add, paintbrush, pencil, X)
