@@ -444,7 +444,7 @@ function setupSticky() {
   const updateStickyVisibility = () => {
     const rect = incomeCard.getBoundingClientRect();
     // If the bottom of the income card is above or at the top edge, show the sticky bar.
-if (rect.top <= -40) { /* show a bit earlier */
+if (rect.top <= -40) { 
   sticky.classList.remove('hidden');
 } else {
   sticky.classList.add('hidden');
