@@ -148,44 +148,55 @@ gap:8px;
 #cat-color-btn.btn{ display:inline-flex; align-items:center; gap:8px; padding:10px; }
 
 /* Sticky compact income summary */
+.sticky-card {
+  position: sticky;
+  top: 0;
+  z-index: 50;
 
-    .sticky-card {
+  /* layout */
   display: flex;
-  gap: 4px;
-  justify-content: center;
+  justify-content: center;   /* keep pills together */
   align-items: center;
-  flex-wrap: wrap;        /* allow wrap on narrower widths */
+  flex-wrap: wrap;           /* allow wrap on narrow screens */
+  gap: 4px;
+
+  /* visuals */
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 0;          /* full rectangle */
+  padding: 6px 10px;
+  margin-bottom: 8px;
 }
-
-
-
 [data-theme="light"] .sticky-card {
   background: var(--card-light);
   border-color: var(--line-light);
 }
 .sticky-card.hidden { display: none; }
 
-    /* Optional: slightly smaller pill padding to reduce risk of overflow */
+/* Pills */
 .sticky-card .pill {
+  display: inline-flex;
+  align-items: center;
   gap: 3px;
+  font-size: 13px;
+  font-weight: 600;
   padding: 3px 6px;
-  white-space: nowrap;    /* keep icon + text together */
+  border-radius: 9999px;
+  background: var(--field);
+  border: 1px solid var(--line);
+  white-space: nowrap;       /* keep icon + text together */
 }
 [data-theme="light"] .sticky-card .pill {
   background: var(--field-light);
   border-color: var(--line-light);
 }
 
-    /* Full-bleed sticky bar with no horizontal overflow */
+/* Full-bleed sticky bar with no horizontal overflow */
 .sticky-card.fullwidth {
-  position: sticky;
-  top: 0;
-  z-index: 50;
   width: 100vw;
   left: 50%;
-  transform: translateX(-50%);   /* more reliable than margin-left hack */
+  transform: translateX(-50%);  /* center across viewport */
   box-sizing: border-box;        /* include padding + border in width */
-  border-radius: 0;
 }
 
 
