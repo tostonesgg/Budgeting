@@ -444,11 +444,11 @@ function setupSticky() {
   const updateStickyVisibility = () => {
     const rect = incomeCard.getBoundingClientRect();
     // If the bottom of the income card is above or at the top edge, show the sticky bar.
-if (rect.top <= -40) { /* show a bit earlier */ }
-      sticky.classList.remove('hidden');
-    } else {
-      sticky.classList.add('hidden');
-    }
+if (rect.top <= -40) { /* show a bit earlier */
+  sticky.classList.remove('hidden');
+} else {
+  sticky.classList.add('hidden');
+}
   };
 
   // Wire listeners
@@ -464,22 +464,18 @@ if (rect.top <= -40) { /* show a bit earlier */ }
   updateStickyVisibility();
 }
 
-  /* =====================================
-   *  Bootstrap
-   * ===================================== */
-  /* =====================================
- *  Bootstrap (load -> fall back to defaults if empty)
+ /* =====================================
+ *  Bootstrap
  * ===================================== */
-if (!load() || !Array.isArray(categories) || categories.length === 0) {
+if (!load()) {
   income = 0;
   categories = JSON.parse(JSON.stringify(defaults));
-  save(); // persist defaults so future loads work
 }
 
-// initial UI
+ // initial UI
 if (incomeInput) {
   incomeInput.value = income ? String(income) : "";
-  incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0); // seed sticky monthly
+  incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0);
 }
 if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
