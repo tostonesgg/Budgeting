@@ -448,6 +448,9 @@ function setupSticky() {
     sticky.classList.remove('hidden');
   } else {
     sticky.classList.add('hidden');
+
+    console.log(rect.top, rect.bottom);
+
   }
 };
 
