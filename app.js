@@ -445,11 +445,11 @@ const updateStickyVisibility = () => {
   const rect = incomeCard.getBoundingClientRect();
   console.log("rect.top:", rect.top, "rect.bottom:", rect.bottom);
 
-  if (rect.bottom <= 40) {
-    sticky.classList.remove('hidden');
-  } else {
-    sticky.classList.add('hidden');
-  }
+  if (rect.top <= -40) {
+  sticky.classList.remove('hidden');  // show
+} else {
+  sticky.classList.add('hidden');     // hide
+}
 };
 
 
