@@ -147,28 +147,31 @@ gap:8px;
 
 #cat-color-btn.btn{ display:inline-flex; align-items:center; gap:8px; padding:10px; }
 
-/* Full-bleed sticky bar (background spans screen) */
-.sticky-card.fullwidth {
+/* Full-bleed sticky bar */
+.sticky-card {
   position: sticky;
   top: 0;
   z-index: 50;
-  width: 100vw;
-  left: 50%;
-  transform: translateX(-50%); /* center across viewport */
+
   background: var(--card);
   border-bottom: 1px solid var(--line);
   border-radius: 0;
-}
 
-/* Light theme colors */
-[data-theme="light"] .sticky-card.fullwidth {
+  /* the bar itself spans the viewport */
+  width: 100vw;
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+[data-theme="light"] .sticky-card {
   background: var(--card-light);
   border-color: var(--line-light);
 }
+.sticky-card.hidden { display: none; }
 
-/* Inner content matches your .wrap width and centers pills */
+/* Center the pills, constrain to your page width */
 .sticky-inner {
-  max-width: 860px;      /* same as .wrap */
+  max-width: 860px;     /* same as .wrap */
   margin: 0 auto;
   padding: 6px 10px;
 
@@ -176,10 +179,10 @@ gap:8px;
   justify-content: center;
   align-items: center;
   gap: 4px;
-  flex-wrap: wrap;       /* wrap if needed on small screens */
+  flex-wrap: wrap;
 }
 
-/* Pills (keep your existing styles) */
+/* Pills */
 .sticky-card .pill {
   display: inline-flex;
   align-items: center;
@@ -196,6 +199,9 @@ gap:8px;
   background: var(--field-light);
   border-color: var(--line-light);
 }
+
+/* Prevent tiny horizontal jiggle on mobile */
+html, body { overflow-x: hidden; }
 
 
 
@@ -236,7 +242,7 @@ Theme
 </div>
 </header>
 
-    <!-- Sticky compact income summary -->
+<!-- Sticky compact income summary -->
 <div id="income-sticky" class="sticky-card fullwidth hidden">
   <div class="sticky-inner">
     <div class="pill"><i data-lucide="calendar-1"></i> <span id="sticky-monthly">—</span></div>
