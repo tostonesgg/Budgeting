@@ -182,6 +182,26 @@ gap:8px;
   background: var(--field-light);
   border-color: var(--line-light);
 }
+
+    /* Categories: 1 column on mobile, 2 on desktop */
+#categories {
+  display: grid;
+  grid-template-columns: 1fr;         /* mobile: single column */
+  gap: 12px;                          /* spacing between cards */
+  align-items: start;
+}
+
+@media (min-width: 768px) {           /* desktop-ish breakpoint */
+  #categories {
+    grid-template-columns: 1fr 1fr;   /* 2 columns */
+  }
+}
+
+/* Avoid double vertical spacing (you already have gap on the grid) */
+#categories .card {
+  margin-bottom: 0;
+}
+
 </style>
 </head>
 <body>
