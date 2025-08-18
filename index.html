@@ -152,28 +152,25 @@ gap:8px;
   position: sticky;
   top: 0;
   z-index: 50;
-
-  /* layout */
   display: flex;
-  justify-content: center;   /* keep pills together */
+  justify-content: center;  /* keep pills centered */
   align-items: center;
-  flex-wrap: wrap;           /* allow wrap on narrow screens */
-  gap: 4px;
-
-  /* visuals */
+  flex-wrap: wrap;          /* allow wrap on smaller screens */
+  gap: 4px;                 /* tighter spacing */
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 0;          /* full rectangle */
+  border-radius: 0;
   padding: 6px 10px;
   margin-bottom: 8px;
 }
+
 [data-theme="light"] .sticky-card {
   background: var(--card-light);
   border-color: var(--line-light);
 }
+
 .sticky-card.hidden { display: none; }
 
-/* Pills */
 .sticky-card .pill {
   display: inline-flex;
   align-items: center;
@@ -184,20 +181,22 @@ gap:8px;
   border-radius: 9999px;
   background: var(--field);
   border: 1px solid var(--line);
-  white-space: nowrap;       /* keep icon + text together */
+  white-space: nowrap;
 }
+
 [data-theme="light"] .sticky-card .pill {
   background: var(--field-light);
   border-color: var(--line-light);
 }
 
-/* Full-bleed sticky bar with no horizontal overflow */
+/* Full-width sticky bar */
 .sticky-card.fullwidth {
   width: 100vw;
   left: 50%;
-  transform: translateX(-50%);  /* center across viewport */
-  box-sizing: border-box;        /* include padding + border in width */
+  transform: translateX(-50%);
+  box-sizing: border-box;
 }
+
 
 
 
