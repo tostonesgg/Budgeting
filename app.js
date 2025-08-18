@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let colorPickIndex = null; // which category we’re editing
 
   // Color picker (label-for approach)
-  const colorBtn   = document.getElementById("cat-color-btn"); // <label>
+  const colorBtn   = document.getElementById("cat-color-btn"); // <label/button>
   const colorInput = document.getElementById("cat-color");     // <input type=color>
   const colorSwatch = colorBtn ? colorBtn.querySelector(".swatch") : null;
 
@@ -155,6 +155,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Render categories
   function renderCategories() {
+    // Guard: avoid crashing if the container is missing
+    if (!categoriesEl) {
+      console.warn("Missing #categories in DOM; skipping render");
+      return;
+    }
+
     categoriesEl.innerHTML = "";
     categories.forEach((cat, i) => {
       const div = document.createElement("div");
@@ -189,16 +195,15 @@ document.addEventListener("DOMContentLoaded", () => {
       // tint all footer buttons with the category color (add, paintbrush, pencil, X)
       const footerBtns = div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat");
       footerBtns.forEach(btn => {
-        btn.style.borderColor = cat.color;           // outline uses category color
+        btn.style.borderColor = cat.color; // outline uses category color
       });
 
-      // change category color
-      document.querySelectorAll(".cat-color").forEach(btn => {
+      // change category color — scope to *this* card only (prevents multi-binding)
+      div.querySelectorAll(".cat-color").forEach(btn => {
         btn.addEventListener("click", () => {
-          const i = parseInt(btn.dataset.index, 10);
-          colorPickIndex = i;
+          const idx = parseInt(btn.dataset.index, 10);
+          colorPickIndex = idx;
           if (inlineColor) {
-            // open system picker (works on desktop & iOS)
             if (typeof inlineColor.showPicker === "function") inlineColor.showPicker();
             else inlineColor.click();
           }
@@ -352,7 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cat.expenses.forEach(exp => {
       if ((exp.freq || "mo") !== "mo" && exp.amount > 0) {
         const perMo = monthlyFrom(exp.amount, exp.freq || "mo");
-        const when = (exp.freq === "qtr") ? "quarterly" : "yearly";
+        const when  = (exp.freq === "qtr") ? "quarterly" : "yearly";
         notes.push(`${exp.name} occurs ${when}, consider budgeting ${fmt(perMo)} /mo.`);
       }
     });
@@ -377,30 +382,30 @@ document.addEventListener("DOMContentLoaded", () => {
     if (playEl) {
       const clean = `${fmt(play)}/mo`;   // clean version for sticky
       playEl.textContent = `You’ve got ${clean} to play with`;
-      playEl.dataset.value = clean;      // <-- NEW: store clean value here
+      playEl.dataset.value = clean;      // sticky reads this
     }
   }
 
   // Theme toggle (guarded so null won't crash the app)
-const themeToggle = document.getElementById("theme-toggle");
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const html = document.documentElement;
-    html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
-    renderCategories(); // re-render to apply correct colors
-  });
-}
+  const themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
+      renderCategories(); // re-render to apply correct colors
+    });
+  }
 
-// --- Bootstrap: load or init ---
-if (!load()) {
-  income = 0;
-  categories = JSON.parse(JSON.stringify(defaults));
-}
+  // --- Bootstrap: load or init ---
+  if (!load()) {
+    income = 0;
+    categories = JSON.parse(JSON.stringify(defaults));
+  }
 
-// set initial UI
-if (incomeInput) incomeInput.value = income ? String(income) : "";
-if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
+  // set initial UI
+  if (incomeInput) incomeInput.value = income ? String(income) : "";
+  if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
-renderCategories();
-updateTotals();
+  renderCategories();
+  updateTotals();
 });
