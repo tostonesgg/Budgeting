@@ -381,23 +381,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Theme toggle
-  document.getElementById("theme-toggle").addEventListener("click", () => {
+  // Theme toggle (safe if the button is missing)
+const themeToggle = document.getElementById("theme-toggle");
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
     const html = document.documentElement;
     html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
     renderCategories(); // re-render to apply correct colors
   });
+}
 
-  // --- Bootstrap: load or init ---
-  if (!load()) {
-    income = 0;
-    categories = JSON.parse(JSON.stringify(defaults));
-  }
+// --- Bootstrap: load or init ---
+if (!load()) {
+  income = 0;
+  categories = JSON.parse(JSON.stringify(defaults));
+}
 
-  // set initial UI
-  if (incomeInput) incomeInput.value = income ? String(income) : "";
-  if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
+// set initial UI
+if (incomeInput) incomeInput.value = income ? String(income) : "";
+if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
-  renderCategories();
-  updateTotals();
+renderCategories();
+updateTotals();
 });
