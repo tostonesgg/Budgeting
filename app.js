@@ -100,15 +100,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Income live updates
-  if (incomeInput) {
-    incomeInput.addEventListener("input", () => {
-      income = parseFloat(incomeInput.value) || 0;
-      if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
-      updateTotals();
-      save();
-    });
-  }
+ // Income live updates
+if (incomeInput) {
+  incomeInput.addEventListener("input", () => {
+    income = parseFloat(incomeInput.value) || 0;
+
+    // Update yearly
+    if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
+
+    // NEW: store clean $value for sticky pill
+    incomeInput.dataset.value = fmt(income);
+
+    updateTotals();
+    save();
+  });
+}
+
 
   // Add category
   if (addCatBtn) {
