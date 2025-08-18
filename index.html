@@ -149,12 +149,13 @@ gap:8px;
 
 /* Sticky compact income summary */
 .sticky-card {
+  display: flex;
+  gap: 4px;                 /* was 8px */
+  justify-content: center; /* instead of space-between */
   position: sticky;
   top: 0;
   z-index: 50;
   display: flex;
-  gap: 8px;
-  justify-content: space-between;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 0;        /* <- was 8px; make it a full rectangle */
