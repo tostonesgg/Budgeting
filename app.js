@@ -442,14 +442,14 @@ function setupSticky() {
 
   // Show when the income card is completely past the top of the viewport.
   const updateStickyVisibility = () => {
-    const rect = incomeCard.getBoundingClientRect();
-    // If the bottom of the income card is above or at the top edge, show the sticky bar.
-if (rect.top <= -40) { 
-  sticky.classList.remove('hidden');
-} else {
-  sticky.classList.add('hidden');
-}
-  };
+  const rect = incomeCard.getBoundingClientRect();
+  // Show when the bottom of the income card has passed the top of the viewport
+  if (rect.bottom <= 0) {
+    sticky.classList.remove('hidden');
+  } else {
+    sticky.classList.add('hidden');
+  }
+};
 
   // Wire listeners
   window.addEventListener('scroll', updateStickyVisibility, { passive: true });
