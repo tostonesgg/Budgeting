@@ -114,54 +114,46 @@
     .addcat-grid #add-category { grid-column:2; grid-row:2; justify-self:stretch; }
     #cat-color-btn.btn{ display:inline-flex; align-items:center; gap:8px; padding:10px; }
 
-    /* Full-bleed sticky bar */
-    .sticky-card {
-      position: sticky;
-      top: 0;
-      z-index: 50;
+/* Full-bleed sticky bar: fixed + slide in/out */
+.sticky-card {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -100%); /* hidden (above viewport) */
+  width: 100vw;
+  z-index: 1000;
+  box-sizing: border-box;
 
-      background: var(--card);
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
+  /* your existing visuals */
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
 
-      width: 100vw;
-      left: 50%;
-      transform: translateX(-50%);
-      box-sizing: border-box;
-    }
-    [data-theme="light"] .sticky-card { background: var(--card-light); border-color: var(--line-light); }
-    .sticky-card.hidden { display: none; }
+  transition: transform 160ms ease;
+}
+.sticky-card.is-visible {
+  transform: translate(-50%, 0); /* slide down into view */
+}
+[data-theme="light"] .sticky-card {
+  background: var(--card-light);
+  border-color: var(--line-light);
+}
 
-    /* Center the pills, constrain to page width */
-    .sticky-inner {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 6px 10px;
+/* center the pills within your page width */
+.sticky-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 6px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
 
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
+/* (optional) prevent horizontal jiggle */
+html, body { overflow-x: hidden; }
 
-    /* Pills */
-    .sticky-card .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 3px 6px;
-      border-radius: 9999px;
-      background: var(--field);
-      border: 1px solid var(--line);
-      white-space: nowrap;
-    }
-    [data-theme="light"] .sticky-card .pill { background: var(--field-light); border-color: var(--line-light); }
-
-    /* Prevent tiny horizontal jiggle on mobile */
-    html, body { overflow-x: hidden; }
 
     /* Categories: 1 column on mobile, 2 on desktop */
     #categories {
