@@ -101,26 +101,24 @@
   gap: 6px;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 2px solid var(--line); /* default, replaced by JS */
 }
 
-  .btn-add{
-    flex:1;
-    border:1px dashed var(--line);
-    background:transparent;
-    padding:5px 8px;           /* ↓ */
-    border-radius:8px;
-    justify-content:center;display:inline-flex;align-items:center;gap:6px;
-    font-size:0.9rem;          /* slightly smaller text */
-  }
-  [data-theme="light"] .btn-add{border-color:var(--line-light)}
-  .btn-cat{
-    width:36px;height:36px;    /* ↓ from 40px */
-    display:inline-flex;align-items:center;justify-content:center;
-    border-radius:8px;border:1px solid var(--line);
-    background:transparent;color:inherit;cursor:pointer
-  }
-  [data-theme="light"] .btn-cat{border-color:var(--line-light)}
+.card-actions .btn-icon,
+.card-actions .btn-add {
+  border: 2px solid var(--line); /* default */
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="light"] .card-actions .btn-icon,
+[data-theme="light"] .card-actions .btn-add {
+  border-color: var(--line-light);
+}
 
 /* Non-monthly notes – more vertical spacing */
 .notes{
