@@ -48,7 +48,7 @@
      ========================= */
   .bill-row{
     display:grid;
-    grid-template-columns: 1fr 90px 48px 32px 32px; /* shorter input + smaller buttons */
+    grid-template-columns: 1fr 90px 48px 32px 32px;
     gap:6px;
     align-items:center;
     margin:8px 0;
@@ -57,7 +57,6 @@
     .bill-row{ grid-template-columns: 1fr 80px 44px 32px 32px; gap:4px; }
   }
 
-  /* Label (icon + name) */
   .bill-row label{
     min-width:0;display:flex;align-items:center;gap:6px;
     font-size:13px;line-height:1.2;
@@ -65,15 +64,13 @@
   }
   .bill-row label svg{ width:14px; height:14px; }
 
-  /* Input trimmed */
   .bill-row input{
     width:100%;box-sizing:border-box;
-    padding:4px 6px;       /* tighter */
-    height:32px;           /* smaller */
+    padding:4px 6px;
+    height:32px;
     font-size:13px;
   }
 
-  /* Frequency pill trimmed */
   .btn-freq{
     height:32px; padding:0 6px;
     font-size:11px;
@@ -83,10 +80,9 @@
   }
   [data-theme="light"] .btn-freq{border-color:var(--line-light)}
 
-  /* Edit / Delete smaller */
   .btn-icon{
     display:inline-flex;align-items:center;justify-content:center;
-    width:32px;height:32px;  /* smaller square */
+    width:32px;height:32px;
     border-radius:6px;
     border:1px solid var(--line);
     background:transparent;color:inherit;cursor:pointer;
@@ -95,22 +91,12 @@
   .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
   [data-theme="light"] .btn-icon{border-color:var(--line-light)}
 
-  /* Category footer actions: smaller, add stays flexible width, edit/delete are compact */
-  .card-actions {
-    display: flex;
-    gap: 4px;
-    margin-top: 4px;
-    padding-top: 4px;
-  }
-
-  .card-actions svg {
-    width: 16px;
-    height: 16px;
-  }
-
+  /* Category footer actions */
+  .card-actions { display: flex; gap: 4px; margin-top: 4px; padding-top: 4px; }
+  .card-actions svg { width: 16px; height: 16px; }
   .card-actions .btn-cat,
   .card-actions .btn-add {
-    border: 1px solid var(--line); /* default */
+    border: 1px solid var(--line);
     border-radius: 6px;
     padding: 3px 5px;
     background: transparent;
@@ -119,46 +105,35 @@
     align-items: center;
     justify-content: center;
   }
-
   [data-theme="light"] .card-actions .btn-cat,
-  [data-theme="light"] .card-actions .btn-add {
-    border-color: var(--line-light);
-  }
+  [data-theme="light"] .card-actions .btn-add { border-color: var(--line-light); }
 
-  /* iOS-safe overlay for buttons that contain a color input */
+  /* iOS-safe overlay for buttons with color input */
   .paint-btn{ position:relative; overflow:hidden; }
   .paint-btn .color-overlay{
     position:absolute;
     inset:0;
-    opacity:0;           /* invisible but clickable */
+    opacity:0;
     border:0;
     padding:0;
     margin:0;
     -webkit-appearance:none;
     cursor:pointer;
   }
-  /* swatch used in both places */
   .paint-btn .swatch{
     width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block
   }
   [data-theme="light"] .paint-btn .swatch{border-color:var(--line-light)}
 
-  /* Non-monthly notes – more vertical spacing */
   .notes{
-    margin-top:10px;           /* space above notes block */
-    line-height:1.5;           /* space between lines (works even with <br/>) */
+    margin-top:10px;
+    line-height:1.5;
     font-size:12px;
     color:var(--muted);
   }
   [data-theme="light"] .notes{ color:var(--muted-light) }
 
-  /* (Legacy) visually hidden color input pattern used elsewhere if needed */
-  .color-input{
-    position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
-    clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;opacity:0;
-  }
-
-  /* Add Category layout: 2x2 grid (name | icon) on top, (color | add) below */
+  /* Add Category layout grid */
   .addcat-grid{
     display:grid;
     grid-template-columns: 1fr 1fr;
@@ -167,14 +142,10 @@
   }
   .addcat-grid #cat-name { grid-column:1; grid-row:1; }
   .addcat-grid #cat-icon { grid-column:2; grid-row:1; }
-  .addcat-grid #add-category { grid-column:2; grid-row:2; }
   .addcat-grid #cat-color-btn { grid-column:1; grid-row:2; }
+  .addcat-grid #add-category { grid-column:2; grid-row:2; justify-self:stretch; }
 
-  /* Make the Pick Color button look like your other buttons */
-  #cat-color-btn.btn{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:10px;
-  }
+  #cat-color-btn.btn{ display:inline-flex; align-items:center; gap:8px; padding:10px; }
   </style>
 </head>
 <body>
@@ -205,15 +176,11 @@
     <div class="card">
       <h2 class="big">Add a Category</h2>
 
-      <!-- NEW: 2x2 grid -->
       <div class="addcat-grid">
-        <!-- top-left: name (unchanged) -->
         <input id="cat-name" placeholder="Category name" />
-
-        <!-- top-right: icon (unchanged) -->
         <input id="cat-icon" placeholder="Lucide icon name (e.g., 'car')" />
 
-        <!-- bottom-left: iOS-safe color-picker button with overlayed input -->
+        <!-- iOS-safe Pick Color -->
         <button id="cat-color-btn" class="btn paint-btn" type="button" title="Pick color">
           <i data-lucide="paintbrush-vertical"></i>
           <span class="swatch" aria-hidden="true"></span>
@@ -221,7 +188,6 @@
           <input id="cat-color" type="color" class="color-overlay" value="#3b82f6" />
         </button>
 
-        <!-- bottom-right: Add button -->
         <button id="add-category" class="btn"><i data-lucide="plus"></i> Add</button>
       </div>
     </div>
@@ -238,15 +204,12 @@
   </main>
 </div>
 
-<!-- Keep if used elsewhere -->
-<input id="inline-color" type="color" class="color-input" value="#3b82f6" aria-hidden="true" />
-
 <script defer src="app.js?v=share-freq-local-1"></script>
 <script>
   window.addEventListener('DOMContentLoaded', function(){
     try { if (window.lucide?.createIcons) window.lucide.createIcons(); } catch(e){}
 
-    // Optional nicety: initialize the swatch from the input's value
+    // Initialize swatch color in Add Category
     const addColorInput = document.getElementById('cat-color');
     const addColorSwatch = document.querySelector('#cat-color-btn .swatch');
     if (addColorInput && addColorSwatch) {
