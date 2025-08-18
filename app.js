@@ -185,17 +185,13 @@ document.addEventListener("DOMContentLoaded", () => {
         <button class="btn-cat cat-del" data-index="${i}" title="Delete category"><i data-lucide="x"></i></button>
         </div>
       `;
-      categoriesEl.appendChild(div);
+categoriesEl.appendChild(div);
 
-// apply adaptive color
-const footer = div.querySelector(".card-actions");
-if (footer) {
-  if (document.documentElement.dataset.theme === "dark") {
-    footer.style.borderTop = `2px solid ${cat.color}`;
-  } else {
-    footer.style.borderTop = `2px solid ${cat.color}`;
-  }
-}
+// tint all footer buttons with the category color
+const footerBtns = div.querySelectorAll(".card-actions .btn-icon, .card-actions .btn-add");
+footerBtns.forEach(btn => {
+  btn.style.borderColor = cat.color;
+});
 
 
       // change category color
