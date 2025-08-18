@@ -115,9 +115,14 @@
   }
   [data-theme="light"] .btn-cat{border-color:var(--line-light)}
 
-  /* Non-monthly notes */
-  .notes{margin-top:6px;font-size:12px;color:var(--muted)}
-  [data-theme="light"] .notes{color:var(--muted-light)}
+/* Non-monthly notes – more vertical spacing */
+.notes{
+  margin-top:10px;           /* space above notes block */
+  line-height:1.5;           /* space between lines (works even with <br/>) */
+  font-size:12px;
+  color:var(--muted);
+}
+[data-theme="light"] .notes{ color:var(--muted-light) }
 
   /* Color picker (Safari-safe: use label[for]) */
   .color-input{
