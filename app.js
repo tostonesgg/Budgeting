@@ -115,12 +115,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (incomeInput) {
     incomeInput.addEventListener("input", () => {
       income = parseFloat(incomeInput.value) || 0;
-
       if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
-
       // Feed the sticky monthly pill a clean $ value
       incomeInput.dataset.value = fmt(income);
-
       updateTotals();
       save();
     });
@@ -164,6 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =====================================
    *  Inline color picker for category footer
    * ===================================== */
+  let colorPickIndex = null;
   if (inlineColor) {
     inlineColor.addEventListener("input", () => {
       if (colorPickIndex == null) return;
@@ -172,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
       colorPickIndex = null;
       renderCategories();
       updateTotals();
-      save && save();
+      save();
     });
   }
 
@@ -180,10 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
    *  Render Categories
    * ===================================== */
   function renderCategories() {
-    if (!categoriesEl) {
-      console.warn("Missing #categories in DOM; skipping render");
-      return;
-    }
+    if (!categoriesEl) return;
 
     categoriesEl.innerHTML = "";
     categories.forEach((cat, i) => {
@@ -217,8 +212,8 @@ document.addEventListener("DOMContentLoaded", () => {
       categoriesEl.appendChild(div);
 
       // Tint footer buttons with the category color
-      const footerBtns = div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat");
-      footerBtns.forEach(btn => { btn.style.borderColor = cat.color; });
+      div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat")
+        .forEach(btn => { btn.style.borderColor = cat.color; });
 
       // Color change (scoped to this card)
       div.querySelectorAll(".cat-color").forEach(btn => {
@@ -237,12 +232,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (window.lucide?.createIcons) window.lucide.createIcons();
 
-    // Wire actions
+    // Wire actions (add/edit/delete)
     document.querySelectorAll(".btn-add").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.index, 10);
-        addExpense(i);
-      });
+      btn.addEventListener("click", () => addExpense(parseInt(btn.dataset.index, 10)));
     });
 
     document.querySelectorAll(".cat-edit").forEach(btn => {
@@ -288,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (freq === "qtr") return amount / 3;
     if (freq === "yr")  return amount / 12;
     return amount; // mo
-  }
+    }
 
   function renderExpenses(catIndex) {
     const expEl   = document.getElementById(`expenses-${catIndex}`);
@@ -393,9 +385,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
     if (playEl) {
-      const clean = `${fmt(play)}/mo`;           // clean text used by sticky
+      const clean = `${fmt(play)}/mo`;
       playEl.textContent = `You’ve got ${clean} to play with`;
-      playEl.dataset.value = clean;              // sticky reads this
+      playEl.dataset.value = clean; // sticky reads this
     }
   }
 
@@ -412,8 +404,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =====================================
-   *  Sticky compact income bar
-   *  - robust visibility via IntersectionObserver
+   *  Sticky compact income bar (fixed + slide)
+   *  - toggles 'is-visible' (no display:none)
    *  - values kept in sync via dataset + observers
    * ===================================== */
   function setupSticky() {
@@ -444,30 +436,30 @@ document.addEventListener("DOMContentLoaded", () => {
     try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
     try { new MutationObserver(updateStickyValues).observe(playEl,  { attributes: true, attributeFilter: ['data-value'] }); } catch {}
 
-    // --- Visibility: show sticky when income card is NOT visible ---
-    const toggleStickyHidden = (isIncomeCardVisible) => {
-      sticky.classList.toggle('hidden', isIncomeCardVisible);
+    // Visibility: add/remove 'is-visible'
+    const setVisible = (on) => {
+      sticky.classList.toggle('is-visible', !!on);
+      console.log('[sticky]', on ? 'show' : 'hide');
     };
 
+    // IntersectionObserver (preferred)
     try {
       const io = new IntersectionObserver(([entry]) => {
-        // Log + toggle
-        console.log('[sticky]', entry.isIntersecting ? 'hide' : 'show');
-        toggleStickyHidden(entry.isIntersecting);
+        // Show when income card is NOT intersecting the viewport
+        setVisible(!entry.isIntersecting);
       }, { root: null, threshold: 0 });
-
       io.observe(incomeCard);
     } catch {
-      // Fallback for older browsers
-      const onScrollOrResize = () => {
-        const r = incomeCard.getBoundingClientRect();
-        const isVisible = r.bottom > 0 && r.top < window.innerHeight;
-        console.log('[sticky-fallback]', isVisible ? 'hide' : 'show');
-        toggleStickyHidden(isVisible);
+      // Fallback: rect check
+      const updateStickyVisibility = () => {
+        const rect = incomeCard.getBoundingClientRect();
+        console.log("rect.top:", rect.top, "rect.bottom:", rect.bottom);
+        // Show when the bottom of the income card scrolls past the top edge
+        setVisible(rect.bottom <= 0);
       };
-      window.addEventListener('scroll', onScrollOrResize, { passive: true });
-      window.addEventListener('resize', onScrollOrResize);
-      onScrollOrResize(); // initial state
+      window.addEventListener('scroll', updateStickyVisibility, { passive: true });
+      window.addEventListener('resize', updateStickyVisibility);
+      updateStickyVisibility();
     }
 
     // Prime pill contents immediately
