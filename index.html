@@ -154,6 +154,20 @@
 /* (optional) prevent horizontal jiggle */
 html, body { overflow-x: hidden; }
 
+    /* Sticky pills: align icon + text neatly */
+.sticky-card .pill {
+  display: inline-flex;       /* make it a flex container */
+  align-items: center;        /* vertically center icon + text */
+  gap: 4px;                   /* spacing between icon and text */
+  font-size: 0.9rem;          /* slightly smaller than normal body font */
+  line-height: 1.2;           /* keep compact */
+  padding: 4px 8px;           /* breathing room */
+  border-radius: 12px;        /* maintain pill shape */
+}
+.sticky-card .pill i {
+  flex-shrink: 0;             /* icon stays its size */
+}
+
 
     /* Categories: 1 column on mobile, 2 on desktop */
     #categories {
