@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const addCatBtn = document.getElementById("add-category");
   const categoriesEl = document.getElementById("categories");
   const shareBtn = document.getElementById("share-btn");
+  const inlineColor = document.getElementById("inline-color");
+  let colorPickIndex = null; // which category we’re editing
+
 
   // Color picker (label-for approach)
   const colorBtn   = document.getElementById("cat-color-btn"); // <label>
@@ -139,6 +142,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (inlineColor) {
+  inlineColor.addEventListener("input", () => {
+    if (colorPickIndex == null) return;
+    const newColor = inlineColor.value;
+    categories[colorPickIndex].color = newColor;
+    colorPickIndex = null;
+    renderCategories();
+    updateTotals();
+    save && save();
+  });
+}
+
+
   // Render categories
   function renderCategories() {
     categoriesEl.innerHTML = "";
@@ -163,12 +179,27 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="expenses" id="expenses-${i}"></div>
         <div class="notes" id="notes-${i}"></div>
         <div class="card-actions">
-          <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
-          <button class="btn-cat cat-edit" data-index="${i}" title="Edit category"><i data-lucide="pencil"></i></button>
-          <button class="btn-cat cat-del" data-index="${i}" title="Delete category"><i data-lucide="x"></i></button>
+        <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
+        <button class="btn-cat cat-color" data-index="${i}" title="Change color"><i data-lucide="paintbrush-vertical"></i></button>
+        <button class="btn-cat cat-edit" data-index="${i}" title="Edit category"><i data-lucide="pencil"></i></button>
+        <button class="btn-cat cat-del" data-index="${i}" title="Delete category"><i data-lucide="x"></i></button>
         </div>
       `;
       categoriesEl.appendChild(div);
+
+      // change category color
+document.querySelectorAll(".cat-color").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const i = parseInt(btn.dataset.index, 10);
+    colorPickIndex = i;
+    if (inlineColor) {
+      // open system picker (works on desktop & iOS)
+      if (typeof inlineColor.showPicker === "function") inlineColor.showPicker();
+      else inlineColor.click();
+    }
+  });
+});
+
 
       renderExpenses(i);
     });
