@@ -1,27 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
   const LS_KEY = "budget.v1";
-
-  const incomeInput  = document.getElementById("net-income");
-  const yearlyEl     = document.getElementById("net-yearly");
-  const playEl       = document.getElementById("play-left");
-
-  const catName      = document.getElementById("cat-name");
-  const catIcon      = document.getElementById("cat-icon");
-  const addCatBtn    = document.getElementById("add-category");
+  const incomeInput = document.getElementById("net-income");
+  const yearlyEl = document.getElementById("net-yearly");
+  const playEl = document.getElementById("play-left");
+  const catName = document.getElementById("cat-name");
+  const catIcon = document.getElementById("cat-icon");
+  const addCatBtn = document.getElementById("add-category");
   const categoriesEl = document.getElementById("categories");
-  const shareBtn     = document.getElementById("share-btn");
-  const inlineColor  = document.getElementById("inline-color"); // still supported for global picker if you want
+  const shareBtn = document.getElementById("share-btn");
+  const inlineColor = document.getElementById("inline-color");
+  let colorPickIndex = null; // which category we’re editing
 
-  // Add-a-category color control (button with overlaid input)
-  const colorBtn     = document.getElementById("cat-color-btn");
-  const colorInput   = document.getElementById("cat-color");
-  const colorSwatch  = colorBtn ? colorBtn.querySelector(".swatch") : null;
-
-  let colorPickIndex = null; // which category we’re editing via inlineColor (kept for compatibility)
+  // Color picker (label-for approach)
+  const colorBtn   = document.getElementById("cat-color-btn"); // <label>
+  const colorInput = document.getElementById("cat-color");     // <input type=color>
+  const colorSwatch = colorBtn ? colorBtn.querySelector(".swatch") : null;
 
   // Helpers
   const clamp = (n) => (isFinite(n) ? n : 0);
-  const fmt   = (n) => `$${(clamp(n)).toFixed(2)}`;
+  const fmt = (n) => `$${(clamp(n)).toFixed(2)}`;
 
   // Default categories: Essentials
   const defaults = [
@@ -30,22 +27,22 @@ document.addEventListener("DOMContentLoaded", () => {
       color: "#ef4444", // red
       icon: "crown",
       expenses: [
-        { name: "Mortgage", amount: 0, icon: "house",        freq: "mo" },
-        { name: "HOA",      amount: 0, icon: "house",        freq: "mo" },
-        { name: "Electricity", amount: 0, icon: "zap",       freq: "mo" },
-        { name: "Water",    amount: 0, icon: "droplet",      freq: "mo" },
-        { name: "Gas",      amount: 0, icon: "cooking-pot",  freq: "mo" },
-        { name: "Waste",    amount: 0, icon: "trash-2",      freq: "qtr" },
-        { name: "Internet", amount: 0, icon: "wifi",         freq: "mo" },
-        { name: "Phone",    amount: 0, icon: "phone",        freq: "mo" },
-        { name: "Home Security", amount: 0, icon: "cctv",    freq: "mo" },
-        { name: "Groceries", amount: 0, icon: "carrot",      freq: "mo" },
-        { name: "Transportation", amount: 0, icon: "fuel",   freq: "mo" },
-        { name: "Car Insurance", amount: 0, icon: "car",     freq: "mo" },
+        { name: "Mortgage", amount: 0, icon: "house", freq: "mo" },
+        { name: "HOA", amount: 0, icon: "house", freq: "mo" },
+        { name: "Electricity", amount: 0, icon: "zap", freq: "mo" },
+        { name: "Water", amount: 0, icon: "droplet", freq: "mo" },
+        { name: "Gas", amount: 0, icon: "cooking-pot", freq: "mo" },
+        { name: "Waste", amount: 0, icon: "trash-2", freq: "qtr" },
+        { name: "Internet", amount: 0, icon: "wifi", freq: "mo" },
+        { name: "Phone", amount: 0, icon: "phone", freq: "mo" },
+        { name: "Home Security", amount: 0, icon: "cctv", freq: "mo" },
+        { name: "Groceries", amount: 0, icon: "carrot", freq: "mo" },
+        { name: "Transportation", amount: 0, icon: "fuel", freq: "mo" },
+        { name: "Car Insurance", amount: 0, icon: "car", freq: "mo" },
         { name: "Car Registration", amount: 0, icon: "file-text", freq: "yr" },
         { name: "Car Maintenance", amount: 0, icon: "wrench", freq: "qtr" },
         { name: "Pet Insurance", amount: 0, icon: "paw-print", freq: "mo" },
-        { name: "Pet Food", amount: 0, icon: "beef",         freq: "qtr" },
+        { name: "Pet Food", amount: 0, icon: "beef", freq: "qtr" },
         { name: "Health Insurance", amount: 0, icon: "stethoscope", freq: "mo" }
       ]
     }
@@ -59,11 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const h = location.hash;
     if (!h.startsWith("#share=")) return false;
     try {
-      const enc  = decodeURIComponent(h.slice(7));
+      const enc = decodeURIComponent(h.slice(7));
       const json = atob(enc);
-      const obj  = JSON.parse(json);
+      const obj = JSON.parse(json);
       if (typeof obj !== "object") return false;
-      income     = clamp(parseFloat(obj.income) || 0);
+      income = clamp(parseFloat(obj.income) || 0);
       categories = Array.isArray(obj.categories) ? obj.categories : [];
       location.hash = ""; // clear hash after import
       return true;
@@ -78,12 +75,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!raw) return false;
     try {
       const obj = JSON.parse(raw);
-      income     = clamp(parseFloat(obj.income) || 0);
+      income = clamp(parseFloat(obj.income) || 0);
       categories = Array.isArray(obj.categories) ? obj.categories : [];
       return true;
-    } catch (_) {
-      return false;
-    }
+    } catch (_) { return false; }
   };
 
   const save = () => {
@@ -91,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(LS_KEY, payload);
   };
 
-  // Color swatch init + updates (Add Category button)
+  // Color swatch init + updates
   if (colorSwatch && colorInput) colorSwatch.style.background = colorInput.value;
   if (colorInput) {
     colorInput.addEventListener("input", () => {
@@ -118,8 +113,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Add category
   if (addCatBtn) {
     addCatBtn.addEventListener("click", () => {
-      const name  = catName.value.trim();
-      const icon  = catIcon.value.trim() || "folder";
+      const name = catName.value.trim();
+      const icon = catIcon.value.trim() || "folder";
       const color = (colorInput && colorInput.value) ? colorInput.value : "#3b82f6";
       if (!name) return alert("Please enter a category name");
 
@@ -146,7 +141,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Optional inline color picker support (central picker)
   if (inlineColor) {
     inlineColor.addEventListener("input", () => {
       if (colorPickIndex == null) return;
@@ -162,7 +156,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Render categories
   function renderCategories() {
     categoriesEl.innerHTML = "";
-
     categories.forEach((cat, i) => {
       const div = document.createElement("div");
       div.className = "card category";
@@ -185,10 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="notes" id="notes-${i}"></div>
         <div class="card-actions">
           <button class="btn-add" data-index="${i}"><i data-lucide="plus"></i> Add expense</button>
-          <button class="btn-cat paint-btn" data-index="${i}" title="Change color">
-            <i data-lucide="paintbrush-vertical"></i>
-            <input type="color" class="color-overlay" value="${cat.color || '#6b7280'}" />
-          </button>
+          <button class="btn-cat cat-color" data-index="${i}" title="Change color"><i data-lucide="paintbrush-vertical"></i></button>
           <button class="btn-cat cat-edit" data-index="${i}" title="Edit category"><i data-lucide="pencil"></i></button>
           <button class="btn-cat cat-del" data-index="${i}" title="Delete category"><i data-lucide="x"></i></button>
         </div>
@@ -196,22 +186,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
       categoriesEl.appendChild(div);
 
-      // Tint footer buttons with the category color
+      // tint all footer buttons with the category color (add, paintbrush, pencil, X)
       const footerBtns = div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat");
       footerBtns.forEach(btn => {
-        btn.style.borderColor = cat.color;
+        btn.style.borderColor = cat.color;           // outline uses category color
       });
 
-      // Wire the color overlay inside this card to update the category color immediately
-      const inCardColorInput = div.querySelector(".paint-btn .color-overlay");
-      if (inCardColorInput) {
-        inCardColorInput.addEventListener("input", (e) => {
-          categories[i].color = e.target.value;
-          renderCategories();
-          updateTotals();
-          save();
+      // change category color
+      document.querySelectorAll(".cat-color").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const i = parseInt(btn.dataset.index, 10);
+          colorPickIndex = i;
+          if (inlineColor) {
+            // open system picker (works on desktop & iOS)
+            if (typeof inlineColor.showPicker === "function") inlineColor.showPicker();
+            else inlineColor.click();
+          }
         });
-      }
+      });
 
       renderExpenses(i);
     });
@@ -226,7 +218,6 @@ document.addEventListener("DOMContentLoaded", () => {
         addExpense(i);
       });
     });
-
     // edit category
     document.querySelectorAll(".cat-edit").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -240,7 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
         save();
       });
     });
-
     // delete category
     document.querySelectorAll(".cat-del").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -279,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Render all expenses of a category
   function renderExpenses(catIndex) {
-    const expEl   = document.getElementById(`expenses-${catIndex}`);
+    const expEl = document.getElementById(`expenses-${catIndex}`);
     const notesEl = document.getElementById(`notes-${catIndex}`);
     if (!expEl) return;
     expEl.innerHTML = "";
@@ -320,6 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
       row.querySelector("input").addEventListener("input", (e) => {
         exp.amount = parseFloat(e.target.value) || 0;
         updateTotals();
+        // no re-render needed unless freq/label changes
         save();
       });
 
@@ -337,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // collect notes if non-monthly
       if ((exp.freq || "mo") !== "mo" && exp.amount > 0) {
         const perMo = monthlyFrom(exp.amount, exp.freq || "mo");
-        const when  = (exp.freq === "qtr") ? "quarterly" : "yearly";
+        const when = (exp.freq === "qtr") ? "quarterly" : "yearly";
         notes.push(`${exp.name} occurs ${when}, consider budgeting ${fmt(perMo)} /mo.`);
       }
     });
@@ -361,7 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cat.expenses.forEach(exp => {
       if ((exp.freq || "mo") !== "mo" && exp.amount > 0) {
         const perMo = monthlyFrom(exp.amount, exp.freq || "mo");
-        const when  = (exp.freq === "qtr") ? "quarterly" : "yearly";
+        const when = (exp.freq === "qtr") ? "quarterly" : "yearly";
         notes.push(`${exp.name} occurs ${when}, consider budgeting ${fmt(perMo)} /mo.`);
       }
     });
@@ -380,9 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const ttlEl = document.getElementById(`cat-total-${i}`);
       if (ttlEl) ttlEl.textContent = fmt(total);
     });
-
     const play = income - allExpenses;
-
     if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
     if (playEl) {
