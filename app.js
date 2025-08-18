@@ -412,66 +412,57 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =====================================
-   *  Sticky compact income bar (IntersectionObserver)
-   * ===================================== */
-  const incomeCard   = document.getElementById('income-card');
-  const sticky       = document.getElementById('income-sticky');
-  const stickyMonthly= document.getElementById('sticky-monthly');
-  const stickyYearly = document.getElementById('sticky-yearly');
-  const stickyPlay   = document.getElementById('sticky-play');
+/* =====================================
+ *  Sticky compact income bar (scroll-only)
+ * ===================================== */
+function setupSticky() {
+  const incomeCard    = document.getElementById('income-card');
+  const sticky        = document.getElementById('income-sticky');
+  const stickyMonthly = document.getElementById('sticky-monthly');
+  const stickyYearly  = document.getElementById('sticky-yearly');
+  const stickyPlay    = document.getElementById('sticky-play');
 
-  function setupSticky() {
-    const hasStickyNodes =
-      incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay &&
-      incomeInput && yearlyEl && playEl;
-
-    if (!hasStickyNodes) {
-      console.warn('[sticky] Skipping setup. Missing nodes.');
-      return;
-    }
-
-    const updateSticky = () => {
-      stickyMonthly.textContent = incomeInput.dataset.value || '—';
-      const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
-      stickyYearly.textContent = y || '—';
-      stickyPlay.textContent   = playEl.dataset.value || '—';
-    };
-
-    // keep contents in sync
-    incomeInput.addEventListener('input', updateSticky);
-    try { new MutationObserver(updateSticky).observe(yearlyEl, { childList: true }); } catch(e){}
-    try { new MutationObserver(updateSticky).observe(playEl,  { attributes: true, attributeFilter: ['data-value'] }); } catch(e){}
-
-    // visibility: show when the income card is fully out of view
-    const show = () => sticky.classList.remove('hidden');
-    const hide = () => sticky.classList.add('hidden');
-
-    let io;
-    try {
-      io = new IntersectionObserver(entries => {
-        const e = entries[0];
-        if (!e) return;
-        if (e.intersectionRatio === 0) show();
-        else hide();
-      }, { root: null, rootMargin: "0px", threshold: [0, 0.01] });
-      io.observe(incomeCard);
-    } catch (err) {
-      console.warn('[sticky] IO unsupported, using scroll fallback', err);
-    }
-
-    // scroll fallback for safety
-    const onScrollFallback = () => {
-      const rect = incomeCard.getBoundingClientRect();
-      if (rect.bottom <= 0) show();
-      else hide();
-    };
-    window.addEventListener('scroll', onScrollFallback, { passive: true });
-
-    // initial fill + state
-    updateSticky();
-    onScrollFallback();
+  if (!incomeCard || !sticky || !stickyMonthly || !stickyYearly || !stickyPlay || !incomeInput || !yearlyEl || !playEl) {
+    console.warn('[sticky] Skipping setup. Missing nodes.');
+    return;
   }
+
+  // Keep the pill values in sync
+  const updateStickyValues = () => {
+    // Monthly (clean $ saved on the input by the income listener)
+    stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : '—');
+
+    // Yearly (strip label)
+    const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
+    stickyYearly.textContent = y || (income ? fmt(income * 12) : '—');
+
+    // Play money (clean $ saved on #play-left by updateTotals)
+    stickyPlay.textContent = playEl.dataset.value || '—';
+  };
+
+  // Show when the income card is completely past the top of the viewport.
+  const updateStickyVisibility = () => {
+    const rect = incomeCard.getBoundingClientRect();
+    // If the bottom of the income card is above or at the top edge, show the sticky bar.
+    if (rect.bottom <= 0) {
+      sticky.classList.remove('hidden');
+    } else {
+      sticky.classList.add('hidden');
+    }
+  };
+
+  // Wire listeners
+  window.addEventListener('scroll', updateStickyVisibility, { passive: true });
+  window.addEventListener('resize', updateStickyVisibility);
+
+  incomeInput.addEventListener('input', updateStickyValues);
+  try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
+  try { new MutationObserver(updateStickyValues).observe(playEl, { attributes: true, attributeFilter: ['data-value'] }); } catch {}
+
+  // Prime content + visibility on load
+  updateStickyValues();
+  updateStickyVisibility();
+}
 
   /* =====================================
    *  Bootstrap
