@@ -12,12 +12,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const addCatBtn    = document.getElementById("add-category");
   const categoriesEl = document.getElementById("categories");
   const shareBtn     = document.getElementById("share-btn");
-  const inlineColor  = document.getElementById("inline-color");
-  let colorPickIndex = null; // which category we’re editing
+  const inlineColor  = document.getElementById("inline-color"); // optional, ok if null
 
-  // Color picker (label-for approach)
-  const colorBtn    = document.getElementById("cat-color-btn"); // <label/button>
-  const colorInput  = document.getElementById("cat-color");     // <input type=color>
+  // Color picker (label/button + input[type=color])
+  const colorBtn    = document.getElementById("cat-color-btn");
+  const colorInput  = document.getElementById("cat-color");
   const colorSwatch = colorBtn ? colorBtn.querySelector(".swatch") : null;
 
   /* =====================================
@@ -412,80 +411,85 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-/* =====================================
- *  Sticky compact income bar (scroll-only)
- * ===================================== */
-function setupSticky() {
-  const incomeCard    = document.getElementById('income-card');
-  const sticky        = document.getElementById('income-sticky');
-  const stickyMonthly = document.getElementById('sticky-monthly');
-  const stickyYearly  = document.getElementById('sticky-yearly');
-  const stickyPlay    = document.getElementById('sticky-play');
+  /* =====================================
+   *  Sticky compact income bar
+   *  - robust visibility via IntersectionObserver
+   *  - values kept in sync via dataset + observers
+   * ===================================== */
+  function setupSticky() {
+    const incomeCard    = document.getElementById('income-card');
+    const sticky        = document.getElementById('income-sticky');
+    const stickyMonthly = document.getElementById('sticky-monthly');
+    const stickyYearly  = document.getElementById('sticky-yearly');
+    const stickyPlay    = document.getElementById('sticky-play');
 
-  if (!incomeCard || !sticky || !stickyMonthly || !stickyYearly || !stickyPlay || !incomeInput || !yearlyEl || !playEl) {
-    console.warn('[sticky] Skipping setup. Missing nodes.');
-    return;
+    const ok =
+      incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay &&
+      incomeInput && yearlyEl && playEl;
+
+    if (!ok) {
+      console.warn('[sticky] Skipping setup. Missing nodes.');
+      return;
+    }
+
+    const updateStickyValues = () => {
+      stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : '—');
+      const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
+      stickyYearly.textContent  = y || (income ? fmt(income * 12) : '—');
+      stickyPlay.textContent    = playEl.dataset.value || '—';
+    };
+
+    // Keep values in sync
+    incomeInput.addEventListener('input', updateStickyValues);
+    try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
+    try { new MutationObserver(updateStickyValues).observe(playEl,  { attributes: true, attributeFilter: ['data-value'] }); } catch {}
+
+    // --- Visibility: show sticky when income card is NOT visible ---
+    const toggleStickyHidden = (isIncomeCardVisible) => {
+      sticky.classList.toggle('hidden', isIncomeCardVisible);
+    };
+
+    try {
+      const io = new IntersectionObserver(([entry]) => {
+        // Log + toggle
+        console.log('[sticky]', entry.isIntersecting ? 'hide' : 'show');
+        toggleStickyHidden(entry.isIntersecting);
+      }, { root: null, threshold: 0 });
+
+      io.observe(incomeCard);
+    } catch {
+      // Fallback for older browsers
+      const onScrollOrResize = () => {
+        const r = incomeCard.getBoundingClientRect();
+        const isVisible = r.bottom > 0 && r.top < window.innerHeight;
+        console.log('[sticky-fallback]', isVisible ? 'hide' : 'show');
+        toggleStickyHidden(isVisible);
+      };
+      window.addEventListener('scroll', onScrollOrResize, { passive: true });
+      window.addEventListener('resize', onScrollOrResize);
+      onScrollOrResize(); // initial state
+    }
+
+    // Prime pill contents immediately
+    updateStickyValues();
   }
 
-  // Keep the pill values in sync
-  const updateStickyValues = () => {
-    // Monthly (clean $ saved on the input by the income listener)
-    stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : '—');
-
-    // Yearly (strip label)
-    const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
-    stickyYearly.textContent = y || (income ? fmt(income * 12) : '—');
-
-    // Play money (clean $ saved on #play-left by updateTotals)
-    stickyPlay.textContent = playEl.dataset.value || '—';
-  };
-
-  // Show when the income card is completely past the top of the viewport.
-const updateStickyVisibility = () => {
-  const rect = incomeCard.getBoundingClientRect();
-  console.log("rect.top:", rect.top, "rect.bottom:", rect.bottom);
-
-  if (rect.top <= -40) {   // show when income card’s top is scrolled ~40px above viewport
-    sticky.classList.remove('hidden');
-  } else {
-    sticky.classList.add('hidden');
+  /* =====================================
+   *  Bootstrap
+   * ===================================== */
+  if (!load()) {
+    income = 0;
+    categories = JSON.parse(JSON.stringify(defaults));
   }
-};
 
+  // Initial UI
+  if (incomeInput) {
+    incomeInput.value = income ? String(income) : "";
+    incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0);
+  }
+  if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
-  // Wire listeners
-  window.addEventListener('scroll', updateStickyVisibility, { passive: true });
-  window.addEventListener('resize', updateStickyVisibility);
-
-  incomeInput.addEventListener('input', updateStickyValues);
-  try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
-  try { new MutationObserver(updateStickyValues).observe(playEl, { attributes: true, attributeFilter: ['data-value'] }); } catch {}
-
-  // Prime content + visibility on load
-  updateStickyValues();
-  updateStickyVisibility();
-}
-
- /* =====================================
- *  Bootstrap
- * ===================================== */
-if (!load()) {
-  income = 0;
-  categories = JSON.parse(JSON.stringify(defaults));
-}
-
- // initial UI
-if (incomeInput) {
-  incomeInput.value = income ? String(income) : "";
-  incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0);
-}
-if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
-
-renderCategories();
-updateTotals();
-setupSticky();
-
-// Kick the sticky logic once on boot so visibility is correct
-requestAnimationFrame(() => window.dispatchEvent(new Event('scroll')));
-
+  renderCategories();
+  updateTotals();
+  setupSticky();
 });
