@@ -147,30 +147,39 @@ gap:8px;
 
 #cat-color-btn.btn{ display:inline-flex; align-items:center; gap:8px; padding:10px; }
 
-/* Sticky compact income summary */
-.sticky-card {
+/* Full-bleed sticky bar (background spans screen) */
+.sticky-card.fullwidth {
   position: sticky;
   top: 0;
   z-index: 50;
-  display: flex;
-  justify-content: center;  /* keep pills centered */
-  align-items: center;
-  flex-wrap: wrap;          /* allow wrap on smaller screens */
-  gap: 4px;                 /* tighter spacing */
+  width: 100vw;
+  left: 50%;
+  transform: translateX(-50%); /* center across viewport */
   background: var(--card);
-  border: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   border-radius: 0;
-  padding: 6px 10px;
-  margin-bottom: 8px;
 }
 
-[data-theme="light"] .sticky-card {
+/* Light theme colors */
+[data-theme="light"] .sticky-card.fullwidth {
   background: var(--card-light);
   border-color: var(--line-light);
 }
 
-.sticky-card.hidden { display: none; }
+/* Inner content matches your .wrap width and centers pills */
+.sticky-inner {
+  max-width: 860px;      /* same as .wrap */
+  margin: 0 auto;
+  padding: 6px 10px;
 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;       /* wrap if needed on small screens */
+}
+
+/* Pills (keep your existing styles) */
 .sticky-card .pill {
   display: inline-flex;
   align-items: center;
@@ -183,19 +192,11 @@ gap:8px;
   border: 1px solid var(--line);
   white-space: nowrap;
 }
-
 [data-theme="light"] .sticky-card .pill {
   background: var(--field-light);
   border-color: var(--line-light);
 }
 
-/* Full-width sticky bar */
-.sticky-card.fullwidth {
-  width: 100vw;
-  left: 50%;
-  transform: translateX(-50%);
-  box-sizing: border-box;
-}
 
 
 
@@ -237,10 +238,13 @@ Theme
 
     <!-- Sticky compact income summary -->
 <div id="income-sticky" class="sticky-card fullwidth hidden">
-  <div class="pill"><i data-lucide="calendar-1"></i> <span id="sticky-monthly">—</span></div>
-  <div class="pill"><i data-lucide="calendar-clock"></i> <span id="sticky-yearly">—</span></div>
-  <div class="pill"><i data-lucide="scale"></i> <span id="sticky-play">—</span></div>
+  <div class="sticky-inner">
+    <div class="pill"><i data-lucide="calendar-1"></i> <span id="sticky-monthly">—</span></div>
+    <div class="pill"><i data-lucide="calendar-clock"></i> <span id="sticky-yearly">—</span></div>
+    <div class="pill"><i data-lucide="scale"></i> <span id="sticky-play">—</span></div>
+  </div>
 </div>
+
 
 
 <main>
