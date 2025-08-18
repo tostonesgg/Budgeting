@@ -187,6 +187,17 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       categoriesEl.appendChild(div);
 
+// apply adaptive color
+const footer = div.querySelector(".card-actions");
+if (footer) {
+  if (document.documentElement.dataset.theme === "dark") {
+    footer.style.borderTop = `2px solid ${cat.color}`;
+  } else {
+    footer.style.borderTop = `2px solid ${cat.color}`;
+  }
+}
+
+
       // change category color
 document.querySelectorAll(".cat-color").forEach(btn => {
   btn.addEventListener("click", () => {
