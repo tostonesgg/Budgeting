@@ -426,33 +426,59 @@ document.addEventListener("DOMContentLoaded", () => {
     incomeInput && yearlyEl && playEl;
 
   function setupSticky() {
-    if (!hasStickyNodes) {
-      console.warn('[sticky] Skipping setup. Missing nodes.');
-      return;
-    }
-
-    const updateSticky = () => {
-      stickyMonthly.textContent = incomeInput.dataset.value || '—';
-      const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
-      stickyYearly.textContent = y || '—';
-      stickyPlay.textContent   = playEl.dataset.value || '—';
-    };
-
-    // keep contents in sync
-    incomeInput.addEventListener('input', updateSticky);
-    try { new MutationObserver(updateSticky).observe(yearlyEl, { childList: true }); } catch(e){}
-    try { new MutationObserver(updateSticky).observe(playEl,  { attributes: true, attributeFilter: ['data-value'] }); } catch(e){}
-
-    // show/hide based on visibility of income card
-    const io = new IntersectionObserver(entries => {
-      const e = entries[0];
-      if (e.isIntersecting) sticky.classList.add('hidden');
-      else sticky.classList.remove('hidden');
-    }, { threshold: 0.05 });
-
-    io.observe(incomeCard);
-    updateSticky(); // initial fill
+  if (!hasStickyNodes) {
+    console.warn('[sticky] Skipping setup. Missing nodes.');
+    return;
   }
+
+  const updateSticky = () => {
+    stickyMonthly.textContent = incomeInput.dataset.value || '—';
+    const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
+    stickyYearly.textContent = y || '—';
+    stickyPlay.textContent   = playEl.dataset.value || '—';
+  };
+
+  // keep contents in sync
+  incomeInput.addEventListener('input', updateSticky);
+  try { new MutationObserver(updateSticky).observe(yearlyEl, { childList: true }); } catch(e){}
+  try { new MutationObserver(updateSticky).observe(playEl,  { attributes: true, attributeFilter: ['data-value'] }); } catch(e){}
+
+  // --- Robust visibility control ---
+  const show = () => sticky.classList.remove('hidden');
+  const hide = () => sticky.classList.add('hidden');
+
+  // Observer: show when income card is NOT visible at all
+  let io;
+  try {
+    io = new IntersectionObserver(entries => {
+      const e = entries[0];
+      if (!e) return;
+      // If the card has *no* intersection with the viewport, show sticky
+      if (e.intersectionRatio === 0) show();
+      else hide();
+    }, {
+      root: null,
+      rootMargin: "0px",
+      threshold: [0, 0.01, 0.1]   // fire right when it leaves/enters
+    });
+    io.observe(incomeCard);
+  } catch (err) {
+    console.warn('[sticky] IO unsupported, using scroll fallback', err);
+  }
+
+  // Scroll fallback (also helps if IO misses an edge-case)
+  const onScrollFallback = () => {
+    const rect = incomeCard.getBoundingClientRect();
+    if (rect.bottom <= 0) show();
+    else hide();
+  };
+  window.addEventListener('scroll', onScrollFallback, { passive: true });
+
+  // Initial fill + state
+  updateSticky();
+  onScrollFallback();
+}
+
 
   /* =====================================
    *  Bootstrap
