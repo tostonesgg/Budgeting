@@ -9,215 +9,97 @@
   <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
   <style>
-    :root{
+    :root {
       --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; --text:#e5e7eb;
       --bg-light:#f8fafc; --card-light:#ffffff; --muted-light:#475569; --line-light:#e2e8f0; --field-light:#ffffff; --text-dark:#111827;
     }
 
-    html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    [data-theme="light"] body{background:var(--bg-light);color:var(--text-dark)}
+    html, body {
+      margin:0;
+      padding:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      overflow-x: hidden; /* prevent horizontal jiggle */
+    }
+    [data-theme="light"] body { background:var(--bg-light); color:var(--text-dark); }
 
-    .wrap{max-width:860px;margin:0 auto;padding:16px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
-    h1{font-size:20px;margin:0;display:flex;gap:8px;align-items:center}
+    .wrap { max-width:860px; margin:0 auto; padding:16px; }
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; }
+    h1 { font-size:20px; margin:0; display:flex; gap:8px; align-items:center; }
 
     /* Header actions */
-    .hdr-actions{display:flex;gap:8px}
-    .btn{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
-    .btn:focus{outline:2px solid var(--focus)}
-    [data-theme="light"] .btn{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
+    .hdr-actions { display:flex; gap:8px; }
+    .btn {
+      background:var(--field); color:inherit; border:1px solid #374151;
+      border-radius:8px; padding:10px; display:inline-flex; gap:6px; align-items:center; cursor:pointer;
+    }
+    .btn:focus { outline:2px solid var(--focus); }
+    [data-theme="light"] .btn { background:var(--field-light); border-color:var(--line-light); color:var(--text-dark); }
 
-    /* Cards / form controls */
-    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-    [data-theme="light"] .card{background:var(--card-light);border-color:var(--line-light)}
-    input,button{background:var(--field);color:inherit;border:1px solid #374151;border-radius:8px;padding:10px}
-    input:focus,button:focus{outline:2px solid var(--focus)}
-    [data-theme="light"] input,[data-theme="light"] button{background:var(--field-light);border-color:var(--line-light);color:var(--text-dark)}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    .row>*{flex:1 1 min(240px,100%)}
-    .muted{color:var(--muted)} [data-theme="light"] .muted{color:var(--muted-light)}
-    .big{font-size:22px;font-weight:800;margin:0 0 6px 0}
+    /* Cards */
+    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
+    [data-theme="light"] .card { background:var(--card-light); border-color:var(--line-light); }
+    input, button { background:var(--field); color:inherit; border:1px solid #374151; border-radius:8px; padding:10px; }
+    input:focus, button:focus { outline:2px solid var(--focus); }
+    [data-theme="light"] input, [data-theme="light"] button { background:var(--field-light); border-color:var(--line-light); color:var(--text-dark); }
+    .muted { color:var(--muted); }
+    [data-theme="light"] .muted { color:var(--muted-light); }
+    .big { font-size:22px; font-weight:800; margin:0 0 6px 0; }
 
-    /* Category cards */
-    .category-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .category-title{display:flex;gap:8px;align-items:center;font-weight:900;font-size:20px}
-    .cat-total{font-weight:800}
-
-    /* Expense row */
-    .bill-row{
-      display:grid;
-      grid-template-columns: 1fr 90px 48px 32px 32px;
-      gap:6px;
-      align-items:center;
-      margin:8px 0;
-    }
-    @media (max-width:480px){
-      .bill-row{ grid-template-columns: 1fr 80px 44px 32px 32px; gap:4px; }
-    }
-    .bill-row label{
-      min-width:0;display:flex;align-items:center;gap:6px;
-      font-size:13px;line-height:1.2;white-space:normal;overflow-wrap:anywhere;
-    }
-    .bill-row label svg{ width:14px; height:14px; }
-    .bill-row input{ width:100%;box-sizing:border-box;padding:4px 6px;height:32px;font-size:13px; }
-    .btn-freq{
-      height:32px; padding:0 6px; font-size:11px; border-radius:6px; border:1px solid var(--line);
-      background:transparent;color:inherit;cursor:pointer;
-    }
-    [data-theme="light"] .btn-freq{border-color:var(--line-light)}
-    .btn-icon{
-      display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;border:1px solid var(--line);
-      background:transparent;color:inherit;cursor:pointer;
-    }
-    .btn-icon svg{width:14px;height:14px;}
-    .btn-icon:hover{outline:2px solid var(--focus);outline-offset:-2px}
-    [data-theme="light"] .btn-icon{border-color:var(--line-light)}
-
-    /* Category footer actions */
-    .card-actions { display: flex; gap: 4px; margin-top: 4px; padding-top: 4px; }
-    .card-actions svg { width: 16px; height: 16px; }
-    .card-actions .btn-cat,
-    .card-actions .btn-add {
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 3px 5px;
-      background: transparent;
-      cursor: pointer;
-      display: inline-flex;
+    /* Shared pill style */
+    .pill {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: transparent;
+      font-size: 14px;
     }
-    [data-theme="light"] .card-actions .btn-cat,
-    [data-theme="light"] .card-actions .btn-add { border-color: var(--line-light); }
-
-    /* iOS-safe overlay for buttons with color input */
-    .paint-btn{ position:relative; overflow:hidden; }
-    .paint-btn .color-overlay{
-      position:absolute; inset:0; opacity:0; border:0; padding:0; margin:0; -webkit-appearance:none; cursor:pointer;
+    .pill input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      min-width: 0;
     }
-    .paint-btn .swatch{ width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block }
-    [data-theme="light"] .paint-btn .swatch{border-color:var(--line-light)}
+    .pill i { flex-shrink: 0; }
 
-    .notes{ margin-top:10px; line-height:1.5; font-size:12px; color:var(--muted); }
-    [data-theme="light"] .notes{ color:var(--muted-light) }
-
-    /* Add Category layout grid */
-    .addcat-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto;
-      gap:8px;
+    /* Sticky bar */
+    .sticky-card {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -100%);
+      width: 100vw;
+      z-index: 1000;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      transition: transform 160ms ease;
     }
-    .addcat-grid #cat-name { grid-column:1; grid-row:1; }
-    .addcat-grid #cat-icon { grid-column:2; grid-row:1; }
-    .addcat-grid #cat-color-btn { grid-column:1; grid-row:2; }
-    .addcat-grid #add-category { grid-column:2; grid-row:2; justify-self:stretch; }
-    #cat-color-btn.btn{ display:inline-flex; align-items:center; gap:8px; padding:10px; }
-
-/* Full-bleed sticky bar: fixed + slide in/out */
-.sticky-card {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translate(-50%, -100%); /* hidden (above viewport) */
-  width: 100vw;
-  z-index: 1000;
-  box-sizing: border-box;
-
-  /* your existing visuals */
-  background: var(--card);
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-
-  transition: transform 160ms ease;
-}
-.sticky-card.is-visible {
-  transform: translate(-50%, 0); /* slide down into view */
-}
-[data-theme="light"] .sticky-card {
-  background: var(--card-light);
-  border-color: var(--line-light);
-}
-
-/* center the pills within your page width */
-.sticky-inner {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 6px 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-/* (optional) prevent horizontal jiggle */
-html, body { overflow-x: hidden; }
-
-    /* Sticky pills: align icon + text neatly */
-.sticky-card .pill {
-  display: inline-flex;       /* make it a flex container */
-  align-items: center;        /* vertically center icon + text */
-  gap: 4px;                   /* spacing between icon and text */
-  font-size: 0.9rem;          /* slightly smaller than normal body font */
-  line-height: 1.2;           /* keep compact */
-  padding: 4px 8px;           /* breathing room */
-  border-radius: 12px;        /* maintain pill shape */
-}
-.sticky-card .pill i {
-  flex-shrink: 0;             /* icon stays its size */
-}
-
-    .step1-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;  /* allows wrapping on narrow screens */
-}
-
-.step1-row .pill {
-  flex: 1 1 0;              /* equal width, allows shrink */
-  min-width: 0;             /* critical to prevent overflow */
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: transparent;
-}
-
-.step1-row .pill input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  min-width: 0;  /* prevents input from overflowing */
-}
-
-/* Stack on mobile */
-@media (max-width: 600px) {
-  .step1-row {
-    flex-direction: column;
-  }
-  .step1-row .pill {
-    width: 100%;
-  }
-}
-
-
-
-
-    /* Categories: 1 column on mobile, 2 on desktop */
-    #categories {
-      display: grid;
-      grid-template-columns: 1fr;       /* mobile: single column */
-      gap: 12px;
-      align-items: start;
+    .sticky-card.is-visible { transform: translate(-50%, 0); }
+    [data-theme="light"] .sticky-card { background: var(--card-light); border-color: var(--line-light); }
+    .sticky-inner {
+      max-width: 860px; margin: 0 auto; padding: 6px 10px;
+      display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap;
     }
-    @media (min-width: 768px) {
-      #categories { grid-template-columns: 1fr 1fr; } /* 2 columns */
+
+    /* Step 1 row */
+    .step1-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    @media (max-width: 600px) {
+      .step1-row { flex-direction: column; }
+      .step1-row .pill { width: 100%; }
     }
-    #categories .card { margin-bottom: 0; } /* avoid double spacing */
+
+    /* Categories grid */
+    #categories { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
+    @media (min-width: 768px) { #categories { grid-template-columns: 1fr 1fr; } }
+    #categories .card { margin-bottom: 0; }
   </style>
 </head>
 <body>
@@ -244,72 +126,56 @@ html, body { overflow-x: hidden; }
     </div>
 
     <main>
- <!-- Income -->
-<div class="card" id="income-card">
-  <h2 class="big">Step 1: What's your monthly net income?</h2>
-  <p class="muted">
-    This is what you take home after taxes, 401k contributions, pre-tax removals 
-    for transportation and health/pet/car insurance costs.
-  </p>
+      <!-- Income -->
+      <div class="card" id="income-card">
+        <h2 class="big">Step 1: What's your monthly net income?</h2>
+        <p class="muted">
+          This is what you take home after taxes, 401k contributions, pre-tax removals 
+          for transportation and health/pet/car insurance costs.
+        </p>
 
-  <div class="step1-row">
-    <!-- Monthly take-home input -->
-    <div class="pill">
-      <i data-lucide="calendar-1"></i>
-      <input 
-        type="number" 
-        id="monthly-income" 
-        placeholder="Monthly take-home" 
-      />
-    </div>
-
-    <!-- Yearly pill -->
-    <div class="pill">
-      <i data-lucide="calendar-clock"></i>
-      <span id="yearly-income">$0.00</span>
-    </div>
-
-    <!-- Balance remaining pill -->
-    <div class="pill">
-      <i data-lucide="scale"></i>
-      <span id="balance-remaining">$0.00/mo</span>
-    </div>
-  </div>
-</div>
-
-
-
-</div>
-
+        <div class="step1-row">
+          <!-- Monthly input -->
+          <div class="pill">
+            <i data-lucide="calendar-1"></i>
+            <input type="number" id="monthly-income" placeholder="Monthly take-home" />
+          </div>
+          <!-- Yearly pill -->
+          <div class="pill">
+            <i data-lucide="calendar-clock"></i>
+            <span id="yearly-income">$0.00</span>
+          </div>
+          <!-- Balance remaining pill -->
+          <div class="pill">
+            <i data-lucide="scale"></i>
+            <span id="balance-remaining">$0.00/mo</span>
+          </div>
+        </div>
+      </div>
 
       <!-- Category Creator -->
       <div class="card">
         <h2 class="big">Step 2: Add a category</h2>
-
         <div class="addcat-grid">
           <input id="cat-name" placeholder="Category name" />
           <input id="cat-icon" placeholder="Lucide icon name (e.g., 'car')" />
-
-          <!-- iOS-safe Pick Color -->
           <button id="cat-color-btn" class="btn paint-btn" type="button" title="Pick color">
             <i data-lucide="paintbrush-vertical"></i>
             <span class="swatch" aria-hidden="true"></span>
             Pick Color
             <input id="cat-color" type="color" class="color-overlay" value="#3b82f6" />
           </button>
-
           <button id="add-category" class="btn"><i data-lucide="plus"></i> Add</button>
         </div>
       </div>
 
       <!-- Categories -->
       <div id="categories"></div>
+    </main>
+  </div>
 
-
-  <!-- Your app logic -->
+  <!-- App logic -->
   <script defer src="app.js?v=share-freq-local-1"></script>
-
-  <!-- One-time lucide boot (for header/sticky icons). Category icons are handled in app.js after render. -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       try { window.lucide?.createIcons(); } catch(e){}
