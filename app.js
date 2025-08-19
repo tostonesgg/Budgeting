@@ -121,37 +121,31 @@ document.addEventListener("DOMContentLoaded", () => {
      ║  Totals (per-category + sticky values)  ║
      ╚════════════════════════════════════════╝ */
   function updateTotals() {
-    let allExpenses = 0;
-    categories.forEach((cat, i) => {
-      const total = cat.expenses.reduce(
-        (sum, e) => sum + monthlyFrom(parseFloat(e.amount) || 0, e.freq || "mo"),
-        0
-      );
-      allExpenses += total;
-      const ttlEl = document.getElementById(`cat-total-${i}`);
-      if (ttlEl) ttlEl.textContent = fmt(total);
-    });
+  const monthlyInput = document.getElementById("monthly-input");
+  const monthly = parseFloat(monthlyInput.value) || 0;
+  const yearly = monthly * 12;
+  const balance = yearly - 1000; // replace 1000 with your actual deduction logic
 
-    const play = income - allExpenses;
+  // --- Step 1 pills (source of truth) ---
+  document.getElementById("step1-monthly").textContent = `$${monthly.toLocaleString()}`;
+  document.getElementById("step1-yearly").textContent = `$${yearly.toLocaleString()}`;
+  document.getElementById("step1-balance").textContent = `$${balance.toLocaleString()}`;
 
-    // Step 1 yearly pill
-    if (yearlyEl) yearlyEl.textContent = fmt(income * 12);
+  // --- Sticky bar pills mirror Step 1 ---
+  document.getElementById("sticky-monthly").textContent =
+    document.getElementById("step1-monthly").textContent;
+  document.getElementById("sticky-yearly").textContent =
+    document.getElementById("step1-yearly").textContent;
+  document.getElementById("sticky-balance").textContent =
+    document.getElementById("step1-balance").textContent;
+}
 
-    // Step 1 balance pill
-    if (balanceEl) {
-      const clean = `${fmt(play)}/mo`;
-      balanceEl.textContent   = clean;
-      balanceEl.dataset.value = clean;
-    }
+// hook to input
+document.getElementById("monthly-input").addEventListener("input", updateTotals);
 
-    // Sticky play pill
-    const stickyPlay = document.getElementById("sticky-play");
-    if (stickyPlay) {
-      const clean = `${fmt(play)}/mo`;
-      stickyPlay.textContent   = clean;
-      stickyPlay.dataset.value = clean;
-    }
-  }
+// run once on load
+updateTotals();
+
 
   /* ╔════════════════════════════════════════╗
      ║  Theme toggle (dark ↔ light)            ║
