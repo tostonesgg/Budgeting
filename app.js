@@ -120,6 +120,45 @@ document.addEventListener("DOMContentLoaded", () => {
     return wrapper;
   }
 
+    /* ╔════════════════════════════════════════╗
+     ║  Expense row builder + persistence      ║
+     ╚════════════════════════════════════════╝ */
+  function createExpenseRow(categoryId, expenseId, value = 0) {
+    const row = document.createElement("div");
+    row.className = "expense-row";
+    row.dataset.expenseId = expenseId;
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.className = "expense-input";
+    input.value = value;
+
+    input.addEventListener("input", () => {
+      // save to localStorage
+      const data = JSON.parse(localStorage.getItem("expensesByCategory")) || {};
+      if (!data[categoryId]) data[categoryId] = [];
+      const idx = data[categoryId].findIndex(e => e.id === expenseId);
+      if (idx >= 0) {
+        data[categoryId][idx].value = parseFloat(input.value) || 0;
+      } else {
+        data[categoryId].push({ id: expenseId, value: parseFloat(input.value) || 0 });
+      }
+      localStorage.setItem("expensesByCategory", JSON.stringify(data));
+      updateTotals();
+    });
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "🗑️";
+    deleteBtn.addEventListener("click", () => {
+      deleteExpenseRow(row);
+    });
+
+    row.appendChild(input);
+    row.appendChild(deleteBtn);
+    return row;
+  }
+
+
   function saveCategoriesToStorage() {
     const cats = [];
     categoriesEl.querySelectorAll(".category-header").forEach((hdr) => {
