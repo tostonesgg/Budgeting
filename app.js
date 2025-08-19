@@ -13,7 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const categoriesEl = document.getElementById("categories");
   const shareBtn     = document.getElementById("share-btn");
   const inlineColor  = document.getElementById("inline-color"); // optional, ok if null
-  const playEl = document.getElementById("net-play");
+  const playEl       = document.getElementById("net-play");
+
 
 
   // Color picker references
@@ -352,7 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
     notesEl.innerHTML = notes.length ? notes.map(n => `• ${n}`).join("<br/>") : "";
   }
 
-  /* ╔════════════════════════════════════════╗
+    /* ╔════════════════════════════════════════╗
      ║  Totals (per-category + sticky Play)    ║
      ╚════════════════════════════════════════╝ */
   function updateTotals() {
@@ -362,7 +363,8 @@ document.addEventListener("DOMContentLoaded", () => {
      *  2. Global "play money" (income – all expenses)
      * Update DOM:
      *  – Category total labels
-     *  – Yearly label under income input
+     *  – Yearly pill in Step 1
+     *  – Play pill in Step 1
      *  – Sticky Play pill (auto-updates when income/expenses change)
      */
     let allExpenses = 0;
@@ -377,22 +379,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const play = income - allExpenses;
-if (yearlyEl) yearlyEl.textContent = fmt(income * 12);
 
-// Update sticky Play pill
-const stickyPlay = document.getElementById("sticky-play");
-if (stickyPlay) {
-  const clean = `${fmt(play)}/mo`;
-  stickyPlay.textContent   = clean;
-  stickyPlay.dataset.value = clean;
-}
+    // Step 1 yearly pill
+    if (yearlyEl) yearlyEl.textContent = fmt(income * 12);
 
-// Update Step 1 Play pill
-if (playEl) {
-  const clean = `${fmt(play)}/mo`;
-  playEl.textContent   = clean;
-  playEl.dataset.value = clean;
-}
+    // Step 1 play pill
+    if (playEl) {
+      const clean = `${fmt(play)}/mo`;
+      playEl.textContent   = clean;
+      playEl.dataset.value = clean;
+    }
+
+    // Sticky play pill
+    const stickyPlay = document.getElementById("sticky-play");
+    if (stickyPlay) {
+      const clean = `${fmt(play)}/mo`;
+      stickyPlay.textContent   = clean;
+      stickyPlay.dataset.value = clean;
+    }
+  }
+
 
 
 
