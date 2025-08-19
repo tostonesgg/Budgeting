@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const categoriesEl = document.getElementById("categories");
   const shareBtn     = document.getElementById("share-btn");
   const inlineColor  = document.getElementById("inline-color"); // optional, ok if null
+  const playEl = document.getElementById("net-play");
+
 
   // Color picker references
   const colorBtn    = document.getElementById("cat-color-btn");
@@ -375,16 +377,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const play = income - allExpenses;
-    if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
+if (yearlyEl) yearlyEl.textContent = fmt(income * 12);
 
-    // Update sticky "Play" pill
-    const stickyPlay = document.getElementById("sticky-play");
-    if (stickyPlay) {
-      const clean = `${fmt(play)}/mo`;
-      stickyPlay.textContent   = clean;
-      stickyPlay.dataset.value = clean;
-    }
-  }
+// Update sticky Play pill
+const stickyPlay = document.getElementById("sticky-play");
+if (stickyPlay) {
+  const clean = `${fmt(play)}/mo`;
+  stickyPlay.textContent   = clean;
+  stickyPlay.dataset.value = clean;
+}
+
+// Update Step 1 Play pill
+if (playEl) {
+  const clean = `${fmt(play)}/mo`;
+  playEl.textContent   = clean;
+  playEl.dataset.value = clean;
+}
+
 
 
   /* ╔════════════════════════════════════════╗
