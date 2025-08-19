@@ -108,6 +108,58 @@
       }
     }
 
+    /* Category creator grid (name, icon, color, add button) */
+.addcat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Category header block (with colored border) */
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--surface);
+}
+
+/* Expense rows inside each category */
+.expense-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.expense-row input {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.expense-row button {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expense-row button:hover {
+  background: var(--surface-hover);
+}
+
+
     #categories { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
     @media (min-width: 768px) { #categories { grid-template-columns: 1fr 1fr; } }
     #categories .card { margin-bottom: 0; }
