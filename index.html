@@ -93,29 +93,48 @@
 .step1-pills {
   display: flex;
   justify-content: space-between;
-  gap: 0.5rem;            /* spacing between pills */
+  gap: 0.5rem;            /* horizontal spacing between pills */
   margin-top: 1rem;
 }
 
 .step1-pills .pill {
-  flex: 1;                /* equal widths on desktop */
+  flex: 1;                /* equal widths */
   text-align: center;
   padding: 0.5rem;
-  background: #e5e7eb;    /* gray background, adjust if needed */
+  background: #e5e7eb;    /* adjust to your theme */
   border-radius: 6px;
-  box-sizing: border-box; /* prevent overflow */
+  box-sizing: border-box;
+  height: 40px;           /* 🔹 fixed uniform height */
+  line-height: 1.2;       /* prevent text crowding */
+  display: flex;          /* center contents vertically */
+  align-items: center;
+  justify-content: center;
+}
+
+/* Make input inside pills not blow up height */
+.step1-pills .pill input {
+  height: 100%;            /* fit pill height */
+  width: 100%;             /* fill pill width */
+  border: none;
+  background: transparent; /* blend into pill */
+  text-align: center;
+  font-size: inherit;
 }
 
 /* MOBILE FIX */
 @media (max-width: 768px) {
   .step1-pills {
-    flex-direction: column; /* stack vertically */
+    flex-direction: column; 
   }
 
   .step1-pills .pill {
-    width: 100%;            /* take full parent width */
-    margin: 0;              /* reset side margins */
-    max-width: 100%;        /* enforce no overflow */
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 0.5rem;   /* 🔹 vertical spacing between stacked pills */
+  }
+
+  .step1-pills .pill:last-child {
+    margin-bottom: 0;        /* remove gap after last pill */
   }
 }
 
