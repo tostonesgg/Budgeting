@@ -1,244 +1,211 @@
-<!doctype html>
-<html lang="en" data-theme="dark">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Budget</title>
-
-  <!-- Lucide -->
-  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Budget App</title>
+  <link rel="stylesheet" href="https://unpkg.com/lucide-static/font/lucide.css">
 
   <style>
-    :root {
-      --bg:#0b1220; --card:#0f172a; --muted:#9ca3af; --line:#1f2937; --field:#111827; --focus:#0ea5e9; --text:#e5e7eb;
-      --bg-light:#f8fafc; --card-light:#ffffff; --muted-light:#475569; --line-light:#e2e8f0; --field-light:#ffffff; --text-dark:#111827;
-    }
+  /* =========================
+     Category + Expense Styles
+     ========================= */
+  .addcat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
 
-    html, body {
-      margin:0;
-      padding:0;
-      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      overflow-x: hidden;
-    }
-    [data-theme="light"] body { background:var(--bg-light); color:var(--text-dark); }
+  /* Category header – subtle border only */
+  .category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
 
-    .wrap { max-width:860px; margin:0 auto; padding:16px; }
-    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; }
-    h1 { font-size:20px; margin:0; display:flex; gap:8px; align-items:center; }
+  .category-header .actions {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
 
-    .hdr-actions { display:flex; gap:8px; }
-    .btn {
-      background:var(--field); color:inherit; border:1px solid #374151;
-      border-radius:8px; padding:10px; display:inline-flex; gap:6px; align-items:center; cursor:pointer;
-    }
-    .btn:focus { outline:2px solid var(--focus); }
-    [data-theme="light"] .btn { background:var(--field-light); border-color:var(--line-light); color:var(--text-dark); }
+  /* Expense row layout */
+  .expense-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
 
-    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
-    [data-theme="light"] .card { background:var(--card-light); border-color:var(--line-light); }
-    input, button { background:var(--field); color:inherit; border:1px solid #374151; border-radius:8px; padding:10px; }
-    input:focus, button:focus { outline:2px solid var(--focus); }
-    [data-theme="light"] input, [data-theme="light"] button { background:var(--field-light); border-color:var(--line-light); color:var(--text-dark); }
-    .muted { color:var(--muted); }
-    [data-theme="light"] .muted { color:var(--muted-light); }
-    .big { font-size:22px; font-weight:800; margin:0 0 6px 0; }
+  .expense-row:last-child {
+    border-bottom: none;
+  }
 
-    .pill {
-      flex: 1 1 0;
-      min-width: 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: transparent;
-      font-size: 14px;
-    }
-    .pill input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 14px;
-      min-width: 0;
-    }
-    .pill i { flex-shrink: 0; }
+  /* Delete button inside expense rows */
+  .expense-row button.delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
 
-    .sticky-card {
-      position: fixed;
-      top: 0;
-      left: 50%;
-      transform: translate(-50%, -100%);
-      width: 100vw;
-      z-index: 1000;
-      background: var(--card);
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      transition: transform 160ms ease;
-    }
-    .sticky-card.is-visible { transform: translate(-50%, 0); }
-    [data-theme="light"] .sticky-card { background: var(--card-light); border-color: var(--line-light); }
-    .sticky-inner {
-      max-width: 860px; margin: 0 auto; padding: 6px 10px;
-      display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap;
-    }
+  .expense-row button.delete-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
 
-    .step1-pills {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      gap: 0.5rem;
-      flex-wrap: nowrap;
-    }
-    .step1-pills .pill {
-      flex: 1 1 0;
-      min-height: 40px;
-      box-sizing: border-box;
-    }
-    @media (max-width: 768px) {
-      .step1-pills {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .step1-pills .pill {
-        width: 100%;
-        max-width: 100%;
-      }
-    }
+  /* Hidden color input (triggered by paintbrush button) */
+  .color-overlay {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
 
-    /* Category creator grid (name, icon, color, add button) */
-.addcat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto auto;
-  gap: 8px;
-  align-items: center;
-}
+  /* =========================
+     Theme variables
+     ========================= */
+  :root {
+    --surface: var(--card);
+    --surface-hover: #1e293b;
+    --border: #475569;
+    --text: #f8fafc;
+    --text-light: #cbd5e1;
+  }
 
-/* Category header block (with colored border) */
-.category-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  margin-bottom: 6px;
-  background: var(--surface);
-}
+  [data-theme="light"] {
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-light: #64748b;
+  }
 
-/* Expense rows inside each category */
-.expense-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-}
+  body {
+    font-family: system-ui, sans-serif;
+    margin: 1rem;
+    background: var(--surface);
+    color: var(--text);
+  }
 
-.expense-row input {
-  flex: 1;
-  padding: 4px 6px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--surface);
-}
-
-.expense-row button {
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 4px 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.expense-row button:hover {
-  background: var(--surface-hover);
-}
-
-
-    #categories { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
-    @media (min-width: 768px) { #categories { grid-template-columns: 1fr 1fr; } }
-    #categories .card { margin-bottom: 0; }
+  h1 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
   </style>
 </head>
-<body>
-  <div class="wrap">
-    <header>
-      <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
-      <div class="hdr-actions">
-        <button id="share-btn" class="btn"><i data-lucide="share-2"></i> Share</button>
-        <button id="theme-toggle" class="btn" type="button">
-          <i class="icon-moon" data-lucide="moon"></i>
-          <i class="icon-sun" data-lucide="sun"></i>
-          Theme
-        </button>
-      </div>
-    </header>
+<body data-theme="dark">
+  <h1>Budget App</h1>
 
-    <!-- Sticky compact income summary -->
-    <div id="income-sticky" class="sticky-card">
-      <div class="sticky-inner">
-        <div class="pill"><i data-lucide="calendar-1"></i> <span id="sticky-monthly">—</span></div>
-        <div class="pill"><i data-lucide="calendar-clock"></i> <span id="sticky-yearly">—</span></div>
-        <div class="pill"><i data-lucide="scale"></i> <span id="sticky-balance">—</span></div>
-      </div>
-    </div>
-
-    <main>
-      <!-- Income -->
-      <div class="card" id="income-card">
-        <h2 class="big">Step 1: What's your monthly net income?</h2>
-        <p class="muted">
-          This is what you take home after taxes, 401k contributions, pre-tax removals 
-          for transportation and health/pet/car insurance costs.
-        </p>
-
-        <div class="step1-pills">
-          <div class="pill">
-            <i data-lucide="calendar-1"></i>
-            <input type="number" id="monthly-input" placeholder="Monthly take-home" />
-          </div>
-          <div class="pill">
-            <i data-lucide="calendar-clock"></i>
-            <span id="step1-yearly">$0.00</span>
-          </div>
-          <div class="pill">
-            <i data-lucide="scale"></i>
-            <span id="step1-balance">$0.00/mo</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Category Creator -->
-      <div class="card">
-        <h2 class="big">Step 2: Add a category</h2>
-        <div class="addcat-grid">
-          <input id="cat-name" placeholder="Category name" />
-          <input id="cat-icon" placeholder="Lucide icon name (e.g., 'car')" />
-          <button id="cat-color-btn" class="btn paint-btn" type="button">
-            <i data-lucide="paintbrush-vertical"></i>
-            <span class="swatch"></span>
-            Pick Color
-            <input id="cat-color" type="color" class="color-overlay" value="#3b82f6" />
-          </button>
-          <button id="add-category" class="btn"><i data-lucide="plus"></i> Add</button>
-        </div>
-      </div>
-
-      <!-- Categories -->
-      <div id="categories"></div>
-    </main>
+  <!-- Add Category -->
+  <div class="addcat-grid">
+    <input id="newCategoryName" type="text" placeholder="Category name"/>
+    <button id="addCategoryBtn">Add Category</button>
   </div>
 
-  <script defer src="app.js"></script>
+  <!-- Categories Container -->
+  <div id="categories"></div>
+
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      try { window.lucide?.createIcons(); } catch(e){}
+  // ======== Helpers ========
+  function loadCategories() {
+    return JSON.parse(localStorage.getItem("categories")) || [];
+  }
+
+  function saveCategories(categories) {
+    localStorage.setItem("categories", JSON.stringify(categories));
+  }
+
+  // ======== Render Category ========
+  function renderCategory(cat) {
+    const container = document.createElement("div");
+    container.className = "category";
+    container.dataset.id = cat.id;
+
+    const header = document.createElement("div");
+    header.className = "category-header";
+    header.style.borderColor = cat.color || "var(--border)";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = cat.name;
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    // Paintbrush button
+    const paintBtn = document.createElement("button");
+    paintBtn.innerHTML = '<i class="lucide-paintbrush"></i>';
+    paintBtn.title = "Change color";
+
+    // Hidden input
+    const colorInput = document.createElement("input");
+    colorInput.type = "color";
+    colorInput.className = "color-overlay";
+    colorInput.value = cat.color || "#475569";
+
+    paintBtn.addEventListener("click", () => {
+      colorInput.click();
     });
+
+    colorInput.addEventListener("input", (e) => {
+      const newColor = e.target.value;
+      header.style.borderColor = newColor;
+
+      let cats = loadCategories();
+      cats = cats.map(c => c.id === cat.id ? {...c, color: newColor} : c);
+      saveCategories(cats);
+    });
+
+    actions.appendChild(paintBtn);
+    actions.appendChild(colorInput);
+
+    header.appendChild(nameSpan);
+    header.appendChild(actions);
+
+    container.appendChild(header);
+
+    return container;
+  }
+
+  // ======== Init ========
+  function renderAll() {
+    const cats = loadCategories();
+    const container = document.getElementById("categories");
+    container.innerHTML = "";
+    cats.forEach(cat => container.appendChild(renderCategory(cat)));
+  }
+
+  document.getElementById("addCategoryBtn").addEventListener("click", () => {
+    const nameInput = document.getElementById("newCategoryName");
+    const name = nameInput.value.trim();
+    if (!name) return;
+
+    const cats = loadCategories();
+    const newCat = {
+      id: Date.now(),
+      name,
+      color: "#475569"
+    };
+    cats.push(newCat);
+    saveCategories(cats);
+    nameInput.value = "";
+    renderAll();
+  });
+
+  renderAll();
   </script>
 </body>
 </html>
