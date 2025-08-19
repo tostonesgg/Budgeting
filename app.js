@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const fmt   = (n) =>
     "$" + Number(clamp(n)).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
+  
   /* ╔════════════════════════════════════════╗
      ║  Central totals update                  ║
      ╚════════════════════════════════════════╝ */
@@ -48,6 +49,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if (stickyYearly)  stickyYearly.textContent  = yearlyEl.textContent;
     if (stickyBalance) stickyBalance.textContent = balanceEl.textContent;
   }
+
+  function deleteExpenseRow(rowEl) {
+  const categoryId = rowEl.closest(".category").dataset.categoryId;
+  const expenseId = rowEl.dataset.expenseId;
+
+  // Load storage
+  const data = JSON.parse(localStorage.getItem("expensesByCategory")) || {};
+
+  if (data[categoryId]) {
+    data[categoryId] = data[categoryId].filter(exp => exp.id !== expenseId);
+    localStorage.setItem("expensesByCategory", JSON.stringify(data));
+  }
+
+  // Remove from DOM
+  rowEl.remove();
+
+  // Update totals
+  updateTotals();
+}
+
 
   /* ╔════════════════════════════════════════╗
      ║  Sticky visibility toggle               ║
