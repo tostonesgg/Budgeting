@@ -411,54 +411,55 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =====================================
-   *  Sticky compact income bar (independent)
-   * ===================================== */
-  function setupSticky() {
-    const incomeCard    = document.getElementById('income-card');
-    const sticky        = document.getElementById('income-sticky');
-    const stickyMonthly = document.getElementById('sticky-monthly');
-    const stickyYearly  = document.getElementById('sticky-yearly');
-    const stickyPlay    = document.getElementById('sticky-play');
+ *  Sticky compact income bar (independent)
+ * ===================================== */
+function setupSticky() {
+  const incomeCard    = document.getElementById('income-card');
+  const sticky        = document.getElementById('income-sticky');
+  const stickyMonthly = document.getElementById('sticky-monthly');
+  const stickyYearly  = document.getElementById('sticky-yearly');
+  const stickyPlay    = document.getElementById('sticky-play');
 
-    const ok =
-      incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay &&
-      incomeInput && yearlyEl;
+  const ok =
+    incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay &&
+    incomeInput && yearlyEl;
 
-    if (!ok) {
-      console.warn('[sticky] Skipping setup. Missing nodes.');
-      return;
-    }
-
-    const updateStickyValues = () => {
-      // monthly/yearly derive from inputs/labels; play is set in updateTotals()
-      stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : '—');
-      const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
-      stickyYearly.textContent  = y || (income ? fmt(income * 12) : '—');
-      // stickyPlay.textContent is already set by updateTotals()
-    };
-
-    incomeInput.addEventListener('input', updateStickyValues);
-    try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
-
-    // Show sticky when the income card is not visible
-    try {
-      const io = new IntersectionObserver(([entry]) => {
-        sticky.classList.toggle('hidden', entry.isIntersecting);
-      }, { root: null, threshold: 0 });
-      io.observe(incomeCard);
-    } catch {
-      const onScrollOrResize = () => {
-        const r = incomeCard.getBoundingClientRect();
-        const isVisible = r.bottom > 0 && r.top < window.innerHeight;
-        sticky.classList.toggle('hidden', isVisible);
-      };
-      window.addEventListener('scroll', onScrollOrResize, { passive: true });
-      window.addEventListener('resize', onScrollOrResize);
-      onScrollOrResize(); // initial state
-    }
-
-    updateStickyValues(); // prime
+  if (!ok) {
+    console.warn('[sticky] Skipping setup. Missing nodes.');
+    return;
   }
+
+  const updateStickyValues = () => {
+    // monthly/yearly derive from inputs/labels; play is set in updateTotals()
+    stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : '—');
+    const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
+    stickyYearly.textContent  = y || (income ? fmt(income * 12) : '—');
+    // stickyPlay is updated in updateTotals()
+  };
+
+  incomeInput.addEventListener('input', updateStickyValues);
+  try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
+
+  // Show sticky when income card is off-screen
+  try {
+    const io = new IntersectionObserver(([entry]) => {
+      sticky.classList.toggle('is-visible', !entry.isIntersecting);
+    }, { root: null, threshold: 0 });
+    io.observe(incomeCard);
+  } catch {
+    const onScrollOrResize = () => {
+      const r = incomeCard.getBoundingClientRect();
+      const isVisible = r.bottom > 0 && r.top < window.innerHeight;
+      sticky.classList.toggle('is-visible', !isVisible);
+    };
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+    onScrollOrResize(); // initial state
+  }
+
+  updateStickyValues(); // prime
+}
+
 
   /* =====================================
    *  Bootstrap
