@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const LS_KEY = "budget.v1";
   const incomeInput  = document.getElementById("net-income");
   const yearlyEl     = document.getElementById("net-yearly");
-  const playEl       = document.getElementById("play-left");
   const catName      = document.getElementById("cat-name");
   const catIcon      = document.getElementById("cat-icon");
   const addCatBtn    = document.getElementById("add-category");
@@ -161,7 +160,6 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =====================================
    *  Inline color picker for category footer
    * ===================================== */
-  let colorPickIndex = null;
   if (inlineColor) {
     inlineColor.addEventListener("input", () => {
       if (colorPickIndex == null) return;
@@ -170,15 +168,19 @@ document.addEventListener("DOMContentLoaded", () => {
       colorPickIndex = null;
       renderCategories();
       updateTotals();
-      save();
+      save && save();
     });
   }
 
   /* =====================================
    *  Render Categories
    * ===================================== */
+  let colorPickIndex = null; // which category we’re editing
   function renderCategories() {
-    if (!categoriesEl) return;
+    if (!categoriesEl) {
+      console.warn("Missing #categories in DOM; skipping render");
+      return;
+    }
 
     categoriesEl.innerHTML = "";
     categories.forEach((cat, i) => {
@@ -212,8 +214,8 @@ document.addEventListener("DOMContentLoaded", () => {
       categoriesEl.appendChild(div);
 
       // Tint footer buttons with the category color
-      div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat")
-        .forEach(btn => { btn.style.borderColor = cat.color; });
+      const footerBtns = div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat");
+      footerBtns.forEach(btn => { btn.style.borderColor = cat.color; });
 
       // Color change (scoped to this card)
       div.querySelectorAll(".cat-color").forEach(btn => {
@@ -232,9 +234,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (window.lucide?.createIcons) window.lucide.createIcons();
 
-    // Wire actions (add/edit/delete)
+    // Wire actions
     document.querySelectorAll(".btn-add").forEach(btn => {
-      btn.addEventListener("click", () => addExpense(parseInt(btn.dataset.index, 10)));
+      btn.addEventListener("click", () => {
+        const i = parseInt(btn.dataset.index, 10);
+        addExpense(i);
+      });
     });
 
     document.querySelectorAll(".cat-edit").forEach(btn => {
@@ -280,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (freq === "qtr") return amount / 3;
     if (freq === "yr")  return amount / 12;
     return amount; // mo
-    }
+  }
 
   function renderExpenses(catIndex) {
     const expEl   = document.getElementById(`expenses-${catIndex}`);
@@ -366,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* =====================================
    *  Totals (per-category + play money)
-   *  – also feeds sticky "play" pill via data-value
+   *  – updates sticky “Play” pill directly
    * ===================================== */
   function updateTotals() {
     let allExpenses = 0;
@@ -384,10 +389,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
-    if (playEl) {
+    // NEW: update sticky Play pill directly (no #play-left needed)
+    const stickyPlay = document.getElementById('sticky-play');
+    if (stickyPlay) {
       const clean = `${fmt(play)}/mo`;
-      playEl.textContent = `You’ve got ${clean} to play with`;
-      playEl.dataset.value = clean; // sticky reads this
+      stickyPlay.textContent   = clean;
+      stickyPlay.dataset.value = clean; // if other code ever needs it
     }
   }
 
@@ -404,9 +411,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =====================================
-   *  Sticky compact income bar (fixed + slide)
-   *  - toggles 'is-visible' (no display:none)
-   *  - values kept in sync via dataset + observers
+   *  Sticky compact income bar (independent)
    * ===================================== */
   function setupSticky() {
     const incomeCard    = document.getElementById('income-card');
@@ -417,7 +422,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const ok =
       incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay &&
-      incomeInput && yearlyEl && playEl;
+      incomeInput && yearlyEl;
 
     if (!ok) {
       console.warn('[sticky] Skipping setup. Missing nodes.');
@@ -425,45 +430,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const updateStickyValues = () => {
+      // monthly/yearly derive from inputs/labels; play is set in updateTotals()
       stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : '—');
       const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
       stickyYearly.textContent  = y || (income ? fmt(income * 12) : '—');
-      stickyPlay.textContent    = playEl.dataset.value || '—';
+      // stickyPlay.textContent is already set by updateTotals()
     };
 
-    // Keep values in sync
     incomeInput.addEventListener('input', updateStickyValues);
     try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
-    try { new MutationObserver(updateStickyValues).observe(playEl,  { attributes: true, attributeFilter: ['data-value'] }); } catch {}
 
-    // Visibility: add/remove 'is-visible'
-    const setVisible = (on) => {
-      sticky.classList.toggle('is-visible', !!on);
-      console.log('[sticky]', on ? 'show' : 'hide');
-    };
-
-    // IntersectionObserver (preferred)
+    // Show sticky when the income card is not visible
     try {
       const io = new IntersectionObserver(([entry]) => {
-        // Show when income card is NOT intersecting the viewport
-        setVisible(!entry.isIntersecting);
+        sticky.classList.toggle('hidden', entry.isIntersecting);
       }, { root: null, threshold: 0 });
       io.observe(incomeCard);
     } catch {
-      // Fallback: rect check
-      const updateStickyVisibility = () => {
-        const rect = incomeCard.getBoundingClientRect();
-        console.log("rect.top:", rect.top, "rect.bottom:", rect.bottom);
-        // Show when the bottom of the income card scrolls past the top edge
-        setVisible(rect.bottom <= 0);
+      const onScrollOrResize = () => {
+        const r = incomeCard.getBoundingClientRect();
+        const isVisible = r.bottom > 0 && r.top < window.innerHeight;
+        sticky.classList.toggle('hidden', isVisible);
       };
-      window.addEventListener('scroll', updateStickyVisibility, { passive: true });
-      window.addEventListener('resize', updateStickyVisibility);
-      updateStickyVisibility();
+      window.addEventListener('scroll', onScrollOrResize, { passive: true });
+      window.addEventListener('resize', onScrollOrResize);
+      onScrollOrResize(); // initial state
     }
 
-    // Prime pill contents immediately
-    updateStickyValues();
+    updateStickyValues(); // prime
   }
 
   /* =====================================
