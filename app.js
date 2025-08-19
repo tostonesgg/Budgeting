@@ -146,6 +146,14 @@ document.addEventListener("DOMContentLoaded", () => {
     nameEl.textContent = name;
     header.appendChild(nameEl);
 
+    // --- Paintbrush button
+    const paintBtn = document.createElement("button");
+    paintBtn.textContent = "🎨";
+    paintBtn.addEventListener("click", () => {
+      openColorPicker(wrapper.dataset.categoryId);
+    });
+    header.appendChild(paintBtn);
+
     // Add expense button
     const addExpenseBtn = document.createElement("button");
     addExpenseBtn.textContent = "+ Expense";
@@ -167,6 +175,31 @@ document.addEventListener("DOMContentLoaded", () => {
     return wrapper;
   }
 
+  /* ╔════════════════════════════════════════╗
+     ║  Color picker + updater                 ║
+     ╚════════════════════════════════════════╝ */
+  function openColorPicker(categoryId) {
+    inlineColor.click(); // reuse hidden <input type="color">
+
+    inlineColor.oninput = (e) => {
+      updateCategoryColor(categoryId, e.target.value);
+    };
+  }
+
+  function updateCategoryColor(categoryId, newColor) {
+    const cats = JSON.parse(localStorage.getItem(LS_KEY_PREFIX + "categories")) || [];
+    const cat = cats.find(c => c.id === categoryId);
+    if (cat) {
+      cat.color = newColor;
+      localStorage.setItem(LS_KEY_PREFIX + "categories", JSON.stringify(cats));
+    }
+
+    const categoryEl = document.querySelector(`[data-category-id="${categoryId}"] .category-header`);
+    if (categoryEl) {
+      categoryEl.style.borderColor = newColor;
+    }
+  }
+
   function saveCategoriesToStorage() {
     const cats = [];
     categoriesEl.querySelectorAll(".category").forEach((cat) => {
@@ -186,6 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cats.forEach((c) => {
       const wrapper = createCategoryElement(c.name, c.icon, c.color);
       wrapper.dataset.categoryId = c.id; // restore id
+      updateCategoryColor(c.id, c.color); // apply color immediately
 
       // load expenses inside this category
       const data = JSON.parse(localStorage.getItem(EXPENSES_KEY)) || {};
@@ -214,17 +248,13 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ╔════════════════════════════════════════╗
      ║  LocalStorage bootstrap & persistence   ║
      ╚════════════════════════════════════════╝ */
-
-  // Restore income
   const savedIncome = localStorage.getItem(LS_KEY_PREFIX + "income");
   if (savedIncome !== null && incomeInput) {
     incomeInput.value = savedIncome;
   }
 
-  // Restore categories & expenses
   loadCategoriesFromStorage();
 
-  // Listeners
   if (incomeInput) {
     incomeInput.addEventListener("input", () => {
       localStorage.setItem(LS_KEY_PREFIX + "income", incomeInput.value);
