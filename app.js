@@ -1,9 +1,10 @@
 // app.js
 document.addEventListener("DOMContentLoaded", () => {
-  /* =====================================
-   *  DOM refs / constants
-   * ===================================== */
-  const LS_KEY = "budget.v1";
+
+  /* ╔════════════════════════════════════════╗
+     ║  DOM references + constants             ║
+     ╚════════════════════════════════════════╝ */
+  const LS_KEY       = "budget.v1";
   const incomeInput  = document.getElementById("net-income");
   const yearlyEl     = document.getElementById("net-yearly");
   const catName      = document.getElementById("cat-name");
@@ -13,20 +14,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const shareBtn     = document.getElementById("share-btn");
   const inlineColor  = document.getElementById("inline-color"); // optional, ok if null
 
-  // Color picker (label/button + input[type=color])
+  // Color picker references
   const colorBtn    = document.getElementById("cat-color-btn");
   const colorInput  = document.getElementById("cat-color");
   const colorSwatch = colorBtn ? colorBtn.querySelector(".swatch") : null;
 
-  /* =====================================
-   *  Helpers
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Helpers (math + formatting)           ║
+     ╚════════════════════════════════════════╝ */
   const clamp = (n) => (isFinite(n) ? n : 0);
   const fmt   = (n) => `$${(clamp(n)).toFixed(2)}`;
 
-  /* =====================================
-   *  Defaults
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Defaults (starter categories)         ║
+     ╚════════════════════════════════════════╝ */
   const defaults = [
     {
       name: "Essentials",
@@ -54,9 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   ];
 
-  /* =====================================
-   *  Load / Save
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Load / Save (localStorage + hash)      ║
+     ╚════════════════════════════════════════╝ */
   let income = 0;
   let categories = [];
 
@@ -92,9 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(LS_KEY, payload);
   };
 
-  /* =====================================
-   *  Color swatch init + updates
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Color swatch live updates              ║
+     ╚════════════════════════════════════════╝ */
   if (colorSwatch && colorInput) colorSwatch.style.background = colorInput.value;
   if (colorInput) {
     colorInput.addEventListener("input", () => {
@@ -108,23 +109,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =====================================
-   *  Income live updates (+ sticky monthly dataset)
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Income updates (input → yearly pill)   ║
+     ╚════════════════════════════════════════╝ */
   if (incomeInput) {
     incomeInput.addEventListener("input", () => {
       income = parseFloat(incomeInput.value) || 0;
       if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
-      // Feed the sticky monthly pill a clean $ value
-      incomeInput.dataset.value = fmt(income);
+      incomeInput.dataset.value = fmt(income); // feeds sticky monthly pill
       updateTotals();
       save();
     });
   }
 
-  /* =====================================
-   *  Add Category
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Add new Category                       ║
+     ╚════════════════════════════════════════╝ */
   if (addCatBtn) {
     addCatBtn.addEventListener("click", () => {
       const name  = catName.value.trim();
@@ -140,9 +140,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =====================================
-   *  Share Template
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Share template (link via clipboard)    ║
+     ╚════════════════════════════════════════╝ */
   if (shareBtn) {
     shareBtn.addEventListener("click", async () => {
       const obj = { income, categories };
@@ -150,49 +150,43 @@ document.addEventListener("DOMContentLoaded", () => {
       const url = `${location.origin}${location.pathname}#share=${enc}`;
       try {
         await navigator.clipboard.writeText(url);
-        alert("Share link copied! Send it to your wife and opening it will load this template.");
+        alert("Share link copied!");
       } catch {
         prompt("Copy this link:", url);
       }
     });
   }
 
-  /* =====================================
-   *  Inline color picker for category footer
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Inline color picker (category footer)  ║
+     ╚════════════════════════════════════════╝ */
+  let colorPickIndex = null;
   if (inlineColor) {
     inlineColor.addEventListener("input", () => {
       if (colorPickIndex == null) return;
-      const newColor = inlineColor.value;
-      categories[colorPickIndex].color = newColor;
+      categories[colorPickIndex].color = inlineColor.value;
       colorPickIndex = null;
       renderCategories();
       updateTotals();
-      save && save();
+      save();
     });
   }
 
-  /* =====================================
-   *  Render Categories
-   * ===================================== */
-  let colorPickIndex = null; // which category we’re editing
+  /* ╔════════════════════════════════════════╗
+     ║  Render Categories + actions            ║
+     ╚════════════════════════════════════════╝ */
   function renderCategories() {
-    if (!categoriesEl) {
-      console.warn("Missing #categories in DOM; skipping render");
-      return;
-    }
-
+    if (!categoriesEl) return;
     categoriesEl.innerHTML = "";
+
     categories.forEach((cat, i) => {
       const div = document.createElement("div");
       div.className = "card category";
 
-      // Adaptive color (dark: border, light: soft background)
+      // Adaptive border/background
       if (document.documentElement.dataset.theme === "dark") {
         div.style.borderColor = cat.color;
-        div.style.background  = "";
       } else {
-        div.style.borderColor = "";
         div.style.background  = cat.color + "33";
       }
 
@@ -210,18 +204,16 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="btn-cat cat-del" data-index="${i}" title="Delete category"><i data-lucide="x"></i></button>
         </div>
       `;
-
       categoriesEl.appendChild(div);
 
-      // Tint footer buttons with the category color
-      const footerBtns = div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat");
-      footerBtns.forEach(btn => { btn.style.borderColor = cat.color; });
+      // Tint footer buttons
+      div.querySelectorAll(".card-actions .btn-add, .card-actions .btn-cat")
+        .forEach(btn => { btn.style.borderColor = cat.color; });
 
-      // Color change (scoped to this card)
+      // Color picker for this category
       div.querySelectorAll(".cat-color").forEach(btn => {
         btn.addEventListener("click", () => {
-          const idx = parseInt(btn.dataset.index, 10);
-          colorPickIndex = idx;
+          colorPickIndex = parseInt(btn.dataset.index, 10);
           if (inlineColor) {
             if (typeof inlineColor.showPicker === "function") inlineColor.showPicker();
             else inlineColor.click();
@@ -234,27 +226,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (window.lucide?.createIcons) window.lucide.createIcons();
 
-    // Wire actions
+    // Wire actions: add, edit, delete
     document.querySelectorAll(".btn-add").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.index, 10);
-        addExpense(i);
-      });
+      btn.addEventListener("click", () => addExpense(parseInt(btn.dataset.index, 10)));
     });
-
     document.querySelectorAll(".cat-edit").forEach(btn => {
       btn.addEventListener("click", () => {
         const i = parseInt(btn.dataset.index, 10);
         const cat = categories[i];
         const newName = prompt("Edit category name:", cat.name);
-        if (newName !== null && newName.trim() !== "") cat.name = newName.trim();
+        if (newName) cat.name = newName.trim();
         const newIcon = prompt("Edit category icon (lucide):", cat.icon);
-        if (newIcon !== null && newIcon.trim() !== "") cat.icon = newIcon.trim();
+        if (newIcon) cat.icon = newIcon.trim();
         renderCategories();
         save();
       });
     });
-
     document.querySelectorAll(".cat-del").forEach(btn => {
       btn.addEventListener("click", () => {
         const i = parseInt(btn.dataset.index, 10);
@@ -269,12 +256,11 @@ document.addEventListener("DOMContentLoaded", () => {
     updateTotals();
   }
 
-  /* =====================================
-   *  Expenses rendering / interactions
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Expenses rendering + notes             ║
+     ╚════════════════════════════════════════╝ */
   function addExpense(catIndex) {
-    const exp = { name: "New Expense", amount: 0, icon: "circle", freq: "mo" };
-    categories[catIndex].expenses.push(exp);
+    categories[catIndex].expenses.push({ name: "New Expense", amount: 0, icon: "circle", freq: "mo" });
     renderExpenses(catIndex);
     save();
   }
@@ -284,7 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function monthlyFrom(amount, freq) {
     if (freq === "qtr") return amount / 3;
     if (freq === "yr")  return amount / 12;
-    return amount; // mo
+    return amount;
   }
 
   function renderExpenses(catIndex) {
@@ -310,19 +296,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       row.querySelector(".edit").addEventListener("click", () => {
         const newName = prompt("Edit expense name:", exp.name);
-        if (newName !== null && newName.trim() !== "") exp.name = newName.trim();
+        if (newName) exp.name = newName.trim();
         const newIcon = prompt("Edit icon name (lucide):", exp.icon);
-        if (newIcon !== null && newIcon.trim() !== "") exp.icon = newIcon.trim();
+        if (newIcon) exp.icon = newIcon.trim();
         renderExpenses(catIndex);
         save();
       });
-
       row.querySelector(".del").addEventListener("click", () => {
         cat.expenses.splice(j, 1);
         renderExpenses(catIndex);
         save();
       });
-
       row.querySelector("input").addEventListener("input", (e) => {
         exp.amount = parseFloat(e.target.value) || 0;
         updateTotals();
@@ -346,10 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (window.lucide?.createIcons) window.lucide.createIcons();
-
-    if (notesEl) {
-      notesEl.innerHTML = notes.length ? notes.map(n => `• ${n}`).join("<br/>") : "";
-    }
+    if (notesEl) notesEl.innerHTML = notes.length ? notes.map(n => `• ${n}`).join("<br/>") : "";
 
     updateTotals();
   }
@@ -369,107 +350,107 @@ document.addEventListener("DOMContentLoaded", () => {
     notesEl.innerHTML = notes.length ? notes.map(n => `• ${n}`).join("<br/>") : "";
   }
 
-  /* =====================================
-   *  Totals (per-category + play money)
-   *  – updates sticky “Play” pill directly
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Totals (per-category + sticky Play)    ║
+     ╚════════════════════════════════════════╝ */
   function updateTotals() {
+    /**
+     * Compute:
+     *  1. Per-category monthly totals
+     *  2. Global "play money" (income – all expenses)
+     * Update DOM:
+     *  – Category total labels
+     *  – Yearly label under income input
+     *  – Sticky Play pill (auto-updates when income/expenses change)
+     */
     let allExpenses = 0;
     categories.forEach((cat, i) => {
-      const total = cat.expenses.reduce((sum, e) => {
-        const amt = parseFloat(e.amount) || 0;
-        return sum + monthlyFrom(amt, e.freq || "mo");
-      }, 0);
+      const total = cat.expenses.reduce(
+        (sum, e) => sum + monthlyFrom(parseFloat(e.amount) || 0, e.freq || "mo"),
+        0
+      );
       allExpenses += total;
       const ttlEl = document.getElementById(`cat-total-${i}`);
       if (ttlEl) ttlEl.textContent = fmt(total);
     });
 
     const play = income - allExpenses;
-
     if (yearlyEl) yearlyEl.textContent = `Yearly: ${fmt(income * 12)}`;
 
-    // NEW: update sticky Play pill directly (no #play-left needed)
-    const stickyPlay = document.getElementById('sticky-play');
+    // Update sticky "Play" pill
+    const stickyPlay = document.getElementById("sticky-play");
     if (stickyPlay) {
       const clean = `${fmt(play)}/mo`;
       stickyPlay.textContent   = clean;
-      stickyPlay.dataset.value = clean; // if other code ever needs it
+      stickyPlay.dataset.value = clean;
     }
   }
 
-  /* =====================================
-   *  Theme toggle
-   * ===================================== */
+
+  /* ╔════════════════════════════════════════╗
+     ║  Theme toggle (dark ↔ light)            ║
+     ╚════════════════════════════════════════╝ */
   const themeToggle = document.getElementById("theme-toggle");
   if (themeToggle) {
     themeToggle.addEventListener("click", () => {
       const html = document.documentElement;
       html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
-      renderCategories(); // re-render to apply correct colors
+      renderCategories();
     });
   }
 
-  /* =====================================
- *  Sticky compact income bar (independent)
- * ===================================== */
-function setupSticky() {
-  const incomeCard    = document.getElementById('income-card');
-  const sticky        = document.getElementById('income-sticky');
-  const stickyMonthly = document.getElementById('sticky-monthly');
-  const stickyYearly  = document.getElementById('sticky-yearly');
-  const stickyPlay    = document.getElementById('sticky-play');
+  /* ╔════════════════════════════════════════╗
+     ║  Sticky bar setup (independent pills)   ║
+     ╚════════════════════════════════════════╝ */
+  function setupSticky() {
+    const incomeCard    = document.getElementById('income-card');
+    const sticky        = document.getElementById('income-sticky');
+    const stickyMonthly = document.getElementById('sticky-monthly');
+    const stickyYearly  = document.getElementById('sticky-yearly');
+    const stickyPlay    = document.getElementById('sticky-play');
 
-  const ok =
-    incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay &&
-    incomeInput && yearlyEl;
+    if (!(incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay && incomeInput && yearlyEl)) {
+      console.warn('[sticky] Skipping setup. Missing nodes.');
+      return;
+    }
 
-  if (!ok) {
-    console.warn('[sticky] Skipping setup. Missing nodes.');
-    return;
-  }
-
-  const updateStickyValues = () => {
-    // monthly/yearly derive from inputs/labels; play is set in updateTotals()
-    stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : '—');
-    const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
-    stickyYearly.textContent  = y || (income ? fmt(income * 12) : '—');
-    // stickyPlay is updated in updateTotals()
-  };
-
-  incomeInput.addEventListener('input', updateStickyValues);
-  try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
-
-  // Show sticky when income card is off-screen
-  try {
-    const io = new IntersectionObserver(([entry]) => {
-      sticky.classList.toggle('is-visible', !entry.isIntersecting);
-    }, { root: null, threshold: 0 });
-    io.observe(incomeCard);
-  } catch {
-    const onScrollOrResize = () => {
-      const r = incomeCard.getBoundingClientRect();
-      const isVisible = r.bottom > 0 && r.top < window.innerHeight;
-      sticky.classList.toggle('is-visible', !isVisible);
+    const updateStickyValues = () => {
+      stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : '—');
+      const y = (yearlyEl.textContent || '').replace(/^Yearly:\s*/i, '').trim();
+      stickyYearly.textContent  = y || (income ? fmt(income * 12) : '—');
     };
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
-    window.addEventListener('resize', onScrollOrResize);
-    onScrollOrResize(); // initial state
+
+    incomeInput.addEventListener('input', updateStickyValues);
+    try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
+
+    // Show sticky when income card leaves viewport
+    try {
+      const io = new IntersectionObserver(([entry]) => {
+        sticky.classList.toggle('is-visible', !entry.isIntersecting);
+      }, { root: null, threshold: 0 });
+      io.observe(incomeCard);
+    } catch {
+      const onScrollOrResize = () => {
+        const r = incomeCard.getBoundingClientRect();
+        const isVisible = r.bottom > 0 && r.top < window.innerHeight;
+        sticky.classList.toggle('is-visible', !isVisible);
+      };
+      window.addEventListener('scroll', onScrollOrResize, { passive: true });
+      window.addEventListener('resize', onScrollOrResize);
+      onScrollOrResize();
+    }
+
+    updateStickyValues();
   }
 
-  updateStickyValues(); // prime
-}
-
-
-  /* =====================================
-   *  Bootstrap
-   * ===================================== */
+  /* ╔════════════════════════════════════════╗
+     ║  Bootstrap (init page)                  ║
+     ╚════════════════════════════════════════╝ */
   if (!load()) {
     income = 0;
     categories = JSON.parse(JSON.stringify(defaults));
   }
 
-  // Initial UI
   if (incomeInput) {
     incomeInput.value = income ? String(income) : "";
     incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0);
