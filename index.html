@@ -20,7 +20,7 @@
       font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
       background:var(--bg);
       color:var(--text);
-      overflow-x: hidden; /* prevent horizontal jiggle */
+      overflow-x: hidden;
     }
     [data-theme="light"] body { background:var(--bg-light); color:var(--text-dark); }
 
@@ -28,7 +28,6 @@
     header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; }
     h1 { font-size:20px; margin:0; display:flex; gap:8px; align-items:center; }
 
-    /* Header actions */
     .hdr-actions { display:flex; gap:8px; }
     .btn {
       background:var(--field); color:inherit; border:1px solid #374151;
@@ -37,7 +36,6 @@
     .btn:focus { outline:2px solid var(--focus); }
     [data-theme="light"] .btn { background:var(--field-light); border-color:var(--line-light); color:var(--text-dark); }
 
-    /* Cards */
     .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
     [data-theme="light"] .card { background:var(--card-light); border-color:var(--line-light); }
     input, button { background:var(--field); color:inherit; border:1px solid #374151; border-radius:8px; padding:10px; }
@@ -47,7 +45,6 @@
     [data-theme="light"] .muted { color:var(--muted-light); }
     .big { font-size:22px; font-weight:800; margin:0 0 6px 0; }
 
-    /* Shared pill style */
     .pill {
       flex: 1 1 0;
       min-width: 0;
@@ -69,7 +66,6 @@
     }
     .pill i { flex-shrink: 0; }
 
-    /* Sticky bar */
     .sticky-card {
       position: fixed;
       top: 0;
@@ -89,34 +85,29 @@
       display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap;
     }
 
-   .step1-pills {
-  display: flex;
-  flex-direction: row;      /* default: horizontal layout */
-  justify-content: space-between;
-  gap: 0.5rem;              /* spacing between pills */
-  flex-wrap: nowrap;        /* 🔹 prevent desktop wrapping */
-}
+    .step1-pills {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: nowrap;
+    }
+    .step1-pills .pill {
+      flex: 1 1 0;
+      min-height: 40px;
+      box-sizing: border-box;
+    }
+    @media (max-width: 768px) {
+      .step1-pills {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .step1-pills .pill {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
 
-.step1-pills .pill {
-  flex: 1 1 0;              /* equal width */
-  min-height: 40px;         /* standardized height */
-  box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-  .step1-pills {
-    flex-direction: column; /* stack vertically */
-    gap: 0.5rem;            /* vertical spacing between stacked pills */
-  }
-
-  .step1-pills .pill {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-
-    /* Categories grid */
     #categories { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
     @media (min-width: 768px) { #categories { grid-template-columns: 1fr 1fr; } }
     #categories .card { margin-bottom: 0; }
@@ -127,8 +118,8 @@
     <header>
       <h1><i data-lucide="piggy-bank"></i> Start budgeting</h1>
       <div class="hdr-actions">
-        <button id="share-btn" class="btn" title="Share template"><i data-lucide="share-2"></i> Share</button>
-        <button id="theme-toggle" class="btn" type="button" title="Toggle theme">
+        <button id="share-btn" class="btn"><i data-lucide="share-2"></i> Share</button>
+        <button id="theme-toggle" class="btn" type="button">
           <i class="icon-moon" data-lucide="moon"></i>
           <i class="icon-sun" data-lucide="sun"></i>
           Theme
@@ -141,7 +132,7 @@
       <div class="sticky-inner">
         <div class="pill"><i data-lucide="calendar-1"></i> <span id="sticky-monthly">—</span></div>
         <div class="pill"><i data-lucide="calendar-clock"></i> <span id="sticky-yearly">—</span></div>
-        <div class="pill"><i data-lucide="scale"></i> <span id="sticky-play">—</span></div>
+        <div class="pill"><i data-lucide="scale"></i> <span id="sticky-balance">—</span></div>
       </div>
     </div>
 
@@ -154,21 +145,18 @@
           for transportation and health/pet/car insurance costs.
         </p>
 
-          <div class="step1-pills">
-          <!-- Monthly input -->
+        <div class="step1-pills">
           <div class="pill">
             <i data-lucide="calendar-1"></i>
-            <input type="number" id="monthly-income" placeholder="Monthly take-home" />
+            <input type="number" id="monthly-input" placeholder="Monthly take-home" />
           </div>
-          <!-- Yearly pill -->
           <div class="pill">
             <i data-lucide="calendar-clock"></i>
-            <span id="yearly-income">$0.00</span>
+            <span id="step1-yearly">$0.00</span>
           </div>
-          <!-- Balance remaining pill -->
           <div class="pill">
             <i data-lucide="scale"></i>
-            <span id="balance-remaining">$0.00/mo</span>
+            <span id="step1-balance">$0.00/mo</span>
           </div>
         </div>
       </div>
@@ -179,9 +167,9 @@
         <div class="addcat-grid">
           <input id="cat-name" placeholder="Category name" />
           <input id="cat-icon" placeholder="Lucide icon name (e.g., 'car')" />
-          <button id="cat-color-btn" class="btn paint-btn" type="button" title="Pick color">
+          <button id="cat-color-btn" class="btn paint-btn" type="button">
             <i data-lucide="paintbrush-vertical"></i>
-            <span class="swatch" aria-hidden="true"></span>
+            <span class="swatch"></span>
             Pick Color
             <input id="cat-color" type="color" class="color-overlay" value="#3b82f6" />
           </button>
@@ -194,8 +182,7 @@
     </main>
   </div>
 
-  <!-- App logic -->
-  <script defer src="app.js?v=share-freq-local-1"></script>
+  <script defer src="app.js"></script>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       try { window.lucide?.createIcons(); } catch(e){}
