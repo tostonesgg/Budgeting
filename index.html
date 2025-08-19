@@ -206,14 +206,35 @@ html, body { overflow-x: hidden; }
     </div>
 
     <main>
-      <!-- Income -->
-      <div class="card" id="income-card">
-        <h2 class="big">Step 1: What's your monthly net income?</h2>
-        <div class="row">
-          <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home" />
-        </div>
-        <p class="muted" id="net-yearly">Yearly: —</p>
-      </div>
+<!-- Income -->
+<div class="card" id="income-card">
+  <h2 class="big">Step 1: What's your monthly net income?</h2>
+  <p class="muted">
+    This is what you take home after taxes, 401k contributions, pre-tax removals 
+    for transportation and health/pet/car insurance costs.
+  </p>
+
+  <div class="row" style="align-items:center; gap:8px;">
+    <!-- Monthly input with icon -->
+    <div class="pill" style="flex:1; display:flex; align-items:center; gap:6px; padding:6px 8px; border:1px solid var(--line); border-radius:8px;">
+      <i data-lucide="calendar-1"></i>
+      <input id="net-income" type="number" step="0.01" placeholder="Enter monthly take-home" style="flex:1; border:none; background:transparent; padding:0; height:24px; font-size:14px;" />
+    </div>
+
+    <!-- Yearly pill -->
+    <div class="pill" style="flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--line); border-radius:8px;">
+      <i data-lucide="calendar-clock"></i>
+      <span id="net-yearly">—</span>
+    </div>
+
+    <!-- Play pill -->
+    <div class="pill" style="flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--line); border-radius:8px;">
+      <i data-lucide="scale"></i>
+      <span id="net-play">—</span>
+    </div>
+  </div>
+</div>
+
 
       <!-- Category Creator -->
       <div class="card">
