@@ -75,6 +75,63 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ╔════════════════════════════════════════╗
+     ║  Category creation + persistence        ║
+     ╚════════════════════════════════════════╝ */
+  function createCategoryElement(name, icon, color) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "category";
+
+    const header = document.createElement("div");
+    header.className = "category-header flex items-center gap-2";
+    header.style.borderColor = color;
+
+    const iconEl = document.createElement("span");
+    iconEl.textContent = icon || "📂";
+    header.appendChild(iconEl);
+
+    const nameEl = document.createElement("span");
+    nameEl.textContent = name;
+    header.appendChild(nameEl);
+
+    wrapper.appendChild(header);
+
+    categoriesEl.appendChild(wrapper);
+    return wrapper;
+  }
+
+  function saveCategoriesToStorage() {
+    const cats = [];
+    categoriesEl.querySelectorAll(".category-header").forEach((hdr) => {
+      cats.push({
+        icon: hdr.querySelector("span")?.textContent || "📂",
+        name: hdr.querySelectorAll("span")[1]?.textContent || "Unnamed",
+        color: hdr.style.borderColor || "#ccc"
+      });
+    });
+    localStorage.setItem(LS_KEY_PREFIX + "categories", JSON.stringify(cats));
+  }
+
+  function loadCategoriesFromStorage() {
+    const cats = JSON.parse(localStorage.getItem(LS_KEY_PREFIX + "categories") || "[]");
+    cats.forEach((c) => createCategoryElement(c.name, c.icon, c.color));
+  }
+
+  if (addCatBtn) {
+    addCatBtn.addEventListener("click", () => {
+      const name  = catName.value.trim();
+      const icon  = catIcon.value.trim();
+      const color = inlineColor?.value || "#ccc";
+      if (!name) return;
+
+      createCategoryElement(name, icon, color);
+      saveCategoriesToStorage();
+
+      catName.value = "";
+      catIcon.value = "";
+    });
+  }
+
+  /* ╔════════════════════════════════════════╗
      ║  LocalStorage bootstrap & persistence   ║
      ╚════════════════════════════════════════╝ */
 
@@ -89,6 +146,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const saved = localStorage.getItem(LS_KEY_PREFIX + "expense-" + el.id);
     if (saved !== null) el.value = saved;
   });
+
+  // Restore categories
+  loadCategoriesFromStorage();
 
   // Listeners
   if (incomeInput) {
