@@ -1,217 +1,65 @@
-// app.js
 document.addEventListener("DOMContentLoaded", () => {
+  const incomeInput   = document.getElementById("monthly-input");
+  const yearlyEl      = document.getElementById("step1-yearly");
+  const balanceEl     = document.getElementById("step1-balance");
+  const stickyBalance = document.getElementById("sticky-balance");
 
-  /* ╔════════════════════════════════════════╗
-     ║  DOM references + constants             ║
-     ╚════════════════════════════════════════╝ */
-  const LS_KEY       = "budget.v1";
-  const incomeInput  = document.getElementById("monthly-income");
-  const yearlyEl     = document.getElementById("yearly-income");
-  const balanceEl    = document.getElementById("balance-remaining");
-  const catName      = document.getElementById("cat-name");
-  const catIcon      = document.getElementById("cat-icon");
-  const addCatBtn    = document.getElementById("add-category");
-  const categoriesEl = document.getElementById("categories");
-  const shareBtn     = document.getElementById("share-btn");
-  const inlineColor  = document.getElementById("inline-color"); // optional, ok if null
+  // Simple formatter for currency
+  const fmt = (val) =>
+    "$" + Number(val).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
-  // Color picker references
-  const colorBtn    = document.getElementById("cat-color-btn");
-  const colorInput  = document.getElementById("cat-color");
-  const colorSwatch = colorBtn ? colorBtn.querySelector(".swatch") : null;
+  // Central update function
+  function updateTotals() {
+    const monthlyIncome = parseFloat(incomeInput.value) || 0;
 
-  /* ╔════════════════════════════════════════╗
-     ║  Helpers (math + formatting)           ║
-     ╚════════════════════════════════════════╝ */
-  const clamp = (n) => (isFinite(n) ? n : 0);
-  const fmt   = (n) => `$${(clamp(n)).toFixed(2)}`;
+    // Total all entered expenses
+    let totalExpenses = 0;
+    document.querySelectorAll(".expense-input").forEach((el) => {
+      totalExpenses += parseFloat(el.value) || 0;
+    });
 
-  /* ╔════════════════════════════════════════╗
-     ║  Defaults (starter categories)         ║
-     ╚════════════════════════════════════════╝ */
-  const defaults = [/* ... unchanged ... */];
+    const netMonthly = monthlyIncome - totalExpenses;
+    const netYearly = monthlyIncome * 12;
 
-  /* ╔════════════════════════════════════════╗
-     ║  Load / Save (localStorage + hash)      ║
-     ╚════════════════════════════════════════╝ */
-  let income = 0;
-  let categories = [];
+    if (yearlyEl) yearlyEl.textContent = fmt(netYearly);
+    if (balanceEl) balanceEl.textContent = fmt(netMonthly) + "/mo";
+    if (stickyBalance) stickyBalance.textContent = fmt(netMonthly) + "/mo";
+  }
 
-  const tryImportFromHash = () => { /* ... unchanged ... */ };
-  const load = () => { /* ... unchanged ... */ };
-  const save = () => {
-    const payload = JSON.stringify({ income, categories });
-    localStorage.setItem(LS_KEY, payload);
-  };
+  // Sticky bar only controls visibility now
+  function setupSticky() {
+    const sticky = document.querySelector(".sticky-bar");
+    if (!sticky) return;
 
-  /* ╔════════════════════════════════════════╗
-     ║  Color swatch live updates              ║
-     ╚════════════════════════════════════════╝ */
-  if (colorSwatch && colorInput) colorSwatch.style.background = colorInput.value;
-  if (colorInput) {
-    colorInput.addEventListener("input", () => {
-      if (colorSwatch) colorSwatch.style.background = colorInput.value;
-      if (document.documentElement.dataset.theme === "dark" && colorBtn) {
-        colorBtn.style.border = `1px solid ${colorInput.value}`;
-        colorBtn.style.borderRadius = "8px";
-      } else if (colorBtn) {
-        colorBtn.style.border = "";
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 100) {
+        sticky.style.display = "flex";
+      } else {
+        sticky.style.display = "none";
       }
     });
   }
 
-  /* ╔════════════════════════════════════════╗
-     ║  Income updates (input → yearly pill)   ║
-     ╚════════════════════════════════════════╝ */
+  // Bootstrap defaults
+  const income = parseFloat(localStorage.getItem("monthlyIncome")) || 0;
+  if (incomeInput) incomeInput.value = income;
+
+  if (yearlyEl) yearlyEl.textContent = fmt(income * 12);
+  // ✅ no more premature balance assignment here
+
+  // Input listeners
   if (incomeInput) {
     incomeInput.addEventListener("input", () => {
-      income = parseFloat(incomeInput.value) || 0;
-      if (yearlyEl) yearlyEl.textContent = fmt(income * 12);
-      incomeInput.dataset.value = fmt(income); // feeds sticky monthly pill
+      localStorage.setItem("monthlyIncome", incomeInput.value);
       updateTotals();
-      save();
     });
   }
 
-  /* ╔════════════════════════════════════════╗
-     ║  Add new Category                       ║
-     ╚════════════════════════════════════════╝ */
-  if (addCatBtn) {
-    addCatBtn.addEventListener("click", () => {
-      const name  = catName.value.trim();
-      const icon  = catIcon.value.trim() || "folder";
-      const color = (colorInput && colorInput.value) ? colorInput.value : "#3b82f6";
-      if (!name) return alert("Please enter a category name");
+  document.querySelectorAll(".expense-input").forEach((el) => {
+    el.addEventListener("input", updateTotals);
+  });
 
-      categories.push({ name, color, icon, expenses: [] });
-      renderCategories();
-      catName.value = "";
-      catIcon.value = "";
-      save();
-    });
-  }
-
-  /* ╔════════════════════════════════════════╗
-     ║  Share template (link via clipboard)    ║
-     ╚════════════════════════════════════════╝ */
-  if (shareBtn) { /* ... unchanged ... */ }
-
-  /* ╔════════════════════════════════════════╗
-     ║  Inline color picker (category footer)  ║
-     ╚════════════════════════════════════════╝ */
-  let colorPickIndex = null;
-  if (inlineColor) { /* ... unchanged ... */ }
-
-  /* ╔════════════════════════════════════════╗
-     ║  Render Categories + actions            ║
-     ╚════════════════════════════════════════╝ */
-  function renderCategories() { /* ... unchanged except updateTotals at end ... */ }
-
-  /* ╔════════════════════════════════════════╗
-     ║  Expenses rendering + notes             ║
-     ╚════════════════════════════════════════╝ */
-  function addExpense(catIndex) { /* ... unchanged ... */ }
-  function nextFreq(f) { return f === "mo" ? "qtr" : f === "qtr" ? "yr" : "mo"; }
-  function freqLabel(f) { return f === "mo" ? "/mo" : f === "qtr" ? "/3mo" : "/yr"; }
-  function monthlyFrom(amount, freq) { /* ... unchanged ... */ }
-  function renderExpenses(catIndex) { /* ... unchanged ... */ }
-  function renderNotesForCategory(catIndex) { /* ... unchanged ... */ }
-
-  /* ╔════════════════════════════════════════╗
-     ║  Totals (per-category + sticky values)  ║
-     ╚════════════════════════════════════════╝ */
-  function updateTotals() {
-  const monthlyInput = document.getElementById("monthly-input");
-  const monthly = parseFloat(monthlyInput.value) || 0;
-  const yearly = monthly * 12;
-  const balance = yearly - 1000; // replace 1000 with your actual deduction logic
-
-  // --- Step 1 pills (source of truth) ---
-  document.getElementById("step1-monthly").textContent = `$${monthly.toLocaleString()}`;
-  document.getElementById("step1-yearly").textContent = `$${yearly.toLocaleString()}`;
-  document.getElementById("step1-balance").textContent = `$${balance.toLocaleString()}`;
-
-  // --- Sticky bar pills mirror Step 1 ---
-  document.getElementById("sticky-monthly").textContent =
-    document.getElementById("step1-monthly").textContent;
-  document.getElementById("sticky-yearly").textContent =
-    document.getElementById("step1-yearly").textContent;
-  document.getElementById("sticky-balance").textContent =
-    document.getElementById("step1-balance").textContent;
-}
-
-// hook to input
-document.getElementById("monthly-input").addEventListener("input", updateTotals);
-
-// run once on load
-updateTotals();
-
-
-  /* ╔════════════════════════════════════════╗
-     ║  Theme toggle (dark ↔ light)            ║
-     ╚════════════════════════════════════════╝ */
-  const themeToggle = document.getElementById("theme-toggle");
-  if (themeToggle) { /* ... unchanged ... */ }
-
-  /* ╔════════════════════════════════════════╗
-     ║  Sticky bar setup (independent pills)   ║
-     ╚════════════════════════════════════════╝ */
-  function setupSticky() {
-    const incomeCard    = document.getElementById("income-card");
-    const sticky        = document.getElementById("income-sticky");
-    const stickyMonthly = document.getElementById("sticky-monthly");
-    const stickyYearly  = document.getElementById("sticky-yearly");
-    const stickyPlay    = document.getElementById("sticky-play");
-
-    if (!(incomeCard && sticky && stickyMonthly && stickyYearly && stickyPlay && incomeInput && yearlyEl)) {
-      console.warn("[sticky] Skipping setup. Missing nodes.");
-      return;
-    }
-
-    const updateStickyValues = () => {
-      stickyMonthly.textContent = incomeInput.dataset.value || (income ? fmt(income) : "—");
-      stickyYearly.textContent  = income ? fmt(income * 12) : "—";
-    };
-
-    incomeInput.addEventListener("input", updateStickyValues);
-    try { new MutationObserver(updateStickyValues).observe(yearlyEl, { childList: true }); } catch {}
-
-    // Show sticky when income card leaves viewport
-    try {
-      const io = new IntersectionObserver(([entry]) => {
-        sticky.classList.toggle("is-visible", !entry.isIntersecting);
-      }, { root: null, threshold: 0 });
-      io.observe(incomeCard);
-    } catch {
-      const onScrollOrResize = () => {
-        const r = incomeCard.getBoundingClientRect();
-        const isVisible = r.bottom > 0 && r.top < window.innerHeight;
-        sticky.classList.toggle("is-visible", !isVisible);
-      };
-      window.addEventListener("scroll", onScrollOrResize, { passive: true });
-      window.addEventListener("resize", onScrollOrResize);
-      onScrollOrResize();
-    }
-
-    updateStickyValues();
-  }
-
-  /* ╔════════════════════════════════════════╗
-     ║  Bootstrap (init page)                  ║
-     ╚════════════════════════════════════════╝ */
-  if (!load()) {
-    income = 0;
-    categories = JSON.parse(JSON.stringify(defaults));
-  }
-
-  if (incomeInput) {
-    incomeInput.value = income ? String(income) : "";
-    incomeInput.dataset.value = fmt(parseFloat(incomeInput.value) || 0);
-  }
-  if (yearlyEl) yearlyEl.textContent = fmt(income * 12);
-  if (balanceEl) balanceEl.textContent = `${fmt(income)}/mo`;
-
-  renderCategories();
+  // Initialize
   updateTotals();
   setupSticky();
 });
