@@ -89,12 +89,35 @@
       display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap;
     }
 
-    /* Step 1 row */
-    .step1-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    @media (max-width: 600px) {
-      .step1-row { flex-direction: column; }
-      .step1-row .pill { width: 100%; }
-    }
+    /* STEP 1 PILL LAYOUT */
+.step1-pills {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;            /* spacing between pills */
+  margin-top: 1rem;
+}
+
+.step1-pills .pill {
+  flex: 1;                /* equal widths on desktop */
+  text-align: center;
+  padding: 0.5rem;
+  background: #e5e7eb;    /* gray background, adjust if needed */
+  border-radius: 6px;
+  box-sizing: border-box; /* prevent overflow */
+}
+
+/* MOBILE FIX */
+@media (max-width: 768px) {
+  .step1-pills {
+    flex-direction: column; /* stack vertically */
+  }
+
+  .step1-pills .pill {
+    width: 100%;            /* take full parent width */
+    margin: 0;              /* reset side margins */
+    max-width: 100%;        /* enforce no overflow */
+  }
+}
 
     /* Categories grid */
     #categories { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
