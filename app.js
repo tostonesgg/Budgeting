@@ -1,10 +1,9 @@
 // app.js
 document.addEventListener("DOMContentLoaded", () => {
-  /* ╔════════════════════════════════════════╗
-     ║  DOM references + constants             ║
-     ╚════════════════════════════════════════╝ */
   const LS_KEY_PREFIX = "budget.";
-  const incomeInput   = document.getElementById("monthly-input"); // fixed id to match index.html
+  const EXPENSES_KEY = "expensesByCategory";
+
+  const incomeInput   = document.getElementById("monthly-input"); 
   const yearlyEl      = document.getElementById("step1-yearly");
   const balanceEl     = document.getElementById("step1-balance");
   const catName       = document.getElementById("cat-name");
@@ -13,25 +12,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const categoriesEl  = document.getElementById("categories");
   const inlineColor   = document.getElementById("cat-color");
 
-  // Sticky bar
   const stickyMonthly = document.getElementById("sticky-monthly");
   const stickyYearly  = document.getElementById("sticky-yearly");
   const stickyBalance = document.getElementById("sticky-balance");
 
-  // Helpers
   const clamp = (n) => (isFinite(n) ? n : 0);
   const fmt   = (n) =>
     "$" + Number(clamp(n)).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
-  const EXPENSES_KEY = "expensesByCategory";
-
   /* ╔════════════════════════════════════════╗
-     ║  Central totals update                  ║
+     ║  Totals updater                         ║
      ╚════════════════════════════════════════╝ */
   function updateTotals() {
     const monthlyIncome = parseFloat(incomeInput?.value) || 0;
-
-    // --- Sum all expenses
     let totalExpenses = 0;
     document.querySelectorAll(".expense-input").forEach((el) => {
       totalExpenses += parseFloat(el.value) || 0;
@@ -40,20 +33,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const netMonthly = monthlyIncome - totalExpenses;
     const netYearly  = monthlyIncome * 12;
 
-    // --- Step 1 pills (source of truth) ---
     if (yearlyEl) yearlyEl.textContent = fmt(netYearly);
     if (balanceEl) balanceEl.textContent = fmt(netMonthly) + "/mo";
 
-    // --- Sticky bar mirrors Step 1 ---
     if (stickyMonthly) stickyMonthly.textContent = fmt(monthlyIncome);
     if (stickyYearly)  stickyYearly.textContent  = yearlyEl?.textContent;
     if (stickyBalance) stickyBalance.textContent = balanceEl?.textContent;
   }
 
   /* ╔════════════════════════════════════════╗
-     ║  Expense row builder + persistence      ║
+     ║  Expense rows                          ║
      ╚════════════════════════════════════════╝ */
-  function createExpenseRow(categoryId, expenseId, value = 0) {
+  function createExpenseRow(categoryId, expenseId, value = 0, color = "#ccc") {
     const row = document.createElement("div");
     row.className = "expense-row";
     row.dataset.expenseId = expenseId;
@@ -78,6 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "🗑️";
+    deleteBtn.style.border = `1px solid ${color}`;
     deleteBtn.addEventListener("click", () => {
       deleteExpenseRow(row);
     });
@@ -102,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ╔════════════════════════════════════════╗
-     ║  Sticky visibility toggle               ║
+     ║  Sticky summary                        ║
      ╚════════════════════════════════════════╝ */
   function setupSticky() {
     const sticky = document.getElementById("income-sticky");
@@ -112,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const io = new IntersectionObserver(([entry]) => {
         sticky.classList.toggle("is-visible", !entry.isIntersecting);
-      }, { root: null, threshold: 0 });
+      });
       io.observe(incomeCard);
     } catch {
       const onScrollOrResize = () => {
@@ -127,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ╔════════════════════════════════════════╗
-     ║  Category creation + persistence        ║
+     ║  Categories                            ║
      ╚════════════════════════════════════════╝ */
   function createCategoryElement(name, icon, color) {
     const wrapper = document.createElement("div");
@@ -146,28 +138,59 @@ document.addEventListener("DOMContentLoaded", () => {
     nameEl.textContent = name;
     header.appendChild(nameEl);
 
-    // --- Paintbrush button
+    // --- Subtle border buttons ---
     const paintBtn = document.createElement("button");
     paintBtn.textContent = "🎨";
+    paintBtn.style.border = `1px solid ${color}`;
     paintBtn.addEventListener("click", () => {
       openColorPicker(wrapper.dataset.categoryId);
     });
-    header.appendChild(paintBtn);
 
-    // Add expense button
+    const renameBtn = document.createElement("button");
+    renameBtn.textContent = "✏️";
+    renameBtn.style.border = `1px solid ${color}`;
+    renameBtn.addEventListener("click", () => {
+      const newName = prompt("Enter a new category name:", name);
+      if (newName) {
+        const cats = JSON.parse(localStorage.getItem(LS_KEY_PREFIX + "categories")) || [];
+        const cat = cats.find(c => c.id === wrapper.dataset.categoryId);
+        if (cat) {
+          cat.name = newName;
+          localStorage.setItem(LS_KEY_PREFIX + "categories", JSON.stringify(cats));
+          renderCategories();
+        }
+      }
+    });
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "❌";
+    deleteBtn.style.border = `1px solid ${color}`;
+    deleteBtn.addEventListener("click", () => {
+      if (confirm(`Delete category "${name}"?`)) {
+        let cats = JSON.parse(localStorage.getItem(LS_KEY_PREFIX + "categories")) || [];
+        cats = cats.filter(c => c.id !== wrapper.dataset.categoryId);
+        localStorage.setItem(LS_KEY_PREFIX + "categories", JSON.stringify(cats));
+        wrapper.remove();
+      }
+    });
+
     const addExpenseBtn = document.createElement("button");
     addExpenseBtn.textContent = "+ Expense";
+    addExpenseBtn.style.border = `1px solid ${color}`;
     addExpenseBtn.addEventListener("click", () => {
       const expenseId = "exp-" + Date.now();
-      const row = createExpenseRow(wrapper.dataset.categoryId, expenseId);
+      const row = createExpenseRow(wrapper.dataset.categoryId, expenseId, 0, color);
       wrapper.appendChild(row);
 
-      // persist blank expense
       const data = JSON.parse(localStorage.getItem(EXPENSES_KEY)) || {};
       if (!data[wrapper.dataset.categoryId]) data[wrapper.dataset.categoryId] = [];
       data[wrapper.dataset.categoryId].push({ id: expenseId, value: 0 });
       localStorage.setItem(EXPENSES_KEY, JSON.stringify(data));
     });
+
+    header.appendChild(paintBtn);
+    header.appendChild(renameBtn);
+    header.appendChild(deleteBtn);
     header.appendChild(addExpenseBtn);
 
     wrapper.appendChild(header);
@@ -175,12 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return wrapper;
   }
 
-  /* ╔════════════════════════════════════════╗
-     ║  Color picker + updater                 ║
-     ╚════════════════════════════════════════╝ */
   function openColorPicker(categoryId) {
-    inlineColor.click(); // reuse hidden <input type="color">
-
+    inlineColor.click();
     inlineColor.oninput = (e) => {
       updateCategoryColor(categoryId, e.target.value);
     };
@@ -197,34 +216,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const categoryEl = document.querySelector(`[data-category-id="${categoryId}"] .category-header`);
     if (categoryEl) {
       categoryEl.style.borderColor = newColor;
+      categoryEl.querySelectorAll("button").forEach(btn => {
+        btn.style.border = `1px solid ${newColor}`;
+      });
     }
   }
 
-  function saveCategoriesToStorage() {
-    const cats = [];
-    categoriesEl.querySelectorAll(".category").forEach((cat) => {
-      const hdr = cat.querySelector(".category-header");
-      cats.push({
-        id: cat.dataset.categoryId,
-        icon: hdr.querySelector("span")?.textContent || "📂",
-        name: hdr.querySelectorAll("span")[1]?.textContent || "Unnamed",
-        color: hdr.style.borderColor || "#ccc"
-      });
-    });
-    localStorage.setItem(LS_KEY_PREFIX + "categories", JSON.stringify(cats));
-  }
-
   function loadCategoriesFromStorage() {
-    const cats = JSON.parse(localStorage.getItem(LS_KEY_PREFIX + "categories") || "[]");
+    const cats = JSON.parse(localStorage.getItem(LS_KEY_PREFIX + "categories")) || [];
     cats.forEach((c) => {
       const wrapper = createCategoryElement(c.name, c.icon, c.color);
-      wrapper.dataset.categoryId = c.id; // restore id
-      updateCategoryColor(c.id, c.color); // apply color immediately
+      wrapper.dataset.categoryId = c.id;
+      updateCategoryColor(c.id, c.color);
 
-      // load expenses inside this category
       const data = JSON.parse(localStorage.getItem(EXPENSES_KEY)) || {};
       (data[c.id] || []).forEach(exp => {
-        const row = createExpenseRow(c.id, exp.id, exp.value);
+        const row = createExpenseRow(c.id, exp.id, exp.value, c.color);
         wrapper.appendChild(row);
       });
     });
@@ -238,21 +245,33 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!name) return;
 
       createCategoryElement(name, icon, color);
-      saveCategoriesToStorage();
-
+      saveCategories();
       catName.value = "";
       catIcon.value = "";
     });
   }
 
+  function saveCategories() {
+    const cats = [];
+    categoriesEl.querySelectorAll(".category").forEach((cat) => {
+      const hdr = cat.querySelector(".category-header");
+      cats.push({
+        id: cat.dataset.categoryId,
+        icon: hdr.querySelector("span")?.textContent || "📂",
+        name: hdr.querySelectorAll("span")[1]?.textContent || "Unnamed",
+        color: hdr.style.borderColor || "#ccc"
+      });
+    });
+    localStorage.setItem(LS_KEY_PREFIX + "categories", JSON.stringify(cats));
+  }
+
   /* ╔════════════════════════════════════════╗
-     ║  LocalStorage bootstrap & persistence   ║
+     ║  Bootstrap                             ║
      ╚════════════════════════════════════════╝ */
   const savedIncome = localStorage.getItem(LS_KEY_PREFIX + "income");
   if (savedIncome !== null && incomeInput) {
     incomeInput.value = savedIncome;
   }
-
   loadCategoriesFromStorage();
 
   if (incomeInput) {
@@ -262,9 +281,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ╔════════════════════════════════════════╗
-     ║  Init                                   ║
-     ╚════════════════════════════════════════╝ */
   updateTotals();
   setupSticky();
 });
